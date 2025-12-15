@@ -1,13 +1,16 @@
 const express = require("express");
 const cors = require("cors");
 
+const authRoutes = require("./routes/authRoutes");
+
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Test route
+// Routes
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
   res.send("GhorBari Backend Running 🚀");
 });
