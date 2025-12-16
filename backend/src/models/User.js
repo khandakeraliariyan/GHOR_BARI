@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        nidStatus: {
+            type: String,
+            enum: ["pending", "approved", "rejected"],
+            default: "pending",
+        },
     },
     { timestamps: true }
 );
