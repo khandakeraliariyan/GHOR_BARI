@@ -99,3 +99,35 @@ exports.deleteProperty = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// GET ALL PROPERTIES + SEARCH & FILTER
+exports.getAllProperties = async (req, res) => {
+    try {
+        const { minPrice, maxPrice, rooms, location } = req.query;
+
+        let query = {};
+
+        if (minPrice || maxPrice) {
+            query.price = {};
+            if (minPrice) query.price.$gte = Number(minPrice);
+            if (maxPrice) query.price.$lte = Number(maxPrice);
+        }
+
+        if (rooms) {
+            query.rooms = Number(rooms);
+        }
+
+        if (location) {
+            query.location = { $regex: location, $options: "i" };
+        }
+
+        const properties = await Property.find(query).populate(
+            "owner",
+            "name rating"
+        );
+
+        res.json(properties);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
