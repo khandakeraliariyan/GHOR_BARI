@@ -8,6 +8,7 @@ const propertyRoutes = require("./routes/propertyRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/api/properties", propertyRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("GhorBari Backend Running 🚀");

@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
                 ref: "Property",
             },
         ],
+        isBlocked: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
