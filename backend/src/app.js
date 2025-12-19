@@ -4,6 +4,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const testRoutes = require("./routes/testRoutes");
 const nidRoutes = require("./routes/nidRoutes");
+const propertyRoutes = require("./routes/propertyRoutes");
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/nid", nidRoutes);
+app.use("/api/properties", propertyRoutes);
 
 app.get("/", (req, res) => {
   res.send("GhorBari Backend Running 🚀");
