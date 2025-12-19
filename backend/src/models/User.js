@@ -41,6 +41,16 @@ const userSchema = new mongoose.Schema(
             enum: ["pending", "approved", "rejected"],
             default: "pending",
         },
+        wishlist: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Property",
+            },
+        ],
+        isBlocked: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
