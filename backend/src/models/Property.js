@@ -40,6 +40,10 @@ const propertySchema = new mongoose.Schema(
       enum: ["available", "rented", "sold"],
       default: "available",
     },
+    isApproved: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
