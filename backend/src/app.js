@@ -6,6 +6,7 @@ const testRoutes = require("./routes/testRoutes");
 const nidRoutes = require("./routes/nidRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use("/api/test", testRoutes);
 app.use("/api/nid", nidRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("GhorBari Backend Running 🚀");
