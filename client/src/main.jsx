@@ -10,7 +10,9 @@ import router from "./Router";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
    
-        <RouterProvider router={router} />
+        <div className="max-w-[1440px]">
+          <RouterProvider router={router} />
+        </div>
         
       
   </StrictMode>

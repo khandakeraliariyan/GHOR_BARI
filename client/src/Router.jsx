@@ -3,6 +3,7 @@ import Error404Page from "./Pages/error404Page";
 import HomeLayout from "./Layouts/HomeLayout";
 import BuyOrRentPage from "./Pages/BuyOrRentPage/BuyOrRentPage";
 import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
+import HomePage from "./Pages/HomePage";
 
 
 const router = createBrowserRouter([
@@ -12,7 +13,7 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <h1 className="min-h-screen">Home Page</h1>,
+                element: <HomePage></HomePage>,
             },
             {
                 path: "/buy-or-rent",
