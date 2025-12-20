@@ -4,6 +4,8 @@ import HomeLayout from "./Layouts/HomeLayout";
 import BuyOrRentPage from "./Pages/BuyOrRentPage/BuyOrRentPage";
 import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
 import HomePage from "./Pages/HomePage";
+import RegisterPage from "./Pages/RegisterPage";
+import LoginPage from "./Pages/LoginPage";
 
 
 const router = createBrowserRouter([
@@ -22,6 +24,14 @@ const router = createBrowserRouter([
             {
                 path: "/list-property",
                 element: <ListPropertyPage></ListPropertyPage>
+            },
+            {
+                path: "/register",
+                element: <RegisterPage></RegisterPage>
+            },
+            {
+                path: "/login",
+                element: <LoginPage></LoginPage>
             }
 
         ]
