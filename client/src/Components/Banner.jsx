@@ -33,7 +33,7 @@ const Banner = () => {
     return (
         <section className="w-full flex flex-col bg-white">
             {/* Image Slider */}
-            <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[85vh]">
+            <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[90vh]">
                 <Swiper
                     modules={[Autoplay, EffectFade]}
                     effect="fade"
