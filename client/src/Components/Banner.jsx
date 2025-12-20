@@ -19,19 +19,19 @@ import bannerImg7 from "../assets/banner-7.jpg";
 import bannerImg8 from "../assets/banner-8.jpg";
 
 const images = [
-    bannerImg1,
+    bannerImg8,
     bannerImg2,
     bannerImg3,
     bannerImg4,
     bannerImg5,
     bannerImg6,
     bannerImg7,
-    bannerImg8,
+    bannerImg1,
 ];
 
 const Banner = () => {
     return (
-        <section className="w-full flex flex-col bg-gray-50">
+        <section className="w-full flex flex-col bg-white">
             {/* Image Slider */}
             <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[85vh]">
                 <Swiper
@@ -150,7 +150,7 @@ const SearchCard = () => {
 
                 {/* Button */}
                 <button className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-4 lg:py-5 rounded-xl text-white font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:brightness-110 hover:shadow-lg transition-all active:scale-95 shadow-orange-200">
-                    <span className="text-sm lg:text-base">Search</span>
+                    <span className="text-sm lg:text-base">Explore Properties</span>
                     <ArrowRight size={20} />
                 </button>
             </div>
