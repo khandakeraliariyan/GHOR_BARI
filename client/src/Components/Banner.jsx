@@ -19,19 +19,19 @@ import bannerImg7 from "../assets/banner-7.jpg";
 import bannerImg8 from "../assets/banner-8.jpg";
 
 const images = [
-    bannerImg1,
+    bannerImg8,
     bannerImg2,
     bannerImg3,
     bannerImg4,
     bannerImg5,
     bannerImg6,
     bannerImg7,
-    bannerImg8,
+    bannerImg1,
 ];
 
 const Banner = () => {
     return (
-        <section className="w-full flex flex-col bg-gray-100">
+        <section className="w-full flex flex-col bg-white">
             {/* Image Slider */}
             <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[85vh]">
                 <Swiper
@@ -97,7 +97,7 @@ const Banner = () => {
             </div>
 
             {/* Search Card - Mobile & Tablet (stacked under slider) */}
-            <div className="lg:hidden w-full px-4 py-8 bg-gray-100 z-30">
+            <div className="lg:hidden w-full px-4 py-8 bg-white z-30">
                 <SearchCard />
             </div>
 
