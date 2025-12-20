@@ -30,8 +30,8 @@ const WhyChooseUs = () => {
     ];
 
     return (
-        <section className="py-16 md:py-24 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6">
+        <section className="py-16 md:py-24 bg-gray-100">
+            <div className="max-w-11/12 mx-auto px-6">
                 {/* SECTION HEADER */}
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">
@@ -53,7 +53,7 @@ const WhyChooseUs = () => {
                         return (
                             <div
                                 key={index}
-                                className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                                className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500"
                             >
                                 {/* ICON BOX */}
                                 <div className="w-16 h-16 rounded-xl bg-orange-50 flex items-center justify-center mb-6 group-hover:bg-gradient-to-br group-hover:from-orange-500 group-hover:to-yellow-500 transition-colors duration-300">
