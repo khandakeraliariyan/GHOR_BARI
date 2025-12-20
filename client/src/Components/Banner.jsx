@@ -31,7 +31,7 @@ const images = [
 
 const Banner = () => {
     return (
-        <section className="w-full flex flex-col">
+        <section className="w-full flex flex-col bg-gray-50">
             {/* Image Slider */}
             <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[85vh]">
                 <Swiper
