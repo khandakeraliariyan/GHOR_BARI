@@ -5,7 +5,10 @@ import HomePageStats from '../Components/HomePageStats.jsx';
 import BeginYourPropertyJourney from '../Components/BeginYourPropertyJourney.jsx';
 
 const HomePage = () => {
-   
+    // Ensure we are on top after redirected to this page
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <div className='min-h-screen'>
