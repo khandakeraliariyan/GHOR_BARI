@@ -1,12 +1,25 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Link, NavLink } from "react-router";
+import useAuth from "../Hooks/useAuth";
+import { showToast } from "../Utilities/ToastMessage";
+import { Tooltip } from "react-tooltip";
+import 'react-tooltip/dist/react-tooltip.css';
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const { user, logoutUser } = useAuth();
 
-    // TEMP : Authentication state
-    const isLoggedIn = false;
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+            showToast("Successfully logged out 👋", "success");
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || "Logout failed ❌", "error");
+        }
+    };
+
 
     return (
         <header className="w-full bg-white shadow-md relative z-50">
@@ -60,23 +73,26 @@ const Navbar = () => {
                         List Property
                     </NavLink>
 
-                    <NavLink
-                        to="/messages"
-                        className={({ isActive }) =>
-                            `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
-              ${isActive
-                                ? "bg-orange-400 text-white"
-                                : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
-                            }`
-                        }
-                    >
-                        Messages
-                    </NavLink>
+                    {/* Only show Messages if logged in */}
+                    {user && (
+                        <NavLink
+                            to="/messages"
+                            className={({ isActive }) =>
+                                `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
+                  ${isActive
+                                    ? "bg-orange-400 text-white"
+                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                }`
+                            }
+                        >
+                            Messages
+                        </NavLink>
+                    )}
                 </div>
 
-                {/* AUTH BUTTONS - DESKTOP */}
+                {/* AUTH BUTTONS / USER AVATAR - DESKTOP */}
                 <div className="hidden md:flex items-center gap-4">
-                    {!isLoggedIn && (
+                    {!user ? (
                         <>
                             <Link
                                 to="/login"
@@ -91,6 +107,36 @@ const Navbar = () => {
                                 Register
                             </Link>
                         </>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={handleLogout}
+                                className="px-4 py-2 text-sm md:text-base font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition"
+                            >
+                                Logout
+                            </button>
+
+                            {/* Avatar with tooltip */}
+                            <div>
+                                <div
+                                    data-tooltip-id="userTooltip"
+                                    data-tooltip-content={user.displayName || "User"}
+                                    className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border border-gray-200 flex items-center justify-center bg-gray-100"
+                                >
+                                    {user.photoURL ? (
+                                        <img
+                                            src={user.photoURL}
+                                            alt={user.displayName || "User Avatar"}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User size={20} className="text-gray-400" />
+                                    )}
+                                </div>
+                                <Tooltip id="userTooltip" place="bottom" effect="solid" />
+                            </div>
+
+                        </div>
                     )}
                 </div>
 
@@ -152,21 +198,23 @@ const Navbar = () => {
                             List Property
                         </NavLink>
 
-                        <NavLink
-                            to="/messages"
-                            onClick={() => setMenuOpen(false)}
-                            className={({ isActive }) =>
-                                `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? "bg-orange-400 text-white"
-                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
-                                }`
-                            }
-                        >
-                            Messages
-                        </NavLink>
+                        {user && (
+                            <NavLink
+                                to="/messages"
+                                onClick={() => setMenuOpen(false)}
+                                className={({ isActive }) =>
+                                    `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                    ${isActive
+                                        ? "bg-orange-400 text-white"
+                                        : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                    }`
+                                }
+                            >
+                                Messages
+                            </NavLink>
+                        )}
 
-                        {!isLoggedIn && (
+                        {!user ? (
                             <div className="flex gap-2 pt-3 flex-col">
                                 <Link
                                     to="/login"
@@ -184,6 +232,16 @@ const Navbar = () => {
                                     Register
                                 </Link>
                             </div>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    logoutUser();
+                                    setMenuOpen(false);
+                                }}
+                                className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition flex items-center justify-center gap-2"
+                            >
+                                <User size={18} /> Logout
+                            </button>
                         )}
                     </div>
                 </div>
