@@ -31,7 +31,7 @@ const images = [
 
 const Banner = () => {
     return (
-        <section className="w-full flex flex-col bg-gray-50">
+        <section className="w-full flex flex-col bg-gray-100">
             {/* Image Slider */}
             <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[85vh]">
                 <Swiper
@@ -97,7 +97,7 @@ const Banner = () => {
             </div>
 
             {/* Search Card - Mobile & Tablet (stacked under slider) */}
-            <div className="lg:hidden w-full px-4 py-8 bg-white z-30">
+            <div className="lg:hidden w-full px-4 py-8 bg-gray-100 z-30">
                 <SearchCard />
             </div>
 
@@ -150,7 +150,7 @@ const SearchCard = () => {
 
                 {/* Button */}
                 <button className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-4 lg:py-5 rounded-xl text-white font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:brightness-110 hover:shadow-lg transition-all active:scale-95 shadow-orange-200">
-                    <span className="text-sm lg:text-base">Search</span>
+                    <span className="text-sm lg:text-base">Explore Properties</span>
                     <ArrowRight size={20} />
                 </button>
             </div>
