@@ -7,10 +7,12 @@ import registerImg from "../assets/registerImage.jpg";
 import { uploadImageToImgBB } from "../Utilities/UploadImage";
 import { showToast } from "../Utilities/ToastMessage";
 import useAuth from "../Hooks/useAuth";
+import useAxios from "../Hooks/useAxios";
 
 const RegisterPage = () => {
     const { registerUserWithEmailPassword, updateUserProfile, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
+    const axios = useAxios();
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -20,43 +22,92 @@ const RegisterPage = () => {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const password = watch("password");
 
-    // Email & Password Registration
+    // Email Password Registration
     const onSubmit = async (data) => {
         try {
             setLoading(true);
-            const userCredential = await registerUserWithEmailPassword(data.email, data.password);
-            const imageFile = data.avatar[0];
-            const imageUrl = await uploadImageToImgBB(imageFile);
 
+            // 1️⃣ Firebase email/password registration
+            const userCredential = await registerUserWithEmailPassword(data.email, data.password);
+            const user = userCredential.user;
+
+            // Upload avatar to ImgBB
+            let imageUrl = "";
+            if (data.avatar && data.avatar.length > 0) {
+                imageUrl = await uploadImageToImgBB(data.avatar[0]);
+            }
+
+            // Update Firebase profile
             await updateUserProfile({
                 displayName: data.fullName,
                 photoURL: imageUrl,
             });
 
+            // Update backend DB (store URL only)
+            const { data: existingUser } = await axios.get(`/check-user-exist?email=${data.email}`);
+            if (!existingUser.exists) {
+                await axios.post("/register-user", {
+                    email: data.email,
+                    name: data.fullName,
+                    profileImage: imageUrl || "",
+                    phone: data.phone || "",
+                    role: data.role || "user",
+                });
+            }
+
             navigate("/");
             showToast(`Welcome, ${data.fullName}! 🎉`, "success");
+
         } catch (error) {
-            showToast(error.message || "Registration failed", "error");
+            showToast(error.response?.data?.message || error.message || "Registration failed", "error");
         } finally {
             setLoading(false);
         }
     };
+
+
 
     // Google Sign-In
     const handleGoogleSignIn = async () => {
         try {
             setLoading(true);
+
+            // Firebase Google sign in
             const result = await loginWithGoogle();
             const user = result.user;
 
+            // Check if user exists in DB
+            const { data } = await axios.get(`/check-user-exist?email=${user.email}`);
+
+            // Create DB entry if not exists
+            if (!data.exists) {
+                await axios.post("/register-user", {
+                    email: user.email,
+                    name: user.displayName || "User",
+                    profileImage: user.photoURL || "",
+                    phone: "",
+                    role: "user",
+                });
+            }
+
             navigate("/");
-            showToast(`Welcome, ${user.displayName}! 🚀`, "success");
+            showToast(`Welcome, ${user.displayName || "User"}! 🚀`, "success");
+
         } catch (error) {
-            showToast(error.message || "Google sign-in failed", "error");
+            showToast(
+                error.response?.data?.message || error.message || "Google sign-in failed",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
     };
+
+
+
+
+
+
 
     return (
         <div className="min-h-screen flex bg-white">
@@ -84,6 +135,7 @@ const RegisterPage = () => {
                             {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.fullName.message}</p>}
                         </div>
 
+
                         {/* EMAIL */}
                         <div className="space-y-1">
                             <label className="text-sm font-semibold text-gray-700 ml-1">Email Address <span className="text-orange-500">*</span></label>
@@ -95,6 +147,34 @@ const RegisterPage = () => {
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
                         </div>
+
+                        {/* PHONE NUMBER */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-700 ml-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                placeholder="e.g. +8801XXXXXXXXX"
+                                {...register("phone")}
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                            />
+                        </div>
+
+                        {/* ROLE SELECTION */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-700 ml-1">Role <span className="text-orange-500">*</span></label>
+                            <select
+                                {...register("role", { required: "Please select a role" })}
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                defaultValue=""
+                            >
+                                <option value="" disabled>Select your role</option>
+                                <option value="property_seeker">Property Seeker</option>
+                                <option value="property_owner">Property Owner</option>
+                                <option value="user">Both</option>
+                            </select>
+                            {errors.role && <p className="text-red-500 text-xs mt-1 ml-1">{errors.role.message}</p>}
+                        </div>
+
 
                         {/* PASSWORD */}
                         <div className="space-y-1">

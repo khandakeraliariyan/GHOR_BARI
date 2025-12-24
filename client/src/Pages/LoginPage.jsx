@@ -7,11 +7,13 @@ import loginImg from "../assets/loginImage.jpg";
 import Loading from "../Components/Loading";
 import { showToast } from "../Utilities/ToastMessage";
 import useAuth from "../Hooks/useAuth";
+import useAxios from "../Hooks/useAxios";
 
 const LoginPage = () => {
     const { loginUserWithEmailPassword, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const axios = useAxios();
 
     const [showPassword, setShowPassword] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -48,17 +50,38 @@ const LoginPage = () => {
     const handleGoogleSignIn = async () => {
         try {
             setActionLoading(true);
+
+            // Firebase Google sign in
             const result = await loginWithGoogle();
             const user = result.user;
 
-            showToast(`Welcome back, ${user.displayName}! 🚀`, "success");
+            // Check if user exists in DB
+            const { data } = await axios.get(`/check-user-exist?email=${user.email}`);
+
+            // Create DB entry if not exists
+            if (!data.exists) {
+                await axios.post("/register-user", {
+                    email: user.email,
+                    name: user.displayName || "User",
+                    profileImage: user.photoURL || "",
+                    phone: "",
+                    role: "user",
+                });
+            }
+
             navigate(location?.state || "/");
+            showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+
         } catch (error) {
-            showToast(error.message || "Google sign-in failed", "error");
+            showToast(
+                error.response?.data?.message || error.message || "Google sign-in failed",
+                "error"
+            );
         } finally {
             setActionLoading(false);
         }
     };
+
 
     if (initialLoading) return <Loading />;
 
