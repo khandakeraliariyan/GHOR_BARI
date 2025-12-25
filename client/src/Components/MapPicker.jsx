@@ -23,7 +23,6 @@ const MapController = ({ flyTo }) => {
             const [lat, lng] = flyTo.center;
             const newZoom = flyTo.zoom || map.getZoom();
 
-            // Check if this is a new target (different from last target)
             const lastTargetCenter = lastTarget.current.center;
             const isNewTarget = !lastTargetCenter ||
                 Math.abs(lastTargetCenter.lat - lat) > 0.0001 ||
@@ -31,12 +30,9 @@ const MapController = ({ flyTo }) => {
                 Math.abs((lastTarget.current.zoom || 0) - newZoom) > 0.1;
 
             if (isNewTarget) {
-                // Cancel any pending animation frame
                 if (animationFrameRef.current) {
                     cancelAnimationFrame(animationFrameRef.current);
                 }
-
-                // Stop any ongoing animation
                 map.stop();
 
                 animationFrameRef.current = requestAnimationFrame(() => {
@@ -53,7 +49,6 @@ const MapController = ({ flyTo }) => {
             }
         }
 
-        // Cleanup on unmount
         return () => {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
@@ -63,30 +58,68 @@ const MapController = ({ flyTo }) => {
     return null;
 };
 
-
-const LocationMarker = ({ setValue }) => {
-    const [position, setPosition] = useState(null);
+const LocationMarker = ({ position, setPosition, setValue }) => {
     useMapEvents({
         click(e) {
             setPosition(e.latlng);
             setValue("coordinates", { lat: e.latlng.lat, lng: e.latlng.lng });
         },
     });
+
     return position === null ? null : <Marker position={position} />;
 };
 
-const MapPicker = ({ setValue, flyTo }) => {
+
+// Locate Me Button
+const LocateButton = ({ setValue, setPosition }) => {
+    const map = useMap();
+    const locateMe = () => {
+        if (!navigator.geolocation) return alert("Geolocation not supported!");
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const { latitude, longitude } = pos.coords;
+            map.flyTo([latitude, longitude], 16);
+
+            // auto place marker like click
+            setPosition({ lat: latitude, lng: longitude });
+
+            setValue("coordinates", { lat: latitude, lng: longitude });
+        });
+    };
+
     return (
-        <MapContainer
-            center={[23.6850, 90.3563]}
-            zoom={7}
-            style={{ height: "100%", width: "100%" }}
-            scrollWheelZoom={false}
+        <button
+            type="button"
+            onClick={locateMe}
+            className="absolute z-[1000] top-3 right-3 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded shadow text-sm hover:bg-white/80"
         >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <MapController flyTo={flyTo} />
-            <LocationMarker setValue={setValue} />
-        </MapContainer>
+            📍 Locate Me
+        </button>
+
+    );
+};
+
+
+const MapPicker = ({ setValue, flyTo }) => {
+    const [position, setPosition] = useState(null);
+
+    return (
+        <div className="relative h-full w-full">
+            <MapContainer
+                center={[23.6850, 90.3563]}
+                zoom={7}
+                style={{ height: "100%", width: "100%" }}
+                scrollWheelZoom={false}
+            >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <MapController flyTo={flyTo} />
+
+                {/* PASS position + setter */}
+                <LocationMarker position={position} setPosition={setPosition} setValue={setValue} />
+
+                {/* Button also receives setPosition */}
+                <LocateButton setValue={setValue} setPosition={setPosition} />
+            </MapContainer>
+        </div>
     );
 };
 
