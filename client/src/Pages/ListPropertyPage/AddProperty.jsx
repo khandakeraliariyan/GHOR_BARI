@@ -1,0 +1,345 @@
+import { useForm } from "react-hook-form";
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import useAxios from "../../Hooks/useAxios";
+import MapPicker from "../../Components/MapPicker";
+import useAuth from "../../Hooks/useAuth";
+import {
+    PlusCircle, Home, MapPin, Layers, CheckCircle,
+    Info, Upload, X, FileText, Image as ImageIcon, Loader2, AlertCircle
+} from "lucide-react";
+import { uploadImageToImgBB } from "../../Utilities/UploadImage";
+import { showToast } from "../../Utilities/ToastMessage";
+
+const AMENITIES = [
+    "Air Conditioning", "Parking Space", "24/7 Security", "Elevator",
+    "Backup Generator", "Gas Connection", "Water Supply", "Balcony",
+    "CCTV", "Fire Safety", "Playground", "Gym"
+];
+
+const DIVISION_COORDS = {
+    dhaka: [23.8103, 90.4125],
+    chattagram: [22.3569, 91.7832], 
+    barisal: [22.7010, 90.3535],   
+    rajshahi: [24.3636, 88.6241],
+    khulna: [22.8456, 89.5403],
+    sylhet: [24.8949, 91.8687],
+    rangpur: [25.7439, 89.2752],
+    mymensingh: [24.7471, 90.4203],
+};
+
+const AddProperty = () => {
+    const { user } = useAuth();
+    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm();
+    const [mapView, setMapView] = useState({ center: [23.6850, 90.3563], zoom: 7 });
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const lastUpdateRef = useRef({ division: null, district: null, upazila: null });
+    const axios = useAxios();
+
+    const { data: divisions = [] } = useQuery({ queryKey: ["divs"], queryFn: () => fetch("/divisions.json").then(res => res.json()) });
+    const { data: districts = [] } = useQuery({ queryKey: ["dists"], queryFn: () => fetch("/districts.json").then(res => res.json()) });
+    const { data: upazilas = [] } = useQuery({ queryKey: ["upzs"], queryFn: () => fetch("/upzillas.json").then(res => res.json()) });
+
+    const listingType = watch("listingType");
+    const propertyType = watch("propertyType");
+    const watchDiv = watch("division_id");
+    const watchDist = watch("district_id");
+    const watchCoords = watch("coordinates");
+
+    useEffect(() => {
+        if (watchDiv && lastUpdateRef.current.division !== watchDiv) {
+            const div = divisions.find(d => String(d.id) === String(watchDiv));
+            const coords = div ? DIVISION_COORDS[div.name.toLowerCase()] : null;
+            if (coords) setMapView({ center: coords, zoom: 8 });
+            setValue("district_id", "");
+            setValue("upazila_id", "");
+            lastUpdateRef.current.division = watchDiv;
+        }
+    }, [watchDiv, divisions, setValue]);
+
+    useEffect(() => {
+        if (watchDist && lastUpdateRef.current.district !== watchDist) {
+            const dist = districts.find(d => String(d.id) === String(watchDist));
+            if (dist?.lat && dist.lon) {
+                setMapView({ center: [parseFloat(dist.lat), parseFloat(dist.lon)], zoom: 11 });
+                lastUpdateRef.current.district = watchDist;
+            }
+            setValue("upazila_id", "");
+        }
+    }, [watchDist, districts, setValue]);
+
+    const handleFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (selectedFiles.length + files.length > 10) {
+            return showToast("Maximum 10 images allowed", "error");
+        }
+        setSelectedFiles(prev => [...prev, ...files]);
+    };
+
+    const removeFile = (index) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const onSubmit = async (data) => {
+        if (!watchCoords) return showToast("Please pin your location on the map", "error");
+        if (selectedFiles.length < 1) return showToast("Please upload at least one image", "error");
+
+        setIsSubmitting(true);
+        try {
+            const uploadedUrls = [];
+            for (let file of selectedFiles) {
+                const url = await uploadImageToImgBB(file);
+                uploadedUrls.push(url);
+            }
+
+            const token = await user?.getIdToken();
+            const payload = {
+                ...data,
+                images: uploadedUrls,
+                price: Number(data.price),
+                unitCount: Number(data.unitCount),
+                bathrooms: Number(data.bathrooms),
+                areaSqFt: Number(data.areaSqFt),
+                address: {
+                    division_id: data.division_id,
+                    district_id: data.district_id,
+                    upazila_id: data.upazila_id,
+                    street: data.address
+                },
+                location: data.coordinates,
+                createdAt: new Date().toISOString()
+            };
+
+            await axios.post("/post-property", payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            showToast("Property listed successfully!", "success");
+            reset();
+            setSelectedFiles([]);
+            setMapView({ center: [23.6850, 90.3563], zoom: 7 });
+            lastUpdateRef.current = { division: null, district: null, upazila: null };
+
+        } catch (err) {
+            showToast("Failed to list property. Check connection.", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Helper to render error messages
+    const ErrorMsg = ({ name }) => errors[name] && (
+        <span className="flex items-center gap-1 mt-1.5 text-[10px] font-bold text-red-500 uppercase tracking-tight">
+            <AlertCircle size={10} /> {errors[name]?.message || "This field is required"}
+        </span>
+    );
+
+    const inputStyle = (fieldName) => `w-full px-4 py-3 bg-gray-50/50 border ${errors[fieldName] ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-500/5'} rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-gray-700 font-medium placeholder:text-gray-400`;
+    const labelStyle = "block text-xs font-bold text-gray-500 mb-2 ml-1 uppercase tracking-widest";
+    const sectionTitle = "text-xl font-bold text-gray-800 flex items-center gap-2 mb-6";
+
+    return (
+        <section className="min-h-screen bg-[#F8FAFC] py-12 px-4">
+            <div className="max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="text-center md:text-left">
+                        <div className="flex items-center justify-center md:justify-start gap-2 text-orange-500 mb-3">
+                            <PlusCircle size={20} />
+                            <span className="font-bold text-xs uppercase tracking-[0.2em]">Listing Portal</span>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+                            Add New <span className="text-orange-500">Property</span>
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-gray-100 shadow-sm">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            Review time: <span className="text-gray-900">~24 Hours</span>
+                        </span>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* LEFT COLUMN */}
+                    <div className="lg:col-span-7 space-y-8">
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><Home className="text-orange-500" size={20} /> Property Essentials</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="md:col-span-2">
+                                    <label className={labelStyle}>Property Title</label>
+                                    <input {...register("title", { required: "Title is required", minLength: { value: 10, message: "Min 10 characters required" } })} className={inputStyle("title")} placeholder="e.g. Modern 3-Bedroom Apartment" />
+                                    <ErrorMsg name="title" />
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>Listing Type</label>
+                                    <select {...register("listingType", { required: "Select a listing type" })} className={inputStyle("listingType")}>
+                                        <option value="">Select Purpose</option>
+                                        <option value="rent">Rent Out</option>
+                                        <option value="sale">Sell</option>
+                                    </select>
+                                    <ErrorMsg name="listingType" />
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>Property Type</label>
+                                    <select {...register("propertyType", { required: "Select a property type" })} className={inputStyle("propertyType")}>
+                                        <option value="">Select Category</option>
+                                        <option value="flat">Residential Flat</option>
+                                        <option value="building">Commercial/Full Building</option>
+                                    </select>
+                                    <ErrorMsg name="propertyType" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><MapPin className="text-orange-500" size={20} /> Location Details</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                    <label className={labelStyle}>Division</label>
+                                    <select {...register("division_id", { required: "Required" })} className={inputStyle("division_id")}>
+                                        <option value="">Select</option>
+                                        {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                    </select>
+                                    <ErrorMsg name="division_id" />
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>District</label>
+                                    <select {...register("district_id", { required: "Required" })} className={inputStyle("district_id")} disabled={!watchDiv}>
+                                        <option value="">Select</option>
+                                        {districts.filter(d => String(d.division_id) === String(watchDiv)).map(d => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                    <ErrorMsg name="district_id" />
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>Upazila</label>
+                                    <select {...register("upazila_id", { required: "Required" })} className={inputStyle("upazila_id")} disabled={!watchDist}>
+                                        <option value="">Select</option>
+                                        {upazilas.filter(u => String(u.district_id) === String(watchDist)).map(u => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                    </select>
+                                    <ErrorMsg name="upazila_id" />
+                                </div>
+                            </div>
+                            <div className="mb-6">
+                                <label className={labelStyle}>Street Address</label>
+                                <input {...register("address", { required: "Street address is required" })} className={inputStyle("address")} placeholder="House, Road, Area..." />
+                                <ErrorMsg name="address" />
+                            </div>
+                            <div className={`rounded-2xl overflow-hidden border ${!watchCoords && errors.submitCount > 0 ? 'border-red-300' : 'border-gray-100'} h-[400px] shadow-inner relative`}>
+                                <MapPicker setValue={setValue} flyTo={mapView} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN */}
+                    <div className="lg:col-span-5 space-y-8">
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><Layers className="text-orange-500" size={20} /> Specifications</h3>
+                            <div className="space-y-6">
+                                <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100">
+                                    <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 block">
+                                        {listingType === "rent" ? "Monthly Rent" : "Asking Price"} (BDT)
+                                    </label>
+                                    <input type="number" {...register("price", { required: "Price is required", min: { value: 1, message: "Must be positive" } })} className="w-full bg-transparent border-none text-3xl font-black text-gray-900 outline-none placeholder:text-orange-200" placeholder="000,000" />
+                                    <ErrorMsg name="price" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelStyle}>{propertyType === "flat" ? "Beds" : "Floors"}</label>
+                                        <input type="number" {...register("unitCount", { required: "Required", min: 1 })} className={inputStyle("unitCount")} placeholder="Count" />
+                                        <ErrorMsg name="unitCount" />
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Baths</label>
+                                        <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
+                                        <ErrorMsg name="bathrooms" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelStyle}>Area (Sq Ft)</label>
+                                    <input type="number" {...register("areaSqFt", { required: "Area is required", min: 1 })} className={inputStyle("areaSqFt")} placeholder="e.g. 1500" />
+                                    <ErrorMsg name="areaSqFt" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><ImageIcon className="text-orange-500" size={20} /> Property Media</h3>
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-2xl cursor-pointer hover:bg-orange-50 transition-colors group">
+                                <Upload className="text-gray-300 group-hover:text-orange-400 transition-colors mb-2" size={32} />
+                                <span className="text-xs font-bold text-gray-400 group-hover:text-orange-500 uppercase tracking-tighter">Click to upload images</span>
+                                <input type="file" multiple accept="image/*" className="hidden" onChange={handleFilesChange} />
+                            </label>
+                            {selectedFiles.length === 0 && <span className="block text-[10px] font-bold text-gray-400 mt-2 text-center uppercase">At least 1 image is required</span>}
+
+                            {selectedFiles.length > 0 && (
+                                <div className="mt-6">
+                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                        {selectedFiles.map((file, idx) => (
+                                            <div key={idx} className="relative flex-shrink-0">
+                                                <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-xl border border-gray-100" />
+                                                <button type="button" onClick={() => removeFile(idx)} className="absolute -top-1 -right-1 bg-white shadow text-red-500 rounded-full p-1 border border-gray-100">
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><CheckCircle className="text-orange-500" size={20} /> Amenities</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {AMENITIES.map(item => (
+                                    <label key={item} className="flex items-center gap-3 cursor-pointer group">
+                                        <input type="checkbox" value={item} {...register("amenities")} className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500/20 transition-all" />
+                                        <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">{item}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* OVERVIEW */}
+                    <div className="lg:col-span-12">
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                            <h3 className={sectionTitle}><Info className="text-orange-500" size={20} /> Detailed Overview</h3>
+                            <textarea {...register("overview", { required: "Detailed description is required", minLength: { value: 20, message: "Please describe in at least 20 characters" } })} className={`${inputStyle("overview")} min-h-[150px] py-4 resize-none`} placeholder="Describe your property's best features..." />
+                            <ErrorMsg name="overview" />
+                        </div>
+                    </div>
+
+                    {/* SUBMIT BUTTON */}
+                    <div className="lg:col-span-12 flex justify-center py-10">
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className={`
+                                flex items-center justify-center gap-3 px-20 py-5 rounded-2xl font-black text-white uppercase tracking-[0.2em] transition-all
+                                ${isSubmitting ? 'bg-orange-400 cursor-not-allowed scale-95' : 'bg-orange-600 hover:bg-orange-700 hover:shadow-2xl hover:shadow-orange-200 active:scale-95 shadow-xl'}
+                            `}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={20} />
+                                    Listing...
+                                </>
+                            ) : (
+                                "List Your Property"
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    );
+};
+
+export default AddProperty;
