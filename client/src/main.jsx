@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AuthProvider from "./Firebase/AuthProvider";
 import router from "./Router";
 import "./index.css";
+import "leaflet/dist/leaflet.css";
+
 
 // Create TanStack Query client
 const queryClient = new QueryClient();
