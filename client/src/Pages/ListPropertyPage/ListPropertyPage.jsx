@@ -1,9 +1,10 @@
 import React from 'react';
+import AddProperty from './AddProperty';
 
 const ListProperty = () => {
     return (
         <div>
-            <h1>List Property Page</h1>
+            <AddProperty></AddProperty>
         </div>
     );
 };
