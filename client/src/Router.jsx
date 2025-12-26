@@ -6,6 +6,7 @@ import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
 import HomePage from "./Pages/HomePage";
 import RegisterPage from "./Pages/RegisterPage";
 import LoginPage from "./Pages/LoginPage";
+import AddProperty from "./Pages/ListPropertyPage/AddProperty";
 
 
 const router = createBrowserRouter([
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
             {
                 path: "/list-property",
                 element: <ListPropertyPage></ListPropertyPage>
+            },
+            {
+                path: "/add-property",
+                element: <AddProperty></AddProperty>
             },
             {
                 path: "/register",
