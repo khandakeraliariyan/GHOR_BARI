@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import useAxios from "../../Hooks/useAxios";
 import PropertyCard from "./PropertyCard";
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import useAuth from "../../Hooks/useAuth";
 
+const PAGE_SIZE = 12;
+
 const BuyOrRentPage = () => {
     const navigate = useNavigate();
     const axiosInstance = useAxios();
@@ -22,7 +24,10 @@ const BuyOrRentPage = () => {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchGeoFiles = async () => {
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const fetchGeoFiles = useCallback(async () => {
         const [divisionsRes, districtsRes, upzillasRes] = await Promise.all([
             fetch("/divisions.json"),
             fetch("/districts.json"),
@@ -37,9 +42,9 @@ const BuyOrRentPage = () => {
         const districtMap = new Map(districts.map((d) => [d.id, d.name]));
         const upzilaMap = new Map(upzillas.map((u) => [u.id, u.name]));
         return { divisionMap, districtMap, upzilaMap };
-    };
+    }, []);
 
-    const fetchProperties = async () => {
+    const fetchProperties = useCallback(async () => {
         try {
             if (!authUser) {
                 console.log("User not logged in");
@@ -76,7 +81,7 @@ const BuyOrRentPage = () => {
             const safeProperties = res.data.map((prop) => {
                 const imageUrl = Array.isArray(prop.images) && prop.images.length > 0 ? prop.images[0] : prop.image || null;
 
-                const beds = prop.unitCount ?? prop.beds ?? 0;
+                const beds = prop.dunitCount ?? prop.beds ?? 0;
                 const baths = prop.bathrooms ?? prop.baths ?? 0;
                 const area = prop.areaSqFt ?? prop.area ?? 0;
                 const rating = prop.rating?.average ?? prop.rating ?? 0;
@@ -94,10 +99,8 @@ const BuyOrRentPage = () => {
                 const ownerRating = ownerInfo.rating?.average ?? ownerInfo.rating ?? 0;
                 const ownerNidVerified = !!ownerInfo.nidVerified;
 
-                // check if the user if varified
                 const isVerified = !!prop.isOwnerVerified || ownerNidVerified;
 
-                // premium rules
                 const isPremium = (listingType === "rent" && Number(prop.price) > 50000) ||
                     (listingType === "sale" && Number(prop.price) > 100000);
 
@@ -119,27 +122,94 @@ const BuyOrRentPage = () => {
             });
 
             setProperties(safeProperties);
+            setCurrentPage(1); // reset page on new data
         } catch (error) {
             console.error("Error fetching properties:", error);
             setProperties([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [authUser, axiosInstance, fetchGeoFiles]);
 
     useEffect(() => {
         if (!authLoading) {
             setLoading(true);
             fetchProperties();
         }
-    }, [authLoading, authUser]);
+    }, [authLoading, fetchProperties]);
 
-    const handleCardClick = (id) => navigate(`/property/${id}`);
+    const handleCardClick = (id) => navigate(`/property-details/${id}`);
+
+    // Pagination helpers
+    const totalItems = properties.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(1);
+    }, [currentPage, totalPages]); // reset if pages shrink
+
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const endIdx = startIdx + PAGE_SIZE;
+    const pageItems = properties.slice(startIdx, endIdx);
+
+    const goToPage = (p) => {
+        const page = Math.min(Math.max(1, p), totalPages);
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const renderPager = () => {
+        if (totalPages <= 1) return null;
+        const pages = [];
+        // show up to 7 page buttons, centered window
+        const maxButtons = 7;
+        let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let end = start + maxButtons - 1;
+        if (end > totalPages) {
+            end = totalPages;
+            start = Math.max(1, end - maxButtons + 1);
+        }
+        for (let p = start; p <= end; p++) pages.push(p);
+
+        return (
+            <div className="flex items-center justify-center gap-2 mt-8">
+                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white border'}`}>
+                    Prev
+                </button>
+
+                {start > 1 && (
+                    <>
+                        <button onClick={() => goToPage(1)} className="px-3 py-2 rounded-md bg-white border">1</button>
+                        {start > 2 && <span className="px-2">...</span>}
+                    </>
+                )}
+
+                {pages.map((p) => (
+                    <button key={p} onClick={() => goToPage(p)}
+                        className={`px-3 py-2 rounded-md ${p === currentPage ? 'bg-orange-500 text-white' : 'bg-white border'}`}>
+                        {p}
+                    </button>
+                ))}
+
+                {end < totalPages && (
+                    <>
+                        {end < totalPages - 1 && <span className="px-2">...</span>}
+                        <button onClick={() => goToPage(totalPages)} className="px-3 py-2 rounded-md bg-white border">{totalPages}</button>
+                    </>
+                )}
+
+                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white border'}`}>
+                    Next
+                </button>
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
             <div className="max-w-7xl mx-auto mb-10 space-y-6">
-                {/* Search & filter UI */}
+                {/* Search & filter UI - not functional yet, will be updated later*/}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -154,7 +224,7 @@ const BuyOrRentPage = () => {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                            {loading ? "Loading..." : `${properties.length} Properties`}
+                            {loading ? "Loading..." : `${totalItems} Properties`}
                         </h1>
                         <p className="text-gray-500 font-medium italic">Curated collection of exceptional homes</p>
                     </div>
@@ -173,17 +243,21 @@ const BuyOrRentPage = () => {
             </div>
 
             {viewMode === "grid" ? (
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-                    {!loading &&
-                        properties.map((property) => (
-                            <div key={property._id} onClick={() => handleCardClick(property._id)}>
-                                <PropertyCard property={property} />
-                            </div>
-                        ))}
-                </div>
+                <>
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
+                        {!loading &&
+                            pageItems.map((property) => (
+                                <div key={property._id} onClick={() => handleCardClick(property._id)}>
+                                    <PropertyCard property={property} />
+                                </div>
+                            ))}
+                    </div>
+
+                    {renderPager()}
+                </>
             ) : (
                 <div className="max-w-7xl mx-auto h-[600px] bg-white rounded-3xl overflow-hidden border border-gray-100">
-                    <BuyOrRentMap properties={properties} onMarkerClick={(id) => navigate(`/property/${id}`)} />
+                    <BuyOrRentMap properties={properties} onMarkerClick={(id) => navigate(`/property-details/${id}`)} />
                 </div>
             )}
         </div>

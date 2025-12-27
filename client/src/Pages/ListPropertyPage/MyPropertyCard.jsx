@@ -1,9 +1,13 @@
 import React from 'react';
 import { MapPin, MessageSquare, Edit3, Trash2, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 const MyPropertyCard = ({ property }) => {
+    const navigate = useNavigate();
+
     // Optional chaining and default values for future-proofing
     const {
+        _id,
         title,
         address,
         price,
@@ -23,8 +27,8 @@ const MyPropertyCard = ({ property }) => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${status === 'active'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-orange-100 text-orange-600'
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-orange-100 text-orange-600'
                     }`}>
                     {status || 'Pending'}
                 </div>
@@ -49,7 +53,7 @@ const MyPropertyCard = ({ property }) => {
                     </div>
                 </div>
 
-                {/* Future Proof Request Counter */}
+                {/* Future Proof Request Counter - static for now, will be updated later*/}
                 <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t border-gray-50">
                     <div className="flex items-center gap-1.5 text-gray-500">
                         <MessageSquare size={16} className="text-orange-400" />
@@ -60,14 +64,19 @@ const MyPropertyCard = ({ property }) => {
                 </div>
             </div>
 
-            {/* Actions Section - 3 Buttons */}
+            {/* Actions Section - 3 Buttons - static for now, will be updated later*/}
             <div className="flex md:flex-col gap-2 justify-center">
-                <button className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl hover:bg-gradient-to-r hover:from-orange-500 hover:to-yellow-500 hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider">
+                <button
+                    onClick={() => navigate(`/property-details/${_id}`)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl hover:bg-gradient-to-r hover:from-orange-500 hover:to-yellow-500 hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider"
+                >
                     <Eye size={14} /> View
                 </button>
+
                 <button className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider">
                     <Edit3 size={14} /> Edit
                 </button>
+
                 <button className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider">
                     <Trash2 size={14} /> Delete
                 </button>
