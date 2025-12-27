@@ -121,7 +121,7 @@ const AddProperty = () => {
             setMapView({ center: [23.6850, 90.3563], zoom: 7 });
             lastUpdateRef.current = { division: null, district: null, upazila: null };
 
-        } catch (err) {
+        } catch {
             showToast("Failed to list property. Check connection.", "error");
         } finally {
             setIsSubmitting(false);
