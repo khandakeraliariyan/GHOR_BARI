@@ -1,14 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import useAxios from "../../Hooks/useAxios";
 import PropertyCard from "./PropertyCard";
 import BuyOrRentMap from "./BuyOrRentMap";
+import Loading from "../../Components/Loading";
 import {
     Search,
     SlidersHorizontal,
     LayoutGrid,
     Map as MapIcon,
-    ChevronDown,
+    RotateCcw,
+    Check
 } from "lucide-react";
 import useAuth from "../../Hooks/useAuth";
 
@@ -23,6 +25,25 @@ const BuyOrRentPage = () => {
     const [viewMode, setViewMode] = useState("grid");
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+
+
+    // Filter Logic States
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
+
+    const initialFilterState = {
+        minPrice: "",
+        maxPrice: "",
+        propertyType: "all",
+        minArea: "",
+        maxArea: "",
+        onlyVerified: false,
+        listingType: "all"
+    };
+
+    const [tempFilters, setTempFilters] = useState(initialFilterState);
+    const [appliedFilters, setAppliedFilters] = useState(initialFilterState);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -47,25 +68,20 @@ const BuyOrRentPage = () => {
     const fetchProperties = useCallback(async () => {
         try {
             if (!authUser) {
-                console.log("User not logged in");
                 setProperties([]);
                 return;
             }
-
             const token = await authUser.getIdToken();
             const res = await axiosInstance.get("/active-properties", {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!Array.isArray(res.data)) {
-                console.error("Unexpected API response format:", res.data);
                 setProperties([]);
                 return;
             }
 
             const { divisionMap, districtMap, upzilaMap } = await fetchGeoFiles();
-
-            // batch owner emails
             const ownerEmails = Array.from(new Set(res.data.map((p) => p.owner?.email).filter(Boolean)));
 
             let ownerInfoMap = new Map();
@@ -80,7 +96,6 @@ const BuyOrRentPage = () => {
 
             const safeProperties = res.data.map((prop) => {
                 const imageUrl = Array.isArray(prop.images) && prop.images.length > 0 ? prop.images[0] : prop.image || null;
-
                 const beds = prop.dunitCount ?? prop.beds ?? 0;
                 const baths = prop.bathrooms ?? prop.baths ?? 0;
                 const area = prop.areaSqFt ?? prop.area ?? 0;
@@ -88,41 +103,27 @@ const BuyOrRentPage = () => {
                 const listingType = prop.listingType ?? "rent";
 
                 const addressObj = prop.address || {};
-                const street = addressObj.street || "";
                 const upazilaName = upzilaMap.get(addressObj.upazila_id) || "";
                 const districtName = districtMap.get(addressObj.district_id) || "";
                 const divisionName = divisionMap.get(addressObj.division_id) || "";
-                const addressString = [street, upazilaName, districtName, divisionName].filter(Boolean).join(", ");
+                const addressString = [addressObj.street, upazilaName, districtName, divisionName].filter(Boolean).join(", ");
 
                 const ownerEmail = prop.owner?.email;
                 const ownerInfo = ownerInfoMap.get(ownerEmail) || {};
                 const ownerRating = ownerInfo.rating?.average ?? ownerInfo.rating ?? 0;
                 const ownerNidVerified = !!ownerInfo.nidVerified;
-
                 const isVerified = !!prop.isOwnerVerified || ownerNidVerified;
-
-                const isPremium = (listingType === "rent" && Number(prop.price) > 50000) ||
-                    (listingType === "sale" && Number(prop.price) > 100000);
+                const isPremium = (listingType === "rent" && Number(prop.price) > 50000) || (listingType === "sale" && Number(prop.price) > 100000);
 
                 return {
                     ...prop,
                     image: imageUrl,
-                    images: prop.images || [],
-                    beds,
-                    baths,
-                    area,
-                    rating,
-                    listingType,
-                    addressString,
-                    ownerRating,
-                    ownerNidVerified,
-                    isVerified,
-                    isPremium,
+                    beds, baths, area, rating, listingType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
                 };
             });
 
             setProperties(safeProperties);
-            setCurrentPage(1); // reset page on new data
+            setCurrentPage(1);
         } catch (error) {
             console.error("Error fetching properties:", error);
             setProperties([]);
@@ -138,106 +139,175 @@ const BuyOrRentPage = () => {
         }
     }, [authLoading, fetchProperties]);
 
-    const handleCardClick = (id) => navigate(`/property-details/${id}`);
+    const filteredProperties = useMemo(() => {
+        let result = [...properties];
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p => p.title?.toLowerCase().includes(q) || p.addressString?.toLowerCase().includes(q));
+        }
+        if (appliedFilters.minPrice) result = result.filter(p => Number(p.price) >= Number(appliedFilters.minPrice));
+        if (appliedFilters.maxPrice) result = result.filter(p => Number(p.price) <= Number(appliedFilters.maxPrice));
+        if (appliedFilters.minArea) result = result.filter(p => Number(p.area) >= Number(appliedFilters.minArea));
+        if (appliedFilters.maxArea) result = result.filter(p => Number(p.area) <= Number(appliedFilters.maxArea));
+        if (appliedFilters.propertyType !== "all") result = result.filter(p => p.propertyType === appliedFilters.propertyType);
+        if (appliedFilters.listingType !== "all") result = result.filter(p => p.listingType === appliedFilters.listingType);
+        if (appliedFilters.onlyVerified) result = result.filter(p => p.isVerified);
 
-    // Pagination helpers
-    const totalItems = properties.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-    useEffect(() => {
-        if (currentPage > totalPages) setCurrentPage(1);
-    }, [currentPage, totalPages]); // reset if pages shrink
+        result.sort((a, b) => {
+            if (sortBy === "priceLow") return a.price - b.price;
+            if (sortBy === "priceHigh") return b.price - a.price;
+            if (sortBy === "rating") return b.rating - a.rating;
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+        return result;
+    }, [properties, searchQuery, appliedFilters, sortBy]);
 
-    const startIdx = (currentPage - 1) * PAGE_SIZE;
-    const endIdx = startIdx + PAGE_SIZE;
-    const pageItems = properties.slice(startIdx, endIdx);
-
-    const goToPage = (p) => {
-        const page = Math.min(Math.max(1, p), totalPages);
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    const handleApplyFilters = () => {
+        setAppliedFilters(tempFilters);
+        setCurrentPage(1);
+        setShowFilters(false);
     };
+
+    const handleResetFilters = () => {
+        setTempFilters(initialFilterState);
+        setAppliedFilters(initialFilterState);
+        setCurrentPage(1);
+    };
+
+    const totalItems = filteredProperties.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filteredProperties.slice(startIdx, startIdx + PAGE_SIZE);
 
     const renderPager = () => {
         if (totalPages <= 1) return null;
-        const pages = [];
-        // show up to 7 page buttons, centered window
-        const maxButtons = 7;
-        let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-        let end = start + maxButtons - 1;
-        if (end > totalPages) {
-            end = totalPages;
-            start = Math.max(1, end - maxButtons + 1);
-        }
-        for (let p = start; p <= end; p++) pages.push(p);
-
+        const pages = Array.from({ length: Math.min(7, totalPages) }, (_, i) => i + 1);
         return (
             <div className="flex items-center justify-center gap-2 mt-8">
-                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}
-                    className={`px-3 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white border'}`}>
-                    Prev
-                </button>
-
-                {start > 1 && (
-                    <>
-                        <button onClick={() => goToPage(1)} className="px-3 py-2 rounded-md bg-white border">1</button>
-                        {start > 2 && <span className="px-2">...</span>}
-                    </>
-                )}
-
                 {pages.map((p) => (
-                    <button key={p} onClick={() => goToPage(p)}
+                    <button key={p} onClick={() => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                         className={`px-3 py-2 rounded-md ${p === currentPage ? 'bg-orange-500 text-white' : 'bg-white border'}`}>
                         {p}
                     </button>
                 ))}
-
-                {end < totalPages && (
-                    <>
-                        {end < totalPages - 1 && <span className="px-2">...</span>}
-                        <button onClick={() => goToPage(totalPages)} className="px-3 py-2 rounded-md bg-white border">{totalPages}</button>
-                    </>
-                )}
-
-                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}
-                    className={`px-3 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white border'}`}>
-                    Next
-                </button>
             </div>
         );
     };
 
+    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (loading || authLoading || initialLoading) {
+        return <Loading />;
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
             <div className="max-w-7xl mx-auto mb-10 space-y-6">
-                {/* Search & filter UI - not functional yet, will be updated later*/}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                        <input placeholder="Search luxury properties by location..." className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-slate-900 outline-none transition-all shadow-sm bg-white" />
+                        <input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by location or property title..."
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-slate-900 outline-none transition-all shadow-sm bg-white"
+                        />
                     </div>
-                    <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
-                        <SlidersHorizontal size={20} /> Filters
-                    </button>
+
+                    <div className="flex gap-2">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-4 py-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900"
+                        >
+                            <option value="newest">Newest</option>
+                            <option value="priceLow">Price: Low to High</option>
+                            <option value="priceHigh">Price: High to Low</option>
+                            <option value="rating">Top Rated</option>
+                        </select>
+
+                        <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
+                            <SlidersHorizontal size={20} /> Filters
+                        </button>
+                    </div>
                 </div>
 
-                {/* header with view toggle */}
+                {showFilters && (
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Price Range (৳)</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minPrice} onChange={(e) => setTempFilters({ ...tempFilters, minPrice: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxPrice} onChange={(e) => setTempFilters({ ...tempFilters, maxPrice: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Area (SqFt)</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minArea} onChange={(e) => setTempFilters({ ...tempFilters, minArea: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxArea} onChange={(e) => setTempFilters({ ...tempFilters, maxArea: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Property Type</label>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.propertyType} onChange={(e) => setTempFilters({ ...tempFilters, propertyType: e.target.value })}>
+                                    <option value="all">All Types</option>
+                                    <option value="flat">Flat</option>
+                                    <option value="building">Building</option>
+                                </select>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Listing Status</label>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.listingType} onChange={(e) => setTempFilters({ ...tempFilters, listingType: e.target.value })}>
+                                    <option value="all">Sale & Rent</option>
+                                    <option value="sale">For Sale</option>
+                                    <option value="rent">For Rent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-gray-100 gap-4">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input type="checkbox" checked={tempFilters.onlyVerified} onChange={(e) => setTempFilters({ ...tempFilters, onlyVerified: e.target.checked })} className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-orange-500 checked:border-orange-500 transition-all" />
+                                    <Check className="absolute w-4 h-4 text-white left-1 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Show only verified owners</span>
+                            </label>
+
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <button onClick={handleResetFilters} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
+                                    <RotateCcw size={16} /> Reset
+                                </button>
+                                <button onClick={handleApplyFilters} className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                            {loading ? "Loading..." : `${totalItems} Properties`}
+                            {totalItems} Properties Found
                         </h1>
-                        <p className="text-gray-500 font-medium italic">Curated collection of exceptional homes</p>
                     </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                            <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
-                                <LayoutGrid size={20} />
-                            </button>
-                            <button onClick={() => setViewMode("map")} className={`p-2 rounded-md transition-all ${viewMode === "map" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
-                                <MapIcon size={20} />
-                            </button>
-                        </div>
+                    <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
+                            <LayoutGrid size={20} />
+                        </button>
+                        <button onClick={() => setViewMode("map")} className={`p-2 rounded-md transition-all ${viewMode === "map" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
+                            <MapIcon size={20} />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -245,19 +315,17 @@ const BuyOrRentPage = () => {
             {viewMode === "grid" ? (
                 <>
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
-                        {!loading &&
-                            pageItems.map((property) => (
-                                <div key={property._id} onClick={() => handleCardClick(property._id)}>
-                                    <PropertyCard property={property} />
-                                </div>
-                            ))}
+                        {pageItems.map((property) => (
+                            <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
+                                <PropertyCard property={property} />
+                            </div>
+                        ))}
                     </div>
-
                     {renderPager()}
                 </>
             ) : (
                 <div className="max-w-7xl mx-auto h-[600px] bg-white rounded-3xl overflow-hidden border border-gray-100">
-                    <BuyOrRentMap properties={properties} onMarkerClick={(id) => navigate(`/property-details/${id}`)} />
+                    <BuyOrRentMap properties={filteredProperties} onMarkerClick={(id) => navigate(`/property-details/${id}`)} />
                 </div>
             )}
         </div>
