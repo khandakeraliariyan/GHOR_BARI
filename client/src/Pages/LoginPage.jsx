@@ -38,7 +38,7 @@ const LoginPage = () => {
             const user = result.user;
 
             showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
-            navigate(location?.state || "/");
+            navigate(location?.state?.from || "/");
         } catch (error) {
             showToast(error.message || "Invalid email or password", "error");
         } finally {
@@ -69,7 +69,7 @@ const LoginPage = () => {
                 });
             }
 
-            navigate(location?.state || "/");
+            navigate(location?.state?.from || "/");
             showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
 
         } catch (error) {

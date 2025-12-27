@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Upload, CheckCircle2 } from "lucide-react";
 import { useNavigate, Link } from "react-router";
+import Loading from "../Components/Loading";
 
 import registerImg from "../assets/registerImage.jpg";
 import { uploadImageToImgBB } from "../Utilities/UploadImage";
@@ -18,6 +19,8 @@ const RegisterPage = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [fileName, setFileName] = useState("");
+    const [initialLoading, setInitialLoading] = useState(true);
+
 
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const password = watch("password");
@@ -103,6 +106,20 @@ const RegisterPage = () => {
         }
     };
 
+
+
+    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (initialLoading) {
+        return <Loading />;
+    }
 
 
 

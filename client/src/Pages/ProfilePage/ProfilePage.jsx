@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { showToast } from '../../Utilities/ToastMessage';
+import Loading from '../../Components/Loading';
 
 const ProfilePage = () => {
     const { user: authUser, updateUserProfile } = useAuth();
@@ -19,6 +20,8 @@ const ProfilePage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+
 
     // Form State
     const [formData, setFormData] = useState({ name: '', phone: '', profileImage: '' });
@@ -65,7 +68,7 @@ const ProfilePage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries(['user-profile']);
             setIsEditing(false);
-            showToast("Profile synchronized successfully!", "success");
+            showToast("Profile updated successfully!", "success");
         },
         onError: (err) => {
             console.error(err);
@@ -138,11 +141,17 @@ const ProfilePage = () => {
         </div>
     );
 
-    if (isLoading || !user) return (
-        <div className="h-screen flex flex-col items-center justify-center">
-            <Loader2 className="animate-spin text-orange-500 mb-4" size={48} />
-            <p className="font-black text-gray-400 animate-pulse tracking-widest uppercase text-xs">Loading Profile...</p>
-        </div>
+    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading || !user || initialLoading) return (
+        <Loading></Loading>
     );
 
     const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
@@ -287,7 +296,7 @@ const ProfilePage = () => {
                                 <span className="text-[9px] font-black text-orange-400 uppercase">Platform Rating</span>
                                 <div className="flex items-center gap-2">
                                     <Star size={16} className="text-orange-500 fill-orange-500" />
-                                    <span className="text-xl font-black text-orange-700">{user?.rating?.average || '5.0'}</span>
+                                    <span className="text-xl font-black text-orange-700">{user?.rating?.average || 'N/A'}</span>
                                 </div>
                             </div>
                         </div>
