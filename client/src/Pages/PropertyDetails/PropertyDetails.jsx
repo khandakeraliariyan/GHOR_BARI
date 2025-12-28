@@ -11,36 +11,48 @@ import {
     User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star
 } from 'lucide-react';
 
+import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-const PropertyDetails = () => {
+const PropertyDetails = ({ isAdminPreview = false }) => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const axios = useAxios();
+    // Get both axios instances
+    const axiosPublic = useAxios();
+    const axiosSecure = useAxiosSecure();
     const { user } = useAuth();
 
     const [geoMaps, setGeoMaps] = useState({ divisionMap: new Map(), districtMap: new Map(), upazilaMap: new Map() });
 
     // 1. Fetch Property Data
     const { data: property, isLoading: propLoading } = useQuery({
-        queryKey: ['property', id],
+        queryKey: ['property', id, isAdminPreview],
         enabled: !!user,
         queryFn: async () => {
+            // IF admin preview, use Secure Axios + Admin Route
+            // ELSE use the standard logic for public property details
+            if (isAdminPreview) {
+                const res = await axiosSecure.get(`/admin/property/${id}`);
+                return res.data;
+            }
+
             const token = await user.getIdToken();
-            const res = await axios.get(`/property/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axiosPublic.get(`/property/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             return res.data;
         }
     });
 
-    // 2. Fetch Secure Owner Profile
+    // Fetch Secure Owner Profile
     const { data: ownerProfile } = useQuery({
         queryKey: ['public-owner', property?.owner?.email],
         enabled: !!property?.owner?.email,
         queryFn: async () => {
             const token = await user.getIdToken();
-            const res = await axios.get(`/public-profile/${property.owner.email}`, {
+            const res = await axiosPublic.get(`/public-profile/${property.owner.email}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             return res.data;
@@ -78,7 +90,6 @@ const PropertyDetails = () => {
     }, [address, geoMaps]);
 
     // Format Date: 3 December, 2025
-    // Format Date: 3 December, 2025
     const formatDate = (dateString) => {
         if (!dateString) return "Joining Date N/A";
         const date = new Date(dateString);
@@ -86,7 +97,7 @@ const PropertyDetails = () => {
         const month = date.toLocaleDateString('en-GB', { month: 'long' });
         const year = date.getFullYear();
 
-        return `${day} ${month}, ${year}`; // Added the comma here manually
+        return `${day} ${month}, ${year}`;
     };
 
     if (!user || propLoading) return (
