@@ -29,7 +29,7 @@ const Navbar = () => {
         if (isAdminLoading) return; // prevent premature navigation
 
         if (isAdmin) {
-            navigate("/dashboard/home");
+            navigate("/dashboard");
         } else {
             navigate("/profile");
         }
