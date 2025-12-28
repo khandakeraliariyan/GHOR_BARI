@@ -1,173 +1,331 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router'; // Assuming you use react-router
-import PropertyCard from './PropertyCard';
-import { Search, SlidersHorizontal, LayoutGrid, Map as MapIcon, ChevronDown, Check } from 'lucide-react';
+import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router";
+import useAxios from "../../Hooks/useAxios";
+import PropertyCard from "./PropertyCard";
+import BuyOrRentMap from "./BuyOrRentMap";
+import Loading from "../../Components/Loading";
+import {
+    Search,
+    SlidersHorizontal,
+    LayoutGrid,
+    Map as MapIcon,
+    RotateCcw,
+    Check
+} from "lucide-react";
+import useAuth from "../../Hooks/useAuth";
 
-const dummyData = [
-    { id: 1, title: "Minimalist Luxury Suite", location: "Gulshan 2, Dhaka", price: "85,000", rating: 4.9, beds: 3, baths: 3, area: 2200, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-    { id: 2, title: "Executive Villa with Pool", location: "Banani DOHS, Dhaka", price: "150,000", rating: 5.0, beds: 5, baths: 4, area: 4500, image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-    { id: 3, title: "Designer Penthouse", location: "Baridhara, Dhaka", price: "120,000", rating: 4.8, beds: 4, baths: 3, area: 3100, image: "https://images.unsplash.com/photo-1600607687940-4e23036c556a?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-    { id: 4, title: "Modern Studio Loft", location: "Bashundhara R/A, Dhaka", price: "45,000", rating: 4.7, beds: 1, baths: 1, area: 950, image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80", premium: false, verified: true },
-    { id: 5, title: "Skyline View Apartment", location: "Dhanmondi, Dhaka", price: "95,000", rating: 4.9, beds: 3, baths: 3, area: 2400, image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-    { id: 6, title: "Family Cozy Residence", location: "Uttara, Dhaka", price: "60,000", rating: 4.6, beds: 3, baths: 2, area: 1800, image: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=80", premium: false, verified: true },
-    { id: 7, title: "Grand Duplex Mansion", location: "Gulshan 1, Dhaka", price: "210,000", rating: 5.0, beds: 6, baths: 6, area: 5500, image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-    { id: 8, title: "Urban Chic Flat", location: "Mirpur DOHS, Dhaka", price: "35,000", rating: 4.5, beds: 2, baths: 2, area: 1200, image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80", premium: false, verified: true },
-    { id: 9, title: "Lakes lakeside Tranquility", location: "Nikunja 1, Dhaka", price: "75,000", rating: 4.8, beds: 3, baths: 3, area: 2100, image: "https://images.unsplash.com/photo-1505691938895-1758d7eaa511?auto=format&fit=crop&w=800&q=80", premium: true, verified: true },
-];
+const PAGE_SIZE = 12;
 
 const BuyOrRentPage = () => {
     const navigate = useNavigate();
-    const [showFilters, setShowFilters] = useState(false);
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'map'
+    const axiosInstance = useAxios();
+    const { user: authUser, loading: authLoading } = useAuth();
 
-    const handleCardClick = (id) => {
-        navigate(`/property/${id}`);
+    const [showFilters, setShowFilters] = useState(false);
+    const [viewMode, setViewMode] = useState("grid");
+    const [properties, setProperties] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+
+
+    // Filter Logic States
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
+
+    const initialFilterState = {
+        minPrice: "",
+        maxPrice: "",
+        propertyType: "all",
+        minArea: "",
+        maxArea: "",
+        onlyVerified: false,
+        listingType: "all"
     };
+
+    const [tempFilters, setTempFilters] = useState(initialFilterState);
+    const [appliedFilters, setAppliedFilters] = useState(initialFilterState);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const fetchGeoFiles = useCallback(async () => {
+        const [divisionsRes, districtsRes, upzillasRes] = await Promise.all([
+            fetch("/divisions.json"),
+            fetch("/districts.json"),
+            fetch("/upzillas.json"),
+        ]);
+        const [divisions, districts, upzillas] = await Promise.all([
+            divisionsRes.json(),
+            districtsRes.json(),
+            upzillasRes.json(),
+        ]);
+        const divisionMap = new Map(divisions.map((d) => [d.id, d.name]));
+        const districtMap = new Map(districts.map((d) => [d.id, d.name]));
+        const upzilaMap = new Map(upzillas.map((u) => [u.id, u.name]));
+        return { divisionMap, districtMap, upzilaMap };
+    }, []);
+
+    const fetchProperties = useCallback(async () => {
+        try {
+            if (!authUser) {
+                setProperties([]);
+                return;
+            }
+            const token = await authUser.getIdToken();
+            const res = await axiosInstance.get("/active-properties", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!Array.isArray(res.data)) {
+                setProperties([]);
+                return;
+            }
+
+            const { divisionMap, districtMap, upzilaMap } = await fetchGeoFiles();
+            const ownerEmails = Array.from(new Set(res.data.map((p) => p.owner?.email).filter(Boolean)));
+
+            let ownerInfoMap = new Map();
+            if (ownerEmails.length) {
+                const ownersRes = await axiosInstance.get(`/users-by-emails?emails=${encodeURIComponent(ownerEmails.join(","))}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (Array.isArray(ownersRes.data)) {
+                    ownersRes.data.forEach((u) => ownerInfoMap.set(u.email, u));
+                }
+            }
+
+            const safeProperties = res.data.map((prop) => {
+                const imageUrl = Array.isArray(prop.images) && prop.images.length > 0 ? prop.images[0] : prop.image || null;
+                const beds = prop.dunitCount ?? prop.beds ?? 0;
+                const baths = prop.bathrooms ?? prop.baths ?? 0;
+                const area = prop.areaSqFt ?? prop.area ?? 0;
+                const rating = prop.rating?.average ?? prop.rating ?? 0;
+                const listingType = prop.listingType ?? "rent";
+
+                const addressObj = prop.address || {};
+                const upazilaName = upzilaMap.get(addressObj.upazila_id) || "";
+                const districtName = districtMap.get(addressObj.district_id) || "";
+                const divisionName = divisionMap.get(addressObj.division_id) || "";
+                const addressString = [addressObj.street, upazilaName, districtName, divisionName].filter(Boolean).join(", ");
+
+                const ownerEmail = prop.owner?.email;
+                const ownerInfo = ownerInfoMap.get(ownerEmail) || {};
+                const ownerRating = ownerInfo.rating?.average ?? ownerInfo.rating ?? 0;
+                const ownerNidVerified = !!ownerInfo.nidVerified;
+                const isVerified = !!prop.isOwnerVerified || ownerNidVerified;
+                const isPremium = (listingType === "rent" && Number(prop.price) > 50000) || (listingType === "sale" && Number(prop.price) > 100000);
+
+                return {
+                    ...prop,
+                    image: imageUrl,
+                    beds, baths, area, rating, listingType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
+                };
+            });
+
+            setProperties(safeProperties);
+            setCurrentPage(1);
+        } catch (error) {
+            console.error("Error fetching properties:", error);
+            setProperties([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [authUser, axiosInstance, fetchGeoFiles]);
+
+    useEffect(() => {
+        if (!authLoading) {
+            setLoading(true);
+            fetchProperties();
+        }
+    }, [authLoading, fetchProperties]);
+
+    const filteredProperties = useMemo(() => {
+        let result = [...properties];
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p => p.title?.toLowerCase().includes(q) || p.addressString?.toLowerCase().includes(q));
+        }
+        if (appliedFilters.minPrice) result = result.filter(p => Number(p.price) >= Number(appliedFilters.minPrice));
+        if (appliedFilters.maxPrice) result = result.filter(p => Number(p.price) <= Number(appliedFilters.maxPrice));
+        if (appliedFilters.minArea) result = result.filter(p => Number(p.area) >= Number(appliedFilters.minArea));
+        if (appliedFilters.maxArea) result = result.filter(p => Number(p.area) <= Number(appliedFilters.maxArea));
+        if (appliedFilters.propertyType !== "all") result = result.filter(p => p.propertyType === appliedFilters.propertyType);
+        if (appliedFilters.listingType !== "all") result = result.filter(p => p.listingType === appliedFilters.listingType);
+        if (appliedFilters.onlyVerified) result = result.filter(p => p.isVerified);
+
+        result.sort((a, b) => {
+            if (sortBy === "priceLow") return a.price - b.price;
+            if (sortBy === "priceHigh") return b.price - a.price;
+            if (sortBy === "rating") return b.rating - a.rating;
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+        return result;
+    }, [properties, searchQuery, appliedFilters, sortBy]);
+
+    const handleApplyFilters = () => {
+        setAppliedFilters(tempFilters);
+        setCurrentPage(1);
+        setShowFilters(false);
+    };
+
+    const handleResetFilters = () => {
+        setTempFilters(initialFilterState);
+        setAppliedFilters(initialFilterState);
+        setCurrentPage(1);
+    };
+
+    const totalItems = filteredProperties.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filteredProperties.slice(startIdx, startIdx + PAGE_SIZE);
+
+    const renderPager = () => {
+        if (totalPages <= 1) return null;
+        const pages = Array.from({ length: Math.min(7, totalPages) }, (_, i) => i + 1);
+        return (
+            <div className="flex items-center justify-center gap-2 mt-8">
+                {pages.map((p) => (
+                    <button key={p} onClick={() => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className={`px-3 py-2 rounded-md ${p === currentPage ? 'bg-orange-500 text-white' : 'bg-white border'}`}>
+                        {p}
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
+    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (loading || authLoading || initialLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
             <div className="max-w-7xl mx-auto mb-10 space-y-6">
-                {/* Search and Filters Toggle */}
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
-                            type="text"
-                            placeholder="Search luxury properties by location..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by location or property title..."
                             className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-slate-900 outline-none transition-all shadow-sm bg-white"
                         />
                     </div>
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                            }`}
-                    >
-                        <SlidersHorizontal size={20} />
-                        Filters
-                    </button>
+
+                    <div className="flex gap-2">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-4 py-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900"
+                        >
+                            <option value="newest">Newest</option>
+                            <option value="priceLow">Price: Low to High</option>
+                            <option value="priceHigh">Price: High to Low</option>
+                            <option value="rating">Top Rated</option>
+                        </select>
+
+                        <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
+                            <SlidersHorizontal size={20} /> Filters
+                        </button>
+                    </div>
                 </div>
 
-                {/* Custom Filter Panel - Based on provided image */}
                 {showFilters && (
-                    <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl grid grid-cols-1 md:grid-cols-4 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
-                        {/* Price Range */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-slate-800 tracking-wide">Price Range (৳)</label>
-                            <div className="flex flex-col gap-2">
-                                <input type="number" placeholder="Min" className="w-full p-3 rounded-lg border border-gray-100 bg-slate-50 text-sm outline-none focus:border-orange-400 transition-colors" />
-                                <input type="number" placeholder="Max" className="w-full p-3 rounded-lg border border-gray-100 bg-slate-50 text-sm outline-none focus:border-orange-400 transition-colors" />
-                            </div>
-                        </div>
-
-                        {/* Bedrooms */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-slate-800 tracking-wide">Bedrooms</label>
-                            <div className="flex gap-2">
-                                {['2', '3', '4', '5+'].map((num) => (
-                                    <button key={num} className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center text-sm font-medium hover:border-orange-500 hover:text-orange-500 transition-all active:bg-orange-50">
-                                        {num}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Property Type */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-slate-800 tracking-wide">Property Type</label>
-                            <div className="relative">
-                                <select className="w-full p-3 appearance-none rounded-lg border border-gray-100 bg-slate-50 text-sm outline-none focus:border-orange-400 cursor-pointer">
-                                    <option>All Types</option>
-                                    <option>Apartment</option>
-                                    <option>Duplex</option>
-                                    <option>Penthouse</option>
-                                    <option>Studio</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                            </div>
-                        </div>
-
-                        {/* Specials */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-slate-800 tracking-wide">Special</label>
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="space-y-3">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded bg-white flex items-center justify-center group-hover:border-orange-500 transition-colors">
-                                        <div className="w-2.5 h-2.5 bg-orange-500 rounded-sm opacity-0 group-hover:opacity-20"></div>
-                                    </div>
-                                    <span className="text-sm text-gray-600 font-medium">Premium Only</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded bg-white flex items-center justify-center group-hover:border-orange-500 transition-colors">
-                                        <div className="w-2.5 h-2.5 bg-orange-500 rounded-sm opacity-0 group-hover:opacity-20"></div>
-                                    </div>
-                                    <span className="text-sm text-gray-600 font-medium">Verified Owners</span>
-                                </label>
+                                <label className="text-sm font-bold text-slate-700">Price Range (৳)</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minPrice} onChange={(e) => setTempFilters({ ...tempFilters, minPrice: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxPrice} onChange={(e) => setTempFilters({ ...tempFilters, maxPrice: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Area (SqFt)</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minArea} onChange={(e) => setTempFilters({ ...tempFilters, minArea: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxArea} onChange={(e) => setTempFilters({ ...tempFilters, maxArea: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Property Type</label>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.propertyType} onChange={(e) => setTempFilters({ ...tempFilters, propertyType: e.target.value })}>
+                                    <option value="all">All Types</option>
+                                    <option value="flat">Flat</option>
+                                    <option value="building">Building</option>
+                                </select>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700">Listing Status</label>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.listingType} onChange={(e) => setTempFilters({ ...tempFilters, listingType: e.target.value })}>
+                                    <option value="all">Sale & Rent</option>
+                                    <option value="sale">For Sale</option>
+                                    <option value="rent">For Rent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-gray-100 gap-4">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input type="checkbox" checked={tempFilters.onlyVerified} onChange={(e) => setTempFilters({ ...tempFilters, onlyVerified: e.target.checked })} className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-orange-500 checked:border-orange-500 transition-all" />
+                                    <Check className="absolute w-4 h-4 text-white left-1 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Show only verified owners</span>
+                            </label>
+
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <button onClick={handleResetFilters} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
+                                    <RotateCcw size={16} /> Reset
+                                </button>
+                                <button onClick={handleApplyFilters} className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
+                                    Apply Filters
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                            {dummyData.length} Premium Properties
+                            {totalItems} Properties Found
                         </h1>
-                        <p className="text-gray-500 font-medium italic">Curated collection of exceptional homes</p>
                     </div>
-
-                    <div className="flex items-center gap-4">
-                        {/* More options dropdown placeholder */}
-                        <div className="relative group">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors">
-                                Most Relevant <ChevronDown size={16} />
-                            </button>
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl py-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all z-20">
-                                {['Price: Low to High', 'Price: High to Low', 'Newest First', 'Highest Rating'].map((opt) => (
-                                    <button key={opt} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-slate-50 hover:text-orange-600 transition-colors">
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* View Toggler */}
-                        <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-orange-500 text-white shadow-inner' : 'text-gray-400 hover:text-gray-600'}`}
-                            >
-                                <LayoutGrid size={20} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('map')}
-                                className={`p-2 rounded-md transition-all ${viewMode === 'map' ? 'bg-orange-500 text-white shadow-inner' : 'text-gray-400 hover:text-gray-600'}`}
-                            >
-                                <MapIcon size={20} />
-                            </button>
-                        </div>
+                    <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
+                            <LayoutGrid size={20} />
+                        </button>
+                        <button onClick={() => setViewMode("map")} className={`p-2 rounded-md transition-all ${viewMode === "map" ? "bg-orange-500 text-white shadow-inner" : "text-gray-400 hover:text-gray-600"}`}>
+                            <MapIcon size={20} />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Content Logic */}
-            {viewMode === 'grid' ? (
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-                    {dummyData.map((property) => (
-                        <div key={property.id} onClick={() => handleCardClick(property.id)}>
-                            <PropertyCard property={property} />
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="max-w-7xl mx-auto h-[600px] bg-slate-200 rounded-3xl flex items-center justify-center border-4 border-dashed border-slate-300">
-                    <div className="text-center">
-                        <MapIcon size={48} className="mx-auto text-slate-400 mb-4" />
-                        <p className="text-xl font-bold text-slate-500">Interactive Map View is yet to be implemented</p>
-                        <button onClick={() => setViewMode('grid')} className="mt-4 text-orange-500 font-bold hover:underline">
-                            Back to Grid View
-                        </button>
+            {viewMode === "grid" ? (
+                <>
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
+                        {pageItems.map((property) => (
+                            <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
+                                <PropertyCard property={property} />
+                            </div>
+                        ))}
                     </div>
+                    {renderPager()}
+                </>
+            ) : (
+                <div className="max-w-7xl mx-auto h-[600px] bg-white rounded-3xl overflow-hidden border border-gray-100">
+                    <BuyOrRentMap properties={filteredProperties} onMarkerClick={(id) => navigate(`/property-details/${id}`)} />
                 </div>
             )}
         </div>

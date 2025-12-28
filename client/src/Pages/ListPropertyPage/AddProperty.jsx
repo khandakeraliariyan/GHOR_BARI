@@ -121,7 +121,7 @@ const AddProperty = () => {
             setMapView({ center: [23.6850, 90.3563], zoom: 7 });
             lastUpdateRef.current = { division: null, district: null, upazila: null };
 
-        } catch (err) {
+        } catch {
             showToast("Failed to list property. Check connection.", "error");
         } finally {
             setIsSubmitting(false);
@@ -145,10 +145,7 @@ const AddProperty = () => {
                 {/* Header Section */}
                 <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-center md:text-left">
-                        <div className="flex items-center justify-center md:justify-start gap-2 text-orange-500 mb-3">
-                            <PlusCircle size={20} />
-                            <span className="font-bold text-xs uppercase tracking-[0.2em]">Listing Portal</span>
-                        </div>
+                        
                         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
                             Add New <span className="text-orange-500">Property</span>
                         </h1>
@@ -227,7 +224,7 @@ const AddProperty = () => {
                                 </div>
                             </div>
                             <div className="mb-6">
-                                <label className={labelStyle}>Street Address</label>
+                                <label className={labelStyle}>Street Address/Area</label>
                                 <input {...register("address", { required: "Street address is required" })} className={inputStyle("address")} placeholder="House, Road, Area..." />
                                 <ErrorMsg name="address" />
                             </div>

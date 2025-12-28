@@ -5,10 +5,15 @@ import useAuth from "../Hooks/useAuth";
 import { showToast } from "../Utilities/ToastMessage";
 import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css';
+import useAdmin from "../Hooks/useAdmin";
+import { useNavigate } from "react-router";
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const { user, logoutUser } = useAuth();
+    const navigate = useNavigate();
+    const [isAdmin, isAdminLoading] = useAdmin();
+
 
     const handleLogout = async () => {
         try {
@@ -19,6 +24,17 @@ const Navbar = () => {
             showToast(error.message || "Logout failed ❌", "error");
         }
     };
+
+    const handleAvatarClick = () => {
+        if (isAdminLoading) return; // prevent premature navigation
+
+        if (isAdmin) {
+            navigate("/dashboard/home");
+        } else {
+            navigate("/profile");
+        }
+    };
+
 
 
     return (
@@ -88,7 +104,27 @@ const Navbar = () => {
                             Messages
                         </NavLink>
                     )}
+
+                    {/* Only show My Profile if logged in */}
+                    {user && (
+                        <NavLink
+                            to="/profile"
+                            className={({ isActive }) =>
+                                `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
+                  ${isActive
+                                    ? "bg-orange-400 text-white"
+                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                }`
+                            }
+                        >
+                            My Profile
+                        </NavLink>
+                    )}
+
                 </div>
+
+
+
 
                 {/* AUTH BUTTONS / USER AVATAR - DESKTOP */}
                 <div className="hidden md:flex items-center gap-4">
@@ -119,10 +155,14 @@ const Navbar = () => {
                             {/* Avatar with tooltip */}
                             <div>
                                 <div
+                                    onClick={handleAvatarClick}
                                     data-tooltip-id="userTooltip"
-                                    data-tooltip-content={user.displayName || "User"}
-                                    className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border border-gray-200 flex items-center justify-center bg-gray-100"
+                                    data-tooltip-content={
+                                        isAdmin ? "Admin Dashboard" : user.displayName || "User"
+                                    }
+                                    className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border border-gray-200 flex items-center justify-center bg-gray-100 hover:ring-2 hover:ring-orange-400 transition"
                                 >
+
                                     {user.photoURL ? (
                                         <img
                                             src={user.photoURL}
@@ -153,100 +193,102 @@ const Navbar = () => {
             </nav>
 
             {/* MOBILE MENU */}
-            {menuOpen && (
-                <div className="md:hidden bg-white shadow-inner">
-                    <div className="flex flex-col px-4 py-3 gap-2">
-                        <NavLink
-                            to="/"
-                            onClick={() => setMenuOpen(false)}
-                            className={({ isActive }) =>
-                                `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? "bg-orange-400 text-white"
-                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
-                                }`
-                            }
-                        >
-                            Home
-                        </NavLink>
-
-                        <NavLink
-                            to="/properties"
-                            onClick={() => setMenuOpen(false)}
-                            className={({ isActive }) =>
-                                `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? "bg-orange-400 text-white"
-                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
-                                }`
-                            }
-                        >
-                            Buy / Rent
-                        </NavLink>
-
-                        <NavLink
-                            to="/list-property"
-                            onClick={() => setMenuOpen(false)}
-                            className={({ isActive }) =>
-                                `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? "bg-orange-400 text-white"
-                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
-                                }`
-                            }
-                        >
-                            List Property
-                        </NavLink>
-
-                        {user && (
+            {
+                menuOpen && (
+                    <div className="md:hidden bg-white shadow-inner">
+                        <div className="flex flex-col px-4 py-3 gap-2">
                             <NavLink
-                                to="/messages"
+                                to="/"
                                 onClick={() => setMenuOpen(false)}
                                 className={({ isActive }) =>
                                     `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                    ${isActive
+                ${isActive
                                         ? "bg-orange-400 text-white"
                                         : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                     }`
                                 }
                             >
-                                Messages
+                                Home
                             </NavLink>
-                        )}
 
-                        {!user ? (
-                            <div className="flex gap-2 pt-3 flex-col">
-                                <Link
-                                    to="/login"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition"
-                                >
-                                    Login
-                                </Link>
-
-                                <Link
-                                    to="/register"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="w-full text-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-md hover:brightness-110 transition"
-                                >
-                                    Register
-                                </Link>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    logoutUser();
-                                    setMenuOpen(false);
-                                }}
-                                className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition flex items-center justify-center gap-2"
+                            <NavLink
+                                to="/properties"
+                                onClick={() => setMenuOpen(false)}
+                                className={({ isActive }) =>
+                                    `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                ${isActive
+                                        ? "bg-orange-400 text-white"
+                                        : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                    }`
+                                }
                             >
-                                <User size={18} /> Logout
-                            </button>
-                        )}
+                                Buy / Rent
+                            </NavLink>
+
+                            <NavLink
+                                to="/list-property"
+                                onClick={() => setMenuOpen(false)}
+                                className={({ isActive }) =>
+                                    `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                ${isActive
+                                        ? "bg-orange-400 text-white"
+                                        : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                    }`
+                                }
+                            >
+                                List Property
+                            </NavLink>
+
+                            {user && (
+                                <NavLink
+                                    to="/messages"
+                                    onClick={() => setMenuOpen(false)}
+                                    className={({ isActive }) =>
+                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                    ${isActive
+                                            ? "bg-orange-400 text-white"
+                                            : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
+                                        }`
+                                    }
+                                >
+                                    Messages
+                                </NavLink>
+                            )}
+
+                            {!user ? (
+                                <div className="flex gap-2 pt-3 flex-col">
+                                    <Link
+                                        to="/login"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition"
+                                    >
+                                        Login
+                                    </Link>
+
+                                    <Link
+                                        to="/register"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="w-full text-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-md hover:brightness-110 transition"
+                                    >
+                                        Register
+                                    </Link>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        logoutUser();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition flex items-center justify-center gap-2"
+                                >
+                                    <User size={18} /> Logout
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </header>
+                )
+            }
+        </header >
     );
 };
 
