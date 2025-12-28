@@ -31,7 +31,7 @@ const DashboardLayout = () => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard Home', path: '/dashboard' },
-        { icon: ClipboardList, label: 'Pending Property Listings', path: '/dashboard/pending-properties' },
+        { icon: ClipboardList, label: 'Pending Property Approvals', path: '/dashboard/pending-properties' },
         { icon: UserCheck, label: 'Pending User Verifications', path: '/dashboard/pending-verifications' },
     ];
 
