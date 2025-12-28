@@ -5,10 +5,15 @@ import useAuth from "../Hooks/useAuth";
 import { showToast } from "../Utilities/ToastMessage";
 import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css';
+import useAdmin from "../Hooks/useAdmin";
+import { useNavigate } from "react-router";
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const { user, logoutUser } = useAuth();
+    const navigate = useNavigate();
+    const [isAdmin, isAdminLoading] = useAdmin();
+
 
     const handleLogout = async () => {
         try {
@@ -19,6 +24,17 @@ const Navbar = () => {
             showToast(error.message || "Logout failed ❌", "error");
         }
     };
+
+    const handleAvatarClick = () => {
+        if (isAdminLoading) return; // prevent premature navigation
+
+        if (isAdmin) {
+            navigate("/dashboard/home");
+        } else {
+            navigate("/profile");
+        }
+    };
+
 
 
     return (
@@ -139,10 +155,14 @@ const Navbar = () => {
                             {/* Avatar with tooltip */}
                             <div>
                                 <div
+                                    onClick={handleAvatarClick}
                                     data-tooltip-id="userTooltip"
-                                    data-tooltip-content={user.displayName || "User"}
-                                    className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border border-gray-200 flex items-center justify-center bg-gray-100"
+                                    data-tooltip-content={
+                                        isAdmin ? "Admin Dashboard" : user.displayName || "User"
+                                    }
+                                    className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border border-gray-200 flex items-center justify-center bg-gray-100 hover:ring-2 hover:ring-orange-400 transition"
                                 >
+
                                     {user.photoURL ? (
                                         <img
                                             src={user.photoURL}
