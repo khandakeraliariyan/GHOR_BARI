@@ -12,8 +12,10 @@ import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import PrivateRoute from "./PrivateRoute/PrivateRoute";
 import PublicUserProfile from "./Pages/ProfilePage/PublicUserProfile";
 import DashboardLayout from "./Layouts/DashboardLayout";
-import AdminDashboard from "./Pages/AdminDashboard/AdminDashboard";
+import AdminDashboardHome from "./Pages/AdminDashboard/AdminDashboardHome";
 import AdminRoute from "./PrivateRoute/AdminRoute";
+import PendingPropertyListings from "./Pages/AdminDashboard/PendingPropertyListings";
+import PendingUserVerifications from "./Pages/AdminDashboard/PendingUserVerifications";
 
 
 const router = createBrowserRouter([
@@ -61,15 +63,25 @@ const router = createBrowserRouter([
         ]
     },
     {
-        path: "/dashboard/home",
-        // 2. Wrap the entire DashboardLayout with AdminRoute
+        path: "/dashboard",
         element: <AdminRoute><DashboardLayout /></AdminRoute>,
         children: [
             {
                 index: true,
-                element: <AdminDashboard></AdminDashboard>
-            }
-            // All future children here are automatically protected by the parent AdminRoute
+                element: <AdminDashboardHome></AdminDashboardHome>
+            },
+            {
+                path: "pending-properties",
+                element: <AdminRoute><PendingPropertyListings></PendingPropertyListings></AdminRoute>
+            },
+            {
+                path: "pending-verifications",
+                element: <AdminRoute><PendingUserVerifications></PendingUserVerifications></AdminRoute>
+            },
+            {
+                path: "property-details/:id",
+                element: <AdminRoute><PropertyDetails isAdminPreview={true} /></AdminRoute>
+            },
         ]
     },
     {
