@@ -1,38 +1,24 @@
-const express = require("express");
+import express from "express";
+
+import verifyToken from "../middleware/verifyToken.js";
+
+import verifyAdmin from "../middleware/verifyAdmin.js";
+
+import {
+  pendingNIDs,
+  verifyUser,
+  pendingProperties,
+  updatePropertyStatus,
+} from "../controllers/adminController.js";
+
 const router = express.Router();
 
-const {
-    getAllUsers,
-    toggleBlockUser,
-    getAllPropertiesAdmin,
-    togglePropertyApproval,
-} = require("../controllers/adminController");
+router.get("/pending-nids", verifyToken, verifyAdmin, pendingNIDs);
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+router.patch("/verify-user/:id", verifyToken, verifyAdmin, verifyUser);
 
-// User management
-router.get("/users", protect, authorizeRoles("admin"), getAllUsers);
-router.put(
-    "/users/:userId/block",
-    protect,
-    authorizeRoles("admin"),
-    toggleBlockUser
-);
+router.get("/pending-properties", verifyToken, verifyAdmin, pendingProperties);
 
-// Property moderation
-router.get(
-    "/properties",
-    protect,
-    authorizeRoles("admin"),
-    getAllPropertiesAdmin
-);
+router.patch("/property/:id", verifyToken, verifyAdmin, updatePropertyStatus);
 
-router.put(
-    "/properties/:propertyId/approve",
-    protect,
-    authorizeRoles("admin"),
-    togglePropertyApproval
-);
-
-module.exports = router;
+export default router;

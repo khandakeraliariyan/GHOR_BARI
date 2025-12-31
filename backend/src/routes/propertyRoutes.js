@@ -1,41 +1,24 @@
-const express = require("express");
+import express from "express";
+
+import verifyToken from "../middleware/verifyToken.js";
+
+import verifyOwner from "../middleware/verifyOwner.js";
+
+import {
+    createProperty,
+    getMyProperties,
+    getActiveProperties,
+    getPropertyById,
+} from "../controllers/propertyController.js";
+
 const router = express.Router();
 
-const {
-    createProperty,
-    getAllProperties,
-    getPropertyById,
-    updateProperty,
-    deleteProperty,
-} = require("../controllers/propertyController");
+router.post("/", verifyToken, createProperty);
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+router.get("/mine", verifyToken, verifyOwner, getMyProperties);
 
-// Public routes
-router.get("/", getAllProperties);
-router.get("/:id", getPropertyById);
+router.get("/active", verifyToken, getActiveProperties);
 
-// Owner routes
-router.post(
-    "/",
-    protect,
-    authorizeRoles("owner"),
-    createProperty
-);
+router.get("/:id", verifyToken, getPropertyById);
 
-router.put(
-    "/:id",
-    protect,
-    authorizeRoles("owner"),
-    updateProperty
-);
-
-router.delete(
-    "/:id",
-    protect,
-    authorizeRoles("owner"),
-    deleteProperty
-);
-
-module.exports = router;
+export default router;
