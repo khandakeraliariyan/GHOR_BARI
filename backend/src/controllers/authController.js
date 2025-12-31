@@ -1,74 +1,42 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import { getDB } from "../config/db.js";
 
-// REGISTER
-exports.register = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
+export const registerUser = async (req, res) => {
 
-        // Check existing user
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: "User already exists" });
-        }
+  const db = getDB();
+  
+  const { email, name, role, phone, profileImage } = req.body;
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+  if (!email || !name) {
+    
+    return res.status(400).send({ message: "Email & name required" });
+  
+}
 
-        // Create user
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role,
-        });
+  const exists = await db.collection("users").findOne({ email });
 
-        res.status(201).json({
-            message: "User registered successfully",
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+  if (exists) {
+    
+    return res.status(400).send({ message: "User exists" });
+  
+}
 
-// LOGIN
-exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  const validRoles = ["property_owner", "property_seeker", "admin", "user"];
 
-        // Check user
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
+  await db.collection("users").insertOne({
 
-        // Match password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
+    email,
+    name,
+    role: validRoles.includes(role) ? role : "user",
+    phone: phone || "",
+    profileImage: profileImage || "",
+    nidVerified: false,
+    nidImages: [],
+    rating: { totalRatings: 0, ratingCount: 0, average: 0 },
+    createdAt: new Date(),
+    updatedAt: new Date(),
 
-        // Generate token
-        const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+  });
 
-        res.status(200).json({
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                isVerified: user.isVerified,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  res.status(201).send({ success: true });
+  
 };
