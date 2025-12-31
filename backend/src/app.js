@@ -3,11 +3,15 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 
-import userRoutes from "./routes/user.routes.js";
-
 import propertyRoutes from "./routes/property.routes.js";
 
 import adminRoutes from "./routes/admin.routes.js";
+
+import nidRoutes from "./routes/nidRoutes.js";
+
+import reviewRoutes from "./routes/reviewRoutes.js";
+
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
@@ -23,10 +27,16 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 
-app.use("/users", userRoutes);
-
 app.use("/properties", propertyRoutes);
 
 app.use("/admin", adminRoutes);
+
+app.use("/nid", nidRoutes);
+
+app.use("/reviews", reviewRoutes);
+
+app.use("/wishlist", wishlistRoutes);
+
+app.use(errorHandler);
 
 export default app;

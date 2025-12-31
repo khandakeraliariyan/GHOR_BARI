@@ -1,17 +1,11 @@
-const express = require("express");
+import express from "express";
+import verifyToken from "../middleware/verifyToken.js";
+import { addReview, getReviews } from "../controllers/reviewController.js";
+
 const router = express.Router();
 
-const {
-    addReview,
-    getUserReviews,
-} = require("../controllers/reviewController");
+router.post("/", verifyToken, addReview);
 
-const { protect } = require("../middleware/authMiddleware");
+router.get("/:email", getReviews);
 
-// Add review
-router.post("/", protect, addReview);
-
-// Get reviews of a user
-router.get("/:userId", getUserReviews);
-
-module.exports = router;
+export default router;

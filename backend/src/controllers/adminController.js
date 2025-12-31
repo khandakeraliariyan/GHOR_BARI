@@ -1,69 +1,56 @@
-const User = require("../models/User");
-const Property = require("../models/Property");
+import { getDB } from "../config/db.js";
+import { ObjectId } from "mongodb";
 
-// Get all users
-exports.getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find().select("-password");
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+export const pendingNIDs = async (req, res) => {
+
+    const db = getDB();
+
+    const users = await db
+        .collection("users")
+        .find({ nidImages: { $exists: true, $ne: [] }, nidVerified: false })
+        .toArray();
+
+    res.send(users);
+
 };
 
-// Block or Unblock User
-exports.toggleBlockUser = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.userId);
+export const verifyUser = async (req, res) => {
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+    const db = getDB();
 
-        user.isBlocked = !user.isBlocked;
-        await user.save();
+    const { status } = req.body;
 
-        res.json({
-            message: user.isBlocked
-                ? "User blocked"
-                : "User unblocked",
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    await db.collection("users").updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { nidVerified: status, nidVerifiedAt: new Date() } }
+    );
+
+    res.send({ success: true });
+
 };
 
-// Get all properties
-exports.getAllPropertiesAdmin = async (req, res) => {
-    try {
-        const properties = await Property.find().populate(
-            "owner",
-            "name email"
-        );
-        res.json(properties);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+export const pendingProperties = async (req, res) => {
+
+    const db = getDB();
+
+    const data = await db
+        .collection("properties")
+        .find({ status: "pending" })
+        .toArray();
+
+    res.send(data);
+
 };
 
-// Approve or Reject Property
-exports.togglePropertyApproval = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.propertyId);
+export const updatePropertyStatus = async (req, res) => {
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
+    const db = getDB();
 
-        property.isApproved = !property.isApproved;
-        await property.save();
+    await db.collection("properties").updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { status: req.body.status } }
+    );
 
-        res.json({
-            message: property.isApproved
-                ? "Property approved"
-                : "Property unapproved",
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    res.send({ success: true });
+
 };

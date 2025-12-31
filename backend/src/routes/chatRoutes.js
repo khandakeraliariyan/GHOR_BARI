@@ -1,10 +1,13 @@
-const express = require("express");
+import express from "express";
+import verifyToken from "../middleware/verifyToken.js";
+
 const router = express.Router();
 
-const { getMessages } = require("../controllers/chatController");
-const { protect } = require("../middleware/authMiddleware");
+// connect socket messages here if needed
+router.get("/history/:email", verifyToken, (req, res) => {
 
-// Get messages with specific user
-router.get("/:userId", protect, getMessages);
+    res.send([]); // placeholder
+    
+});
 
-module.exports = router;
+export default router;

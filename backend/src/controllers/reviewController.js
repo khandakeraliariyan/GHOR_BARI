@@ -1,52 +1,30 @@
-const Review = require("../models/Review");
-const User = require("../models/User");
+import { getDB } from "../config/db.js";
 
-// Add review
-exports.addReview = async (req, res) => {
-    try {
-        const { targetUser, rating, comment } = req.body;
+export const addReview = async (req, res) => {
 
-        if (targetUser === req.user._id.toString()) {
-            return res
-                .status(400)
-                .json({ message: "You cannot rate yourself" });
-        }
+    const db = getDB();
 
-        const review = await Review.create({
-            reviewer: req.user._id,
-            targetUser,
-            rating,
-            comment,
-        });
+    const review = {
+        ...req.body,
+        reviewer: req.user.email,
+        createdAt: new Date(),
+    };
 
-        // Recalculate average rating
-        const reviews = await Review.find({ targetUser });
-        const avgRating =
-            reviews.reduce((sum, r) => sum + r.rating, 0) /
-            reviews.length;
+    await db.collection("reviews").insertOne(review);
 
-        await User.findByIdAndUpdate(targetUser, {
-            rating: avgRating.toFixed(1),
-        });
+    res.send({ success: true });
 
-        res.status(201).json({
-            message: "Review added successfully",
-            review,
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
 };
 
-// Get reviews of a user
-exports.getUserReviews = async (req, res) => {
-    try {
-        const reviews = await Review.find({
-            targetUser: req.params.userId,
-        }).populate("reviewer", "name");
+export const getReviews = async (req, res) => {
 
-        res.json(reviews);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const db = getDB();
+
+    const reviews = await db
+        .collection("reviews")
+        .find({ targetEmail: req.params.email })
+        .toArray();
+
+    res.send(reviews);
+    
 };

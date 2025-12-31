@@ -1,9 +1,10 @@
-const express = require("express");
+import express from "express";
+import { registerUser } from "../controllers/authController.js";
+
 const router = express.Router();
 
-const { register, login } = require("../controllers/authController");
+// register user after firebase login
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerUser);
 
-module.exports = router;
+export default router;
