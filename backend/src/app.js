@@ -3,8 +3,6 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 
-import userRoutes from "./routes/user.routes.js";
-
 import propertyRoutes from "./routes/property.routes.js";
 
 import adminRoutes from "./routes/admin.routes.js";
@@ -22,8 +20,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
-
-app.use("/users", userRoutes);
 
 app.use("/properties", propertyRoutes);
 
