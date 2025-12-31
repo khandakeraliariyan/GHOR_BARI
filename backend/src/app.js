@@ -1,31 +1,32 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
-const authRoutes = require("./routes/authRoutes");
-const testRoutes = require("./routes/testRoutes");
-const nidRoutes = require("./routes/nidRoutes");
-const propertyRoutes = require("./routes/propertyRoutes");
-const wishlistRoutes = require("./routes/wishlistRoutes");
-const chatRoutes = require("./routes/chatRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const adminRoutes = require("./routes/adminRoutes");
+import authRoutes from "./routes/auth.routes.js";
+
+import userRoutes from "./routes/user.routes.js";
+
+import propertyRoutes from "./routes/property.routes.js";
+
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
 app.use(cors());
+
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
-app.use("/api/nid", nidRoutes);
-app.use("/api/properties", propertyRoutes);
-app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/admin", adminRoutes);
-
 app.get("/", (req, res) => {
-  res.send("GhorBari Backend Running 🚀");
+
+  res.send("🏠 GhorBari API running");
+
 });
 
-module.exports = app;
+app.use("/auth", authRoutes);
+
+app.use("/users", userRoutes);
+
+app.use("/properties", propertyRoutes);
+
+app.use("/admin", adminRoutes);
+
+export default app;
