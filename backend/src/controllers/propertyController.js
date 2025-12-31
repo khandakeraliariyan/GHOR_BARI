@@ -1,133 +1,78 @@
-const Property = require("../models/Property");
+import { getDB } from "../config/db.js";
+import { ObjectId } from "mongodb";
 
-// CREATE PROPERTY (Owner only & Verified)
-exports.createProperty = async (req, res) => {
-    try {
-        if (!req.user.isVerified) {
-            return res
-                .status(403)
-                .json({ message: "NID verification required" });
-        }
+export const createProperty = async (req, res) => {
 
-        const property = await Property.create({
-            ...req.body,
-            owner: req.user._id,
-        });
+    const db = getDB();
 
-        res.status(201).json({
-            message: "Property listed successfully",
-            property,
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const data = req.body;
+
+    const property = {
+
+        ...data,
+        owner: {
+            uid: req.user.uid,
+            email: req.user.email,
+            name: req.user.name,
+            photoURL: req.user.photoURL,
+        },
+
+        isOwnerVerified: req.user.isVerified,
+        status: "pending",
+        createdAt: new Date(),
+
+    };
+
+    const result = await db.collection("properties").insertOne(property);
+
+    res.status(201).send({ id: result.insertedId });
+
 };
 
-// GET ALL PROPERTIES (Public)
-exports.getAllProperties = async (req, res) => {
-    try {
-        const properties = await Property.find().populate(
-            "owner",
-            "name rating"
-        );
-        res.json(properties);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+export const getMyProperties = async (req, res) => {
+
+    const db = getDB();
+
+    const result = await db
+        .collection("properties")
+        .find({ "owner.email": req.query.email })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+    res.send(result);
+
 };
 
-// GET SINGLE PROPERTY
-exports.getPropertyById = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id).populate(
-            "owner",
-            "name rating"
-        );
+export const getActiveProperties = async (req, res) => {
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
+    const db = getDB();
 
-        res.json(property);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const result = await db
+        .collection("properties")
+        .find({ status: "active" })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+    res.send(result);
+
 };
 
-// UPDATE PROPERTY (Owner only)
-exports.updateProperty = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id);
+export const getPropertyById = async (req, res) => {
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
+    const db = getDB();
 
-        if (property.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Not authorized" });
-        }
+    if (!ObjectId.isValid(req.params.id)) {
 
-        Object.assign(property, req.body);
-        await property.save();
+        return res.status(400).send({ message: "Invalid ID" });
 
-        res.json({
-            message: "Property updated successfully",
-            property,
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
     }
-};
 
-// DELETE PROPERTY (Owner only)
-exports.deleteProperty = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id);
+    const property = await db
+        .collection("properties")
+        .findOne({ _id: new ObjectId(req.params.id) });
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
+    if (!property) return res.status(404).send({ message: "Not found" });
 
-        if (property.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Not authorized" });
-        }
+    res.send(property);
 
-        await property.deleteOne();
-
-        res.json({ message: "Property deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// GET ALL PROPERTIES + SEARCH & FILTER
-exports.getAllProperties = async (req, res) => {
-    try {
-        const { minPrice, maxPrice, rooms, location } = req.query;
-
-        let query = {};
-
-        if (minPrice || maxPrice) {
-            query.price = {};
-            if (minPrice) query.price.$gte = Number(minPrice);
-            if (maxPrice) query.price.$lte = Number(maxPrice);
-        }
-
-        if (rooms) {
-            query.rooms = Number(rooms);
-        }
-
-        if (location) {
-            query.location = { $regex: location, $options: "i" };
-        }
-
-        const properties = await Property.find(query).populate(
-            "owner",
-            "name rating"
-        );
-
-        res.json(properties);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
 };
