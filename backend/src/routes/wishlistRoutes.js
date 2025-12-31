@@ -1,17 +1,11 @@
-const express = require("express");
+import express from "express";
+import verifyToken from "../middleware/verifyToken.js";
+import { addToWishlist, getWishlist } from "../controllers/wishlistController.js";
+
 const router = express.Router();
 
-const {
-    toggleWishlist,
-    getWishlist,
-} = require("../controllers/wishlistController");
+router.post("/", verifyToken, addToWishlist);
 
-const { protect } = require("../middleware/authMiddleware");
+router.get("/", verifyToken, getWishlist);
 
-// Toggle wishlist
-router.post("/:propertyId", protect, toggleWishlist);
-
-// Get wishlist
-router.get("/", protect, getWishlist);
-
-module.exports = router;
+export default router;
