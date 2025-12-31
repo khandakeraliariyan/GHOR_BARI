@@ -11,6 +11,8 @@ import nidRoutes from "./routes/nidRoutes.js";
 
 import reviewRoutes from "./routes/reviewRoutes.js";
 
+import wishlistRoutes from "./routes/wishlistRoutes.js";
+
 const app = express();
 
 app.use(cors());
@@ -32,5 +34,7 @@ app.use("/admin", adminRoutes);
 app.use("/nid", nidRoutes);
 
 app.use("/reviews", reviewRoutes);
+
+app.use("/wishlist", wishlistRoutes);
 
 export default app;
