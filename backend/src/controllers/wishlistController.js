@@ -1,37 +1,31 @@
-const User = require("../models/User");
+import { getDB } from "../config/db.js";
+import { ObjectId } from "mongodb";
 
-// ADD or REMOVE Wishlist (Toggle)
-exports.toggleWishlist = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id);
-        const propertyId = req.params.propertyId;
+export const addToWishlist = async (req, res) => {
 
-        const isWishlisted = user.wishlist.includes(propertyId);
+  const db = getDB();
 
-        if (isWishlisted) {
-            user.wishlist = user.wishlist.filter(
-                (id) => id.toString() !== propertyId
-            );
-            await user.save();
-            return res.json({ message: "Removed from wishlist" });
-        } else {
-            user.wishlist.push(propertyId);
-            await user.save();
-            return res.json({ message: "Added to wishlist" });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  await db.collection("wishlist").insertOne({
+
+    userEmail: req.user.email,
+    propertyId: new ObjectId(req.body.propertyId),
+    createdAt: new Date(),
+
+  });
+
+  res.send({ success: true });
+
 };
 
-// GET User Wishlist
-exports.getWishlist = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).populate(
-            "wishlist"
-        );
-        res.json(user.wishlist);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+export const getWishlist = async (req, res) => {
+
+  const db = getDB();
+
+  const data = await db
+    .collection("wishlist")
+    .find({ userEmail: req.user.email })
+    .toArray();
+
+  res.send(data);
+  
 };
