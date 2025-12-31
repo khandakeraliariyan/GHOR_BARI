@@ -9,6 +9,8 @@ import adminRoutes from "./routes/admin.routes.js";
 
 import nidRoutes from "./routes/nidRoutes.js";
 
+import reviewRoutes from "./routes/reviewRoutes.js";
+
 const app = express();
 
 app.use(cors());
@@ -28,5 +30,7 @@ app.use("/properties", propertyRoutes);
 app.use("/admin", adminRoutes);
 
 app.use("/nid", nidRoutes);
+
+app.use("/reviews", reviewRoutes);
 
 export default app;
