@@ -1,51 +1,17 @@
-const dotenv = require("dotenv");
-dotenv.config();
+import dotenv from "dotenv";
+import app from "./app.js";
+import { connectDB } from "./config/db.js";
 
-const app = require("./app");
-const connectDB = require("./config/db");
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
-const http = require("http");
-const { Server } = require("socket.io");
+connectDB().then(() => {
 
-// Connect Database FIRST
-connectDB();
+    app.listen(PORT, () => {
 
-// Create server
-const server = http.createServer(app);
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("join", (userId) => {
-    socket.join(userId);
-  });
-
-  socket.on("sendMessage", async (data) => {
-    const { sender, receiver, message } = data;
-
-    const newMessage = await require("./models/Message").create({
-      sender,
-      receiver,
-      message,
     });
-
-    io.to(receiver).emit("receiveMessage", newMessage);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
-
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    
 });
