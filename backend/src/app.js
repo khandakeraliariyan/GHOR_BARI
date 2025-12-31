@@ -37,4 +37,6 @@ app.use("/reviews", reviewRoutes);
 
 app.use("/wishlist", wishlistRoutes);
 
+app.use(errorHandler);
+
 export default app;
