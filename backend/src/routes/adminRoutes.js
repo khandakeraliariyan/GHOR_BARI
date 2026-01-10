@@ -1,24 +1,42 @@
 import express from "express";
 
-import verifyToken from "../middleware/verifyToken.js";
+import { verifyToken } from "../middleware/verifyToken.js";
 
-import verifyAdmin from "../middleware/verifyAdmin.js";
+import { verifyAdmin } from "../middleware/verifyAdmin.js";
 
-import {
-  pendingNIDs,
-  verifyUser,
-  pendingProperties,
-  updatePropertyStatus,
-} from "../controllers/adminController.js";
+import * as adminController from "../controllers/adminController.js";
+
 
 const router = express.Router();
 
-router.get("/pending-nids", verifyToken, verifyAdmin, pendingNIDs);
 
-router.patch("/verify-user/:id", verifyToken, verifyAdmin, verifyUser);
+// Get all users with pending NID submissions
 
-router.get("/pending-properties", verifyToken, verifyAdmin, pendingProperties);
+router.get("/admin/pending-verifications", verifyToken, adminController.getPendingVerifications);
 
-router.patch("/property/:id", verifyToken, verifyAdmin, updatePropertyStatus);
+// Update user verification status
+
+router.patch("/admin/verify-user/:id", verifyToken, adminController.verifyUser);
+
+// Get all pending property listings
+
+router.get("/admin/pending-properties", verifyToken, adminController.getPendingProperties);
+
+// Update property status (Approve/Delete)
+
+router.patch("/admin/property-status/:id", verifyToken, adminController.updatePropertyStatus);
+
+// Permanently delete a property from the database
+
+router.delete("/admin/delete-property/:id", verifyToken, adminController.deleteProperty);
+
+// Dashboard Stats API
+
+router.get("/admin/stats", verifyToken, adminController.getStats);
+
+// API for admin to get property by id regardless of status
+
+router.get("/admin/property/:id", verifyToken, verifyAdmin, adminController.getAdminPropertyById);
 
 export default router;
+

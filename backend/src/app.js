@@ -1,42 +1,39 @@
 import express from "express";
+
 import cors from "cors";
 
-import authRoutes from "./routes/auth.routes.js";
+import dotenv from "dotenv";
 
-import propertyRoutes from "./routes/property.routes.js";
+import userRoutes from "./routes/userRoutes.js";
 
-import adminRoutes from "./routes/admin.routes.js";
+import propertyRoutes from "./routes/propertyRoutes.js";
 
-import nidRoutes from "./routes/nidRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
-import reviewRoutes from "./routes/reviewRoutes.js";
-
-import wishlistRoutes from "./routes/wishlistRoutes.js";
+dotenv.config();
 
 const app = express();
+
+// Middlewares
 
 app.use(cors());
 
 app.use(express.json());
 
+// Test route
+
 app.get("/", (req, res) => {
 
-  res.send("🏠 GhorBari API running");
+    res.send("🏠 GhorBari server is running");
 
 });
 
-app.use("/auth", authRoutes);
+// Routes
 
-app.use("/properties", propertyRoutes);
+app.use("/", userRoutes);
 
-app.use("/admin", adminRoutes);
+app.use("/", propertyRoutes);
 
-app.use("/nid", nidRoutes);
-
-app.use("/reviews", reviewRoutes);
-
-app.use("/wishlist", wishlistRoutes);
-
-app.use(errorHandler);
+app.use("/", adminRoutes);
 
 export default app;
