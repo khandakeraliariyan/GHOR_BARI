@@ -4,11 +4,11 @@ import cors from "cors";
 
 import dotenv from "dotenv";
 
-import userRoutes from "./routes/users.js";
+import userRoutes from "./routes/userRoutes.js";
 
-import propertyRoutes from "./routes/properties.js";
+import propertyRoutes from "./routes/propertyRoutes.js";
 
-import adminRoutes from "./routes/admin.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
