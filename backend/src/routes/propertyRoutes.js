@@ -1,24 +1,25 @@
 import express from "express";
 
-import verifyToken from "../middleware/verifyToken.js";
+import { verifyToken } from "../middleware/verifyToken.js";
 
-import verifyOwner from "../middleware/verifyOwner.js";
+import { verifyOwner } from "../middleware/verifyOwner.js";
 
-import {
-    createProperty,
-    getMyProperties,
-    getActiveProperties,
-    getPropertyById,
-} from "../controllers/propertyController.js";
+import * as propertyController from "../controllers/propertyController.js";
+
 
 const router = express.Router();
 
-router.post("/", verifyToken, createProperty);
 
-router.get("/mine", verifyToken, verifyOwner, getMyProperties);
+// Create property
+router.post("/post-property", verifyToken, propertyController.postProperty);
 
-router.get("/active", verifyToken, getActiveProperties);
+// Get all property data of a user
+router.get("/my-properties", verifyToken, verifyOwner, propertyController.getMyProperties);
 
-router.get("/:id", verifyToken, getPropertyById);
+// Get single property by ID
+router.get("/property/:id", verifyToken, propertyController.getPropertyById);
+
+// Get all ACTIVE property listings
+router.get("/active-properties", verifyToken, propertyController.getActiveProperties);
 
 export default router;
