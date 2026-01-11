@@ -4,7 +4,7 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 
-const serviceAccount = require("../../.gitignore");
+const serviceAccount = require("../../ghor-bari-firebase-admin-sdk.json");
 
 admin.initializeApp({
 
