@@ -4,12 +4,13 @@ import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 
-const serviceAccount = require("../.env");
+const serviceAccount = require("../../ghor-bari-firebase-admin-sdk.json");
 
 admin.initializeApp({
 
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount)
 
 });
 
 export default admin;
+

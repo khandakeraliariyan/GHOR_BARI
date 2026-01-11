@@ -1,19 +1,21 @@
-import { getDB } from "../config/db.js";
+import { getDatabase } from "../config/db.js";
 
-const verifyAdmin = async (req, res, next) => {
+export const verifyAdmin = async (req, res, next) => {
 
-    const db = getDB();
+    const db = getDatabase();
 
-    const user = await db.collection("users").findOne({ email: req.user.email });
+    const email = req.user.email;
 
-    if (user?.role !== "admin") {
+    const user = await db.collection("users").findOne({ email });
 
-        return res.status(403).send({ message: "Admins only" });
+    const isAdmin = user?.role === "admin";
 
-    }
-
-    next();
+    if (!isAdmin) {
     
-};
+        return res.status(403).send({ message: "Forbidden Access: Admins Only" });
+    
+    }
+    
+    next();
 
-export default verifyAdmin;
+};

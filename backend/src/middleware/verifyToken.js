@@ -1,36 +1,31 @@
 import admin from "../config/firebase.js";
 
-const verifyToken = async (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
 
     const authHeader = req.headers.authorization;
     
-    if (!authHeader) {
-
-        return res.status(401).send({ message: "Unauthorized" });
-    
-    }
+    if (!authHeader) return res.status(401).send({ message: "Unauthorized" });
 
     const token = authHeader.split(" ")[1];
 
     try {
     
         const decoded = await admin.auth().verifyIdToken(token);
-    
+
         req.user = {
             uid: decoded.uid,
             email: decoded.email,
             name: decoded.name || decoded.displayName || "User",
             photoURL: decoded.picture || "",
-            isVerified: decoded.email_verified,
+            isVerified: decoded.email_verified || false
         };
-    
+
         next();
     
-    } catch {
+    } catch (err) {
     
-        res.status(403).send({ message: "Invalid token" });
+        return res.status(403).send({ message: "Invalid token" });
     
     }
-};
 
-export default verifyToken;
+};
