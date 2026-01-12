@@ -53,7 +53,7 @@ const RegisterPage = () => {
                     email: data.email,
                     name: data.fullName,
                     profileImage: imageUrl || "",
-                    phone: data.phone || "",
+                    phone: data.phone ? `+88${data.phone}` : "",
                     role: data.role || "user",
                 });
             }
@@ -168,12 +168,30 @@ const RegisterPage = () => {
                         {/* PHONE NUMBER */}
                         <div className="space-y-1">
                             <label className="text-sm font-semibold text-gray-700 ml-1">Phone Number</label>
-                            <input
-                                type="tel"
-                                placeholder="e.g. +8801XXXXXXXXX"
-                                {...register("phone")}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
-                            />
+                            <div className="flex items-center bg-white border border-gray-200 rounded-xl focus-within:border-orange-500 transition-all">
+                                <span className="px-4 py-2.5 text-gray-700 font-medium select-none">+88</span>
+                                <input
+                                    type="tel"
+                                    placeholder="01XXXXXXXXX"
+                                    maxLength="11"
+                                    {...register("phone", {
+                                        pattern: {
+                                            value: /^\d{11}$/,
+                                            message: "Phone number must be exactly 11 digits"
+                                        },
+                                        validate: (value) => {
+                                            if (!value) return true; // Optional field
+                                            return value.length === 11 || "Phone number must be exactly 11 digits";
+                                        }
+                                    })}
+                                    onInput={(e) => {
+                                        // Only allow digits
+                                        e.target.value = e.target.value.replace(/\D/g, '');
+                                    }}
+                                    className="flex-1 bg-transparent py-2.5 pr-4 text-gray-800 focus:outline-none"
+                                />
+                            </div>
+                            {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone.message}</p>}
                         </div>
 
                         {/* ROLE SELECTION */}
@@ -208,12 +226,12 @@ const RegisterPage = () => {
                                             hasLower: (v) => /[a-z]/.test(v) || "Must include a small letter"
                                         }
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -232,12 +250,12 @@ const RegisterPage = () => {
                                         required: "Confirm your password",
                                         validate: (value) => value === password || "Passwords do not match",
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
