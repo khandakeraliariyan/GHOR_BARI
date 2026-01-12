@@ -38,7 +38,7 @@ const Navbar = () => {
 
 
     return (
-        <header className="w-full bg-white shadow-md sticky top-0 z-50">
+        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-white/20">
             <nav className="mx-auto px-6 h-16 flex items-center justify-between">
                 {/* LOGO */}
                 <Link
@@ -195,7 +195,7 @@ const Navbar = () => {
             {/* MOBILE MENU */}
             {
                 menuOpen && (
-                    <div className="md:hidden bg-white shadow-inner">
+                    <div className="md:hidden bg-white/70 backdrop-blur-md shadow-inner border-t border-white/20">
                         <div className="flex flex-col px-4 py-3 gap-2">
                             <NavLink
                                 to="/"
