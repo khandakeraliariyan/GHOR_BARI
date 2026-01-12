@@ -4,6 +4,8 @@ import { verifyToken } from "../middleware/verifyToken.js";
 
 import { verifyOwner } from "../middleware/verifyOwner.js";
 
+import { verifyPropertyOwner } from "../middleware/verifyPropertyOwner.js";
+
 import * as propertyController from "../controllers/propertyController.js";
 
 
@@ -21,5 +23,11 @@ router.get("/property/:id", verifyToken, propertyController.getPropertyById);
 
 // Get all ACTIVE property listings
 router.get("/active-properties", verifyToken, propertyController.getActiveProperties);
+
+// Update property (only owner)
+router.put("/property/:id", verifyToken, verifyPropertyOwner, propertyController.updateProperty);
+
+// Delete property (only owner)
+router.delete("/property/:id", verifyToken, verifyPropertyOwner, propertyController.deleteProperty);
 
 export default router;
