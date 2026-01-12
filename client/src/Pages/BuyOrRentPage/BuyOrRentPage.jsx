@@ -10,7 +10,8 @@ import {
     LayoutGrid,
     Map as MapIcon,
     RotateCcw,
-    Check
+    Check,
+    ChevronDown
 } from "lucide-react";
 import useAuth from "../../Hooks/useAuth";
 
@@ -229,16 +230,19 @@ const BuyOrRentPage = () => {
                     </div>
 
                     <div className="flex gap-2">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="px-4 py-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900"
-                        >
-                            <option value="newest">Newest</option>
-                            <option value="priceLow">Price: Low to High</option>
-                            <option value="priceHigh">Price: High to Low</option>
-                            <option value="rating">Top Rated</option>
-                        </select>
+                        <div className="relative flex items-center">
+                            <ChevronDown className="absolute left-3 text-gray-400 pointer-events-none" size={18} />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="pl-8 pr-3 py-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900 appearance-none cursor-pointer text-left min-w-[105px]"
+                            >
+                                <option value="newest">Newest</option>
+                                <option value="priceLow">Price: Low to High</option>
+                                <option value="priceHigh">Price: High to Low</option>
+                                <option value="rating">Top Rated</option>
+                            </select>
+                        </div>
 
                         <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
                             <SlidersHorizontal size={20} /> Filters

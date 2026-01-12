@@ -5,10 +5,10 @@ import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import PropertyDetailsMap from './PropertyDetailsMap';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Pagination, Autoplay } from 'swiper/modules';
 import {
     MapPin, Bed, Bath, Square, CheckCircle, XCircle,
-    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star
+    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star, Tag
 } from 'lucide-react';
 
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
@@ -62,7 +62,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
     useEffect(() => {
         const fetchGeoData = async () => {
             try {
-                const [divR, disR, upzR] = await Promise.all([fetch('/divisions.json'), fetch('/districts.json'), fetch('/upazilas.json')]);
+                const [divR, disR, upzR] = await Promise.all([fetch('/divisions.json'), fetch('/districts.json'), fetch('/upzillas.json')]);
                 const [div, dis, upz] = await Promise.all([divR.json(), disR.json(), upzR.json()]);
                 setGeoMaps({
                     divisionMap: new Map(div.map(d => [String(d.id), d.name])),
@@ -78,6 +78,12 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
         title, images, listingType, price, address, unitCount, bathrooms,
         areaSqFt, overview, amenities, location
     } = property || {};
+
+    // Calculate premium flag
+    const isPremium = useMemo(() => {
+        if (!price || !listingType) return false;
+        return (listingType === "rent" && Number(price) > 50000) || (listingType === "sale" && Number(price) > 100000);
+    }, [price, listingType]);
 
     const decodedLocation = useMemo(() => {
         if (!address || geoMaps.divisionMap.size === 0) return address?.street || "Loading...";
@@ -113,7 +119,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
                 {/* LEFT SIDE */}
                 <div className="lg:col-span-3 space-y-6">
                     <div className="w-full h-[550px] bg-gray-200 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100">
-                        <Swiper modules={[Navigation, Pagination, Autoplay]} navigation pagination={{ clickable: true }} autoplay={{ delay: 5000 }} loop={true} className="h-full w-full">
+                        <Swiper modules={[Pagination, Autoplay]} pagination={{ clickable: true }} autoplay={{ delay: 5000 }} loop={true} className="h-full w-full">
                             {images?.map((img, idx) => (
                                 <SwiperSlide key={idx}><img src={img} alt={title} className="w-full h-full object-cover object-center" /></SwiperSlide>
                             ))}
@@ -121,13 +127,21 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
                     </div>
 
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-                        <div className="flex flex-wrap gap-3 mb-6">
-                            <span className="bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-full flex items-center gap-1 shadow-md uppercase tracking-widest">
-                                {listingType}
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            <span className="bg-slate-900 text-white text-sm font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md uppercase">
+                                <Tag size={14} /> {listingType}
                             </span>
-                            <span className={`text-[10px] font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 border uppercase tracking-widest ${ownerProfile?.nidVerified ? "bg-white/60 text-emerald-700 border-emerald-200" : "bg-white/40 text-red-600 border-red-100"
-                                }`}>
-                                {ownerProfile?.nidVerified ? <><CheckCircle size={12} /> Verified Owner</> : <><XCircle size={12} /> Unverified Owner</>}
+                            {isPremium && (
+                                <span className="bg-orange-500 text-white text-sm font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                                    <Star size={14} fill="currentColor" /> Premium
+                                </span>
+                            )}
+                            <span
+                                className={`text-sm font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 border
+                                    ${ownerProfile?.nidVerified ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-white/40 text-red-600 border-red-100"}`}
+                                style={{ backdropFilter: "saturate(120%) blur(4px)" }}
+                            >
+                                {ownerProfile?.nidVerified ? <><CheckCircle size={14} /> Verified</> : <><XCircle size={14} /> Unverified</>}
                             </span>
                         </div>
 
