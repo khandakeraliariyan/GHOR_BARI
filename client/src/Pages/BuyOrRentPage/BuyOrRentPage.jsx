@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import useAxios from "../../Hooks/useAxios";
 import PropertyCard from "./PropertyCard";
 import BuyOrRentMap from "./BuyOrRentMap";
@@ -18,6 +18,7 @@ const PAGE_SIZE = 12;
 
 const BuyOrRentPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const axiosInstance = useAxios();
     const { user: authUser, loading: authLoading } = useAuth();
 
@@ -28,8 +29,8 @@ const BuyOrRentPage = () => {
     const [initialLoading, setInitialLoading] = useState(true);
 
 
-    // Filter Logic States
-    const [searchQuery, setSearchQuery] = useState("");
+    // Filter Logic States - Initialize from URL params
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [sortBy, setSortBy] = useState("newest");
 
     const initialFilterState = {
@@ -138,6 +139,12 @@ const BuyOrRentPage = () => {
             fetchProperties();
         }
     }, [authLoading, fetchProperties]);
+
+    // Update search query when URL params change
+    useEffect(() => {
+        const searchParam = searchParams.get("search");
+        setSearchQuery(searchParam || "");
+    }, [searchParams]);
 
     const filteredProperties = useMemo(() => {
         let result = [...properties];
@@ -314,14 +321,41 @@ const BuyOrRentPage = () => {
 
             {viewMode === "grid" ? (
                 <>
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
-                        {pageItems.map((property) => (
-                            <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
-                                <PropertyCard property={property} />
+                    {totalItems === 0 ? (
+                        <div className="max-w-7xl mx-auto">
+                            {/* Empty State Message */}
+                            <div className="bg-white rounded-3xl p-12 border border-gray-100 shadow-sm">
+                                <div className="text-center">
+                                    <div className="mb-6 flex justify-center">
+                                        <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center">
+                                            <Search className="text-orange-500" size={48} />
+                                        </div>
+                                    </div>
+                                    <h2 className="text-3xl font-black text-gray-900 mb-8">No Properties Found</h2>
+                                    <button
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            handleResetFilters();
+                                        }}
+                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-bold hover:brightness-110 transition-all"
+                                    >
+                                        Clear All Filters
+                                    </button>
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                    {renderPager()}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
+                                {pageItems.map((property) => (
+                                    <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
+                                        <PropertyCard property={property} />
+                                    </div>
+                                ))}
+                            </div>
+                            {renderPager()}
+                        </>
+                    )}
                 </>
             ) : (
                 <div className="max-w-7xl mx-auto h-[600px] bg-white rounded-3xl overflow-hidden border border-gray-100">
