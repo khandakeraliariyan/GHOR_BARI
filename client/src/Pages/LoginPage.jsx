@@ -122,12 +122,12 @@ const LoginPage = () => {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     {...register("password", { required: "Password is required" })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
