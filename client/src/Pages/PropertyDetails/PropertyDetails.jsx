@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import PropertyDetailsMap from './PropertyDetailsMap';
+import NearbyPlaces from './NearbyPlaces';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import {
@@ -25,6 +26,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
     const { user } = useAuth();
 
     const [geoMaps, setGeoMaps] = useState({ divisionMap: new Map(), districtMap: new Map(), upazilaMap: new Map() });
+    const [selectedPlace, setSelectedPlace] = useState(null);
 
     // 1. Fetch Property Data
     const { data: property, isLoading: propLoading } = useQuery({
@@ -56,6 +58,204 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             return res.data;
+        }
+    });
+
+    // Fetch Nearby Places using Overpass API directly from frontend
+    const { data: nearbyPlaces, isLoading: nearbyPlacesLoading } = useQuery({
+        queryKey: ['nearby-places', property?.location?.lat, property?.location?.lng],
+        enabled: !!property?.location?.lat && !!property?.location?.lng,
+        queryFn: async () => {
+            const { lat, lng } = property.location;
+            const radius = 5000; // 5km radius in meters
+
+            // Helper function to calculate distance (Haversine formula)
+            const calculateDistance = (lat1, lng1, lat2, lng2) => {
+                const R = 6371; // Earth's radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            };
+
+            // Overpass API query - All POI types
+            const overpassQuery = `
+[out:json][timeout:30];
+(
+  node["amenity"="school"](around:${radius},${lat},${lng});
+  node["amenity"="university"](around:${radius},${lat},${lng});
+  node["amenity"="college"](around:${radius},${lat},${lng});
+  node["amenity"="hospital"](around:${radius},${lat},${lng});
+  node["amenity"="clinic"](around:${radius},${lat},${lng});
+  node["amenity"="doctors"](around:${radius},${lat},${lng});
+  node["healthcare"="diagnostic"](around:${radius},${lat},${lng});
+  node["aeroway"="aerodrome"](around:${radius},${lat},${lng});
+  node["public_transport"="station"](around:${radius},${lat},${lng});
+  node["highway"="bus_stop"](around:${radius},${lat},${lng});
+  node["railway"="station"](around:${radius},${lat},${lng});
+  node["amenity"="marketplace"](around:${radius},${lat},${lng});
+  node["shop"="mall"](around:${radius},${lat},${lng});
+  node["shop"="supermarket"](around:${radius},${lat},${lng});
+  node["leisure"="park"](around:${radius},${lat},${lng});
+  node["amenity"="restaurant"](around:${radius},${lat},${lng});
+  node["amenity"="cafe"](around:${radius},${lat},${lng});
+  node["amenity"="place_of_worship"](around:${radius},${lat},${lng});
+  node["amenity"="bank"](around:${radius},${lat},${lng});
+  node["amenity"="atm"](around:${radius},${lat},${lng});
+  node["amenity"="fuel"](around:${radius},${lat},${lng});
+  node["amenity"="police"](around:${radius},${lat},${lng});
+  node["tourism"="hotel"](around:${radius},${lat},${lng});
+  node["leisure"="fitness_centre"](around:${radius},${lat},${lng});
+  node["leisure"="gym"](around:${radius},${lat},${lng});
+  way["amenity"="school"](around:${radius},${lat},${lng});
+  way["amenity"="university"](around:${radius},${lat},${lng});
+  way["amenity"="college"](around:${radius},${lat},${lng});
+  way["amenity"="hospital"](around:${radius},${lat},${lng});
+  way["amenity"="clinic"](around:${radius},${lat},${lng});
+  way["amenity"="doctors"](around:${radius},${lat},${lng});
+  way["healthcare"="diagnostic"](around:${radius},${lat},${lng});
+  way["aeroway"="aerodrome"](around:${radius},${lat},${lng});
+  way["public_transport"="station"](around:${radius},${lat},${lng});
+  way["railway"="station"](around:${radius},${lat},${lng});
+  way["amenity"="marketplace"](around:${radius},${lat},${lng});
+  way["shop"="mall"](around:${radius},${lat},${lng});
+  way["shop"="supermarket"](around:${radius},${lat},${lng});
+  way["leisure"="park"](around:${radius},${lat},${lng});
+  way["amenity"="restaurant"](around:${radius},${lat},${lng});
+  way["amenity"="cafe"](around:${radius},${lat},${lng});
+  way["amenity"="place_of_worship"](around:${radius},${lat},${lng});
+  way["amenity"="bank"](around:${radius},${lat},${lng});
+  way["amenity"="fuel"](around:${radius},${lat},${lng});
+  way["amenity"="police"](around:${radius},${lat},${lng});
+  way["tourism"="hotel"](around:${radius},${lat},${lng});
+  way["leisure"="fitness_centre"](around:${radius},${lat},${lng});
+  way["leisure"="gym"](around:${radius},${lat},${lng});
+);
+out center;
+`;
+
+            const response = await fetch("https://overpass-api.de/api/interpreter", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `data=${encodeURIComponent(overpassQuery)}`
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch nearby places");
+
+            const data = await response.json();
+            if (!data.elements || data.elements.length === 0) {
+                return { 
+                    education: [], 
+                    healthcare: [], 
+                    airports: [], 
+                    busStations: [], 
+                    railStations: [],
+                    shopping: [],
+                    parks: [],
+                    restaurants: [],
+                    religious: [],
+                    banks: [],
+                    fuelStations: [],
+                    police: [],
+                    hotels: [],
+                    gyms: []
+                };
+            }
+
+            // Process and categorize (with merged categories)
+            const places = data.elements.map(element => {
+                const placeLat = element.lat || (element.center && element.center.lat);
+                const placeLng = element.lon || (element.lng) || (element.center && element.center.lon);
+                if (!placeLat || !placeLng) return null;
+
+                const distance = calculateDistance(lat, lng, placeLat, placeLng);
+                if (distance > 5) return null; // Filter out places beyond 5km
+                
+                const name = element.tags?.name || element.tags?.["name:en"] || "Unnamed Place";
+
+                let category = "other";
+                const tags = element.tags || {};
+                
+                // Education (schools, universities, colleges)
+                if (tags.amenity === "school" || tags.amenity === "university" || tags.amenity === "college") {
+                    category = "education";
+                }
+                // Healthcare (hospitals, clinics, doctors, diagnostic centers)
+                else if (tags.amenity === "hospital" || tags.amenity === "clinic" || tags.amenity === "doctors" || tags.healthcare === "diagnostic") {
+                    category = "healthcare";
+                }
+                // Airports
+                else if (tags.aeroway === "aerodrome") {
+                    category = "airports";
+                }
+                // Bus Stations
+                else if (tags.public_transport === "station" || tags.highway === "bus_stop") {
+                    category = "busStations";
+                }
+                // Rail Stations
+                else if (tags.railway === "station") {
+                    category = "railStations";
+                }
+                // Shopping
+                else if (tags.amenity === "marketplace" || tags.shop === "mall" || tags.shop === "supermarket") {
+                    category = "shopping";
+                }
+                // Parks
+                else if (tags.leisure === "park") {
+                    category = "parks";
+                }
+                // Restaurants & Cafes
+                else if (tags.amenity === "restaurant" || tags.amenity === "cafe") {
+                    category = "restaurants";
+                }
+                // Religious Places
+                else if (tags.amenity === "place_of_worship") {
+                    category = "religious";
+                }
+                // Banks & ATMs
+                else if (tags.amenity === "bank" || tags.amenity === "atm") {
+                    category = "banks";
+                }
+                // Fuel Stations
+                else if (tags.amenity === "fuel") {
+                    category = "fuelStations";
+                }
+                // Police Stations
+                else if (tags.amenity === "police") {
+                    category = "police";
+                }
+                // Hotels
+                else if (tags.tourism === "hotel") {
+                    category = "hotels";
+                }
+                // Gyms
+                else if (tags.leisure === "fitness_centre" || tags.leisure === "gym") {
+                    category = "gyms";
+                }
+
+                return { name, lat: placeLat, lng: placeLng, distance: parseFloat(distance.toFixed(2)), category, tags };
+            }).filter(Boolean);
+
+            // Group by category, sort by distance, and return all (no slice here - we'll handle in component)
+            return {
+                education: places.filter(p => p.category === "education").sort((a, b) => a.distance - b.distance),
+                healthcare: places.filter(p => p.category === "healthcare").sort((a, b) => a.distance - b.distance),
+                airports: places.filter(p => p.category === "airports").sort((a, b) => a.distance - b.distance),
+                busStations: places.filter(p => p.category === "busStations").sort((a, b) => a.distance - b.distance),
+                railStations: places.filter(p => p.category === "railStations").sort((a, b) => a.distance - b.distance),
+                shopping: places.filter(p => p.category === "shopping").sort((a, b) => a.distance - b.distance),
+                parks: places.filter(p => p.category === "parks").sort((a, b) => a.distance - b.distance),
+                restaurants: places.filter(p => p.category === "restaurants").sort((a, b) => a.distance - b.distance),
+                religious: places.filter(p => p.category === "religious").sort((a, b) => a.distance - b.distance),
+                banks: places.filter(p => p.category === "banks").sort((a, b) => a.distance - b.distance),
+                fuelStations: places.filter(p => p.category === "fuelStations").sort((a, b) => a.distance - b.distance),
+                police: places.filter(p => p.category === "police").sort((a, b) => a.distance - b.distance),
+                hotels: places.filter(p => p.category === "hotels").sort((a, b) => a.distance - b.distance),
+                gyms: places.filter(p => p.category === "gyms").sort((a, b) => a.distance - b.distance)
+            };
         }
     });
 
@@ -186,8 +386,20 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
                     </div>
 
                     <div className="h-[500px] rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-md bg-white">
-                        <PropertyDetailsMap location={location} title={title} />
+                        <PropertyDetailsMap 
+                            location={location} 
+                            title={title} 
+                            nearbyPlaces={nearbyPlaces}
+                            selectedPlace={selectedPlace}
+                            onPlaceSelect={setSelectedPlace}
+                        />
                     </div>
+
+                    <NearbyPlaces 
+                        nearbyPlaces={nearbyPlaces} 
+                        isLoading={nearbyPlacesLoading}
+                        onPlaceClick={(place) => setSelectedPlace(place)}
+                    />
                 </div>
 
                 {/* RIGHT SIDE */}
@@ -252,6 +464,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
                             </p>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
