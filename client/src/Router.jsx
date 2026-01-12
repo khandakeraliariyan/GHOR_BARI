@@ -6,6 +6,7 @@ import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
 import HomePage from "./Pages/HomePage";
 import RegisterPage from "./Pages/RegisterPage";
 import LoginPage from "./Pages/LoginPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import AddProperty from "./Pages/ListPropertyPage/AddProperty";
 import PropertyDetails from "./Pages/PropertyDetails/PropertyDetails";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
             {
                 path: "/login",
                 element: <LoginPage></LoginPage>
+            },
+            {
+                path: "/reset-password",
+                element: <ResetPasswordPage></ResetPasswordPage>
             },
             {
                 path: "/properties",

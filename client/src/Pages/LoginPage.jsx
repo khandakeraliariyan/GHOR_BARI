@@ -115,7 +115,7 @@ const LoginPage = () => {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center ml-1">
                                 <label className="text-sm font-semibold text-gray-700">Password <span className="text-orange-500">*</span></label>
-                                <button type="button" className="text-xs text-orange-500 hover:underline">Forgot Password?</button>
+                                <Link to="/reset-password" className="text-xs text-orange-500 hover:underline">Forgot Password?</Link>
                             </div>
                             <div className="relative">
                                 <input
