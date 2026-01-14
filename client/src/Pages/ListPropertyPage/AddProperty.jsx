@@ -98,8 +98,6 @@ const AddProperty = () => {
                 ...data,
                 images: uploadedUrls,
                 price: Number(data.price),
-                unitCount: Number(data.unitCount),
-                bathrooms: Number(data.bathrooms),
                 areaSqFt: Number(data.areaSqFt),
                 address: {
                     division_id: data.division_id,
@@ -110,6 +108,15 @@ const AddProperty = () => {
                 location: data.coordinates,
                 createdAt: new Date().toISOString()
             };
+
+            // Dynamic fields based on property type
+            if (data.propertyType === "building") {
+                payload.floorCount = Number(data.floorCount);
+                payload.totalUnits = Number(data.totalUnits);
+            } else if (data.propertyType === "flat") {
+                payload.roomCount = Number(data.roomCount);
+                payload.bathrooms = Number(data.bathrooms);
+            }
 
             await axios.post("/post-property", payload, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -247,16 +254,35 @@ const AddProperty = () => {
                                     <ErrorMsg name="price" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className={labelStyle}>{propertyType === "flat" ? "Beds" : "Floors"}</label>
-                                        <input type="number" {...register("unitCount", { required: "Required", min: 1 })} className={inputStyle("unitCount")} placeholder="Count" />
-                                        <ErrorMsg name="unitCount" />
-                                    </div>
-                                    <div>
-                                        <label className={labelStyle}>Baths</label>
-                                        <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
-                                        <ErrorMsg name="bathrooms" />
-                                    </div>
+                                    {propertyType === "flat" ? (
+                                        <>
+                                            <div>
+                                                <label className={labelStyle}>Rooms</label>
+                                                <input type="number" {...register("roomCount", { required: "Required", min: 1 })} className={inputStyle("roomCount")} placeholder="Count" />
+                                                <ErrorMsg name="roomCount" />
+                                            </div>
+                                            <div>
+                                                <label className={labelStyle}>Baths</label>
+                                                <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
+                                                <ErrorMsg name="bathrooms" />
+                                            </div>
+                                        </>
+                                    ) : propertyType === "building" ? (
+                                        <>
+                                            <div>
+                                                <label className={labelStyle}>Floors</label>
+                                                <input type="number" {...register("floorCount", { required: "Required", min: 1 })} className={inputStyle("floorCount")} placeholder="Count" />
+                                                <ErrorMsg name="floorCount" />
+                                            </div>
+                                            <div>
+                                                <label className={labelStyle}>Total Units</label>
+                                                <input type="number" {...register("totalUnits", { required: "Required", min: 1 })} className={inputStyle("totalUnits")} placeholder="Count" />
+                                                <ErrorMsg name="totalUnits" />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="col-span-2 text-sm text-gray-500">Please select a property type first</div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={labelStyle}>Area (Sq Ft)</label>
