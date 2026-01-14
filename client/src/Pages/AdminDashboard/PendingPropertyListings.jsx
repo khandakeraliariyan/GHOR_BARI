@@ -169,7 +169,7 @@ const PendingPropertyListings = () => {
                                         <button onClick={() => handleAction(prop._id, 'active')} className="w-9 h-9 flex items-center justify-center text-emerald-500 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all" title="Approve">
                                             <CheckCircle size={18} />
                                         </button>
-                                        <button onClick={() => navigate(`/dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
+                                        <button onClick={() => navigate(`/admin-dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
                                             <ExternalLink size={18} />
                                         </button>
                                         <button onClick={() => handleAction(prop._id, 'rejected')} className="w-9 h-9 flex items-center justify-center text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all" title="Reject">

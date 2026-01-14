@@ -50,7 +50,7 @@ const LoginPage = () => {
                 
                 // Redirect admin to dashboard, others to intended location or home
                 if (isAdmin) {
-                    navigate("/dashboard");
+                    navigate("/admin-dashboard");
                 } else {
                     navigate(location?.state?.from || "/");
                 }
@@ -101,7 +101,7 @@ const LoginPage = () => {
                 
                 // Redirect admin to dashboard, others to intended location or home
                 if (isAdmin) {
-                    navigate("/dashboard");
+                    navigate("/admin-dashboard");
                 } else {
                     navigate(location?.state?.from || "/");
                 }
