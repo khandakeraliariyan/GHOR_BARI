@@ -8,6 +8,7 @@ import Loading from "../Components/Loading";
 import { showToast } from "../Utilities/ToastMessage";
 import useAuth from "../Hooks/useAuth";
 import useAxios from "../Hooks/useAxios";
+import useAdmin from "../Hooks/useAdmin";
 
 const LoginPage = () => {
     const { loginUserWithEmailPassword, loginWithGoogle } = useAuth();
@@ -37,8 +38,27 @@ const LoginPage = () => {
             const result = await loginUserWithEmailPassword(data.email, data.password);
             const user = result.user;
 
-            showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
-            navigate(location?.state?.from || "/");
+            // Check if user is admin
+            try {
+                const token = await user.getIdToken();
+                const adminCheck = await axios.get(`/users/admin/${user.email}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const isAdmin = adminCheck.data?.admin || false;
+
+                showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
+                
+                // Redirect admin to dashboard, others to intended location or home
+                if (isAdmin) {
+                    navigate("/dashboard");
+                } else {
+                    navigate(location?.state?.from || "/");
+                }
+            } catch (error) {
+                // If admin check fails, redirect to normal location
+                showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
+                navigate(location?.state?.from || "/");
+            }
         } catch (error) {
             showToast(error.message || "Invalid email or password", "error");
         } finally {
@@ -69,8 +89,27 @@ const LoginPage = () => {
                 });
             }
 
-            navigate(location?.state?.from || "/");
-            showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+            // Check if user is admin
+            try {
+                const token = await user.getIdToken();
+                const adminCheck = await axios.get(`/users/admin/${user.email}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const isAdmin = adminCheck.data?.admin || false;
+
+                showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+                
+                // Redirect admin to dashboard, others to intended location or home
+                if (isAdmin) {
+                    navigate("/dashboard");
+                } else {
+                    navigate(location?.state?.from || "/");
+                }
+            } catch (error) {
+                // If admin check fails, redirect to normal location
+                showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+                navigate(location?.state?.from || "/");
+            }
 
         } catch (error) {
             showToast(
