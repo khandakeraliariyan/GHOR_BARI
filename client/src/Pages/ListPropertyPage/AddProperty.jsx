@@ -45,6 +45,7 @@ const AddProperty = () => {
     const propertyType = watch("propertyType");
     const watchDiv = watch("division_id");
     const watchDist = watch("district_id");
+    const watchUpazila = watch("upazila_id");
     const watchCoords = watch("coordinates");
 
     useEffect(() => {
@@ -68,6 +69,16 @@ const AddProperty = () => {
             setValue("upazila_id", "");
         }
     }, [watchDist, districts, setValue]);
+
+    useEffect(() => {
+        if (watchUpazila && lastUpdateRef.current.upazila !== watchUpazila) {
+            const upz = upazilas.find(u => String(u.id) === String(watchUpazila));
+            if (upz?.lat && upz.lon) {
+                setMapView({ center: [parseFloat(upz.lat), parseFloat(upz.lon)], zoom: 13 });
+                lastUpdateRef.current.upazila = watchUpazila;
+            }
+        }
+    }, [watchUpazila, upazilas]);
 
     const handleFilesChange = (e) => {
         const files = Array.from(e.target.files);
