@@ -163,7 +163,7 @@ const AdminDashboardHome = () => {
             {/* Welcome Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-black text-[#344767] uppercase tracking-tight">
-                    GhorBari admin dashboard
+                    GhorBari Admin Dashboard
                 </h1>
                 <p className="text-[#67748e] text-sm font-medium">
                     Overview of system performance and pending administrative tasks.
@@ -192,7 +192,7 @@ const AdminDashboardHome = () => {
                         </div>
                         <h1 className="text-[10px] md:text-lg font-bold text-[#344767] uppercase tracking-tight">Recent Pending User Verifications</h1>
                     </div>
-                    <button onClick={() => navigate('/dashboard/pending-verifications')} className="text-[11px] font-bold uppercase bg-[#344767] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all">
+                    <button onClick={() => navigate('/admin-dashboard/pending-verifications')} className="text-[11px] font-bold uppercase bg-[#344767] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all">
                         View All <ArrowRight size={14} />
                     </button>
                 </div>
@@ -281,7 +281,7 @@ const AdminDashboardHome = () => {
                         </div>
                         <h1 className="text-[10px] md:text-lg font-bold text-[#344767] uppercase tracking-tight">Recent Pending Property Listings</h1>
                     </div>
-                    <button onClick={() => navigate('/dashboard/pending-properties')} className="text-[11px] font-bold uppercase bg-[#344767] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all">
+                    <button onClick={() => navigate('/admin-dashboard/pending-properties')} className="text-[11px] font-bold uppercase bg-[#344767] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all">
                         View All <ArrowRight size={14} />
                     </button>
                 </div>
@@ -343,7 +343,7 @@ const AdminDashboardHome = () => {
                                             <button onClick={() => handleAction(prop._id, 'active')} className="w-9 h-9 flex items-center justify-center text-emerald-500 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all" title="Approve">
                                                 <CheckCircle size={18} />
                                             </button>
-                                            <button onClick={() => navigate(`/dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
+                                            <button onClick={() => navigate(`/admin-dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
                                                 <ExternalLink size={18} />
                                             </button>
                                             <button onClick={() => handleAction(prop._id, 'rejected')} className="w-9 h-9 flex items-center justify-center text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all" title="Reject">
