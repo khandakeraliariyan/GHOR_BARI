@@ -5,19 +5,26 @@ const PropertyCard = ({ property }) => {
     const {
         title,
         price,
-        unitCount,
-        baths,
         area,
         image,
         images = [],
         addressString,
         listingType,
+        propertyType,
         owner,
         ownerRating,
         ownerNidVerified,
         isOwnerVerified,
         verified,
         isPremium,
+        // Dynamic fields based on propertyType
+        roomCount,
+        bathrooms,
+        floorCount,
+        totalUnits,
+        // Legacy fields for backward compatibility
+        unitCount,
+        baths,
     } = property;
 
     const imageUrl = Array.isArray(images) && images.length > 0
@@ -65,12 +72,17 @@ const PropertyCard = ({ property }) => {
 
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                     <div className="flex justify-between text-white text-sm font-medium">
-                        {listingType === "sale" ? (
-                            <div className="flex items-center gap-1.5"><Layers size={16} className="opacity-80" /> {unitCount || "N/A"} Floors</div>
+                        {propertyType === "building" ? (
+                            <>
+                                <div className="flex items-center gap-1.5"><Layers size={16} className="opacity-80" /> {floorCount || unitCount || "N/A"} Floors</div>
+                                <div className="flex items-center gap-1.5"><Bed size={16} className="opacity-80" /> {totalUnits || "N/A"} Units</div>
+                            </>
                         ) : (
-                            <div className="flex items-center gap-1.5"><Bed size={16} className="opacity-80" /> {unitCount} Beds</div>
+                            <>
+                                <div className="flex items-center gap-1.5"><Bed size={16} className="opacity-80" /> {roomCount || unitCount || "N/A"} Rooms</div>
+                                <div className="flex items-center gap-1.5"><Bath size={16} className="opacity-80" /> {bathrooms || baths || "N/A"} Baths</div>
+                            </>
                         )}
-                        <div className="flex items-center gap-1.5"><Bath size={16} className="opacity-80" /> {baths} Baths</div>
                         <div className="flex items-center gap-1.5"><Square size={16} className="opacity-80" /> {area} sqft</div>
                     </div>
                 </div>

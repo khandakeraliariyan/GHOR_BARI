@@ -98,11 +98,22 @@ const BuyOrRentPage = () => {
 
             const safeProperties = res.data.map((prop) => {
                 const imageUrl = Array.isArray(prop.images) && prop.images.length > 0 ? prop.images[0] : prop.image || null;
-                const beds = prop.dunitCount ?? prop.beds ?? 0;
-                const baths = prop.bathrooms ?? prop.baths ?? 0;
                 const area = prop.areaSqFt ?? prop.area ?? 0;
                 const rating = prop.rating?.average ?? prop.rating ?? 0;
                 const listingType = prop.listingType ?? "rent";
+                const propertyType = prop.propertyType ?? "flat";
+
+                // Map dynamic fields based on propertyType
+                let beds, baths;
+                if (propertyType === "building") {
+                    // For building: use floorCount and totalUnits
+                    beds = prop.floorCount ?? prop.unitCount ?? 0;
+                    baths = prop.totalUnits ?? 0;
+                } else {
+                    // For flat: use roomCount and bathrooms
+                    beds = prop.roomCount ?? prop.unitCount ?? prop.beds ?? 0;
+                    baths = prop.bathrooms ?? prop.baths ?? 0;
+                }
 
                 const addressObj = prop.address || {};
                 const upazilaName = upzilaMap.get(addressObj.upazila_id) || "";
@@ -120,7 +131,7 @@ const BuyOrRentPage = () => {
                 return {
                     ...prop,
                     image: imageUrl,
-                    beds, baths, area, rating, listingType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
+                    beds, baths, area, rating, listingType, propertyType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
                 };
             });
 
