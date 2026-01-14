@@ -29,15 +29,24 @@ const EditPropertyModal = ({ isOpen, onClose, property, onSuccess }) => {
     // Initialize form when property changes
     useEffect(() => {
         if (property && isOpen) {
-            reset({
+            const initialData = {
                 price: property.price || "",
-                unitCount: property.unitCount || "",
-                bathrooms: property.bathrooms || "",
                 areaSqFt: property.areaSqFt || "",
                 overview: property.overview || "",
                 amenities: property.amenities || [],
                 coordinates: property.location || { lat: 23.6850, lng: 90.3563 }
-            });
+            };
+
+            // Set dynamic fields based on property type
+            if (property.propertyType === "building") {
+                initialData.floorCount = property.floorCount || "";
+                initialData.totalUnits = property.totalUnits || "";
+            } else if (property.propertyType === "flat") {
+                initialData.roomCount = property.roomCount || "";
+                initialData.bathrooms = property.bathrooms || "";
+            }
+
+            reset(initialData);
             setExistingImages(property.images || []);
             setSelectedFiles([]);
             if (property.location) {
@@ -100,8 +109,6 @@ const EditPropertyModal = ({ isOpen, onClose, property, onSuccess }) => {
             const token = await user?.getIdToken();
             const payload = {
                 price: Number(data.price),
-                unitCount: Number(data.unitCount),
-                bathrooms: Number(data.bathrooms),
                 areaSqFt: Number(data.areaSqFt),
                 images: allImages,
                 overview: data.overview,
@@ -111,6 +118,15 @@ const EditPropertyModal = ({ isOpen, onClose, property, onSuccess }) => {
                     lng: data.coordinates.lng
                 }
             };
+
+            // Dynamic fields based on property type
+            if (property.propertyType === "building") {
+                payload.floorCount = Number(data.floorCount);
+                payload.totalUnits = Number(data.totalUnits);
+            } else if (property.propertyType === "flat") {
+                payload.roomCount = Number(data.roomCount);
+                payload.bathrooms = Number(data.bathrooms);
+            }
 
             await axios.put(`/property/${property._id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -176,26 +192,55 @@ const EditPropertyModal = ({ isOpen, onClose, property, onSuccess }) => {
                                 {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className={labelStyle}>{property?.propertyType === "flat" ? "Beds" : "Floors"}</label>
-                                    <input
-                                        type="number"
-                                        {...register("unitCount", { required: "Required", min: 1 })}
-                                        className={inputStyle("unitCount")}
-                                        placeholder="Count"
-                                    />
-                                    {errors.unitCount && <p className="text-red-500 text-xs mt-1">{errors.unitCount.message}</p>}
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Baths</label>
-                                    <input
-                                        type="number"
-                                        {...register("bathrooms", { required: "Required", min: 1 })}
-                                        className={inputStyle("bathrooms")}
-                                        placeholder="Count"
-                                    />
-                                    {errors.bathrooms && <p className="text-red-500 text-xs mt-1">{errors.bathrooms.message}</p>}
-                                </div>
+                                {property?.propertyType === "flat" ? (
+                                    <>
+                                        <div>
+                                            <label className={labelStyle}>Rooms</label>
+                                            <input
+                                                type="number"
+                                                {...register("roomCount", { required: "Required", min: 1 })}
+                                                className={inputStyle("roomCount")}
+                                                placeholder="Count"
+                                            />
+                                            {errors.roomCount && <p className="text-red-500 text-xs mt-1">{errors.roomCount.message}</p>}
+                                        </div>
+                                        <div>
+                                            <label className={labelStyle}>Baths</label>
+                                            <input
+                                                type="number"
+                                                {...register("bathrooms", { required: "Required", min: 1 })}
+                                                className={inputStyle("bathrooms")}
+                                                placeholder="Count"
+                                            />
+                                            {errors.bathrooms && <p className="text-red-500 text-xs mt-1">{errors.bathrooms.message}</p>}
+                                        </div>
+                                    </>
+                                ) : property?.propertyType === "building" ? (
+                                    <>
+                                        <div>
+                                            <label className={labelStyle}>Floors</label>
+                                            <input
+                                                type="number"
+                                                {...register("floorCount", { required: "Required", min: 1 })}
+                                                className={inputStyle("floorCount")}
+                                                placeholder="Count"
+                                            />
+                                            {errors.floorCount && <p className="text-red-500 text-xs mt-1">{errors.floorCount.message}</p>}
+                                        </div>
+                                        <div>
+                                            <label className={labelStyle}>Total Units</label>
+                                            <input
+                                                type="number"
+                                                {...register("totalUnits", { required: "Required", min: 1 })}
+                                                className={inputStyle("totalUnits")}
+                                                placeholder="Count"
+                                            />
+                                            {errors.totalUnits && <p className="text-red-500 text-xs mt-1">{errors.totalUnits.message}</p>}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="col-span-2 text-sm text-gray-500">Property type not set</div>
+                                )}
                             </div>
                             <div>
                                 <label className={labelStyle}>Area (Sq Ft)</label>

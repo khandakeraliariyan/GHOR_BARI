@@ -10,14 +10,15 @@ export const postProperty = async (req, res) => {
 
         const data = req.body;
 
+        const propertyType = data.propertyType; // flat | building
+
+        // Base property object
         const property = {
 
             title: data.title,
             listingType: data.listingType,        // rent | sale
-            propertyType: data.propertyType,      // flat | building
+            propertyType: propertyType,           // flat | building
             price: Number(data.price),             // sale price or rent per month
-            unitCount: Number(data.unitCount),    // bedrooms OR floors
-            bathrooms: Number(data.bathrooms),
             areaSqFt: Number(data.areaSqFt),
 
             // Address object now stores IDs + full address
@@ -50,6 +51,17 @@ export const postProperty = async (req, res) => {
             status: "pending",
             createdAt: new Date()
         };
+
+        // Dynamic fields based on property type
+        if (propertyType === "building") {
+            // For building: floorCount and totalUnits
+            property.floorCount = Number(data.floorCount);
+            property.totalUnits = Number(data.totalUnits);
+        } else if (propertyType === "flat") {
+            // For flat: roomCount and bathrooms
+            property.roomCount = Number(data.roomCount);
+            property.bathrooms = Number(data.bathrooms);
+        }
 
         // Insert directly into the "properties" collection
 
@@ -164,12 +176,19 @@ export const updateProperty = async (req, res) => {
 
         const data = req.body;
 
+        // Get the existing property to check propertyType
+        const existingProperty = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+        
+        if (!existingProperty) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        const propertyType = existingProperty.propertyType; // flat | building
+
         // Only allow updating specific fields
         const updateData = {
 
             price: Number(data.price),
-            unitCount: Number(data.unitCount),
-            bathrooms: Number(data.bathrooms),
             areaSqFt: Number(data.areaSqFt),
             images: data.images || [],
             overview: data.overview,
@@ -181,6 +200,17 @@ export const updateProperty = async (req, res) => {
             updatedAt: new Date()
 
         };
+
+        // Dynamic fields based on property type
+        if (propertyType === "building") {
+            // For building: floorCount and totalUnits
+            updateData.floorCount = Number(data.floorCount);
+            updateData.totalUnits = Number(data.totalUnits);
+        } else if (propertyType === "flat") {
+            // For flat: roomCount and bathrooms
+            updateData.roomCount = Number(data.roomCount);
+            updateData.bathrooms = Number(data.bathrooms);
+        }
 
         const result = await db.collection("properties").updateOne(
             { _id: new ObjectId(id), "owner.email": req.user.email },

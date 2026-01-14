@@ -275,8 +275,14 @@ out center;
     }, []);
 
     const {
-        title, images, listingType, price, address, unitCount, bathrooms,
-        areaSqFt, overview, amenities, location
+        title, images, listingType, propertyType, price, address, areaSqFt, overview, amenities, location,
+        // Dynamic fields based on propertyType
+        roomCount,
+        bathrooms,
+        floorCount,
+        totalUnits,
+        // Legacy fields for backward compatibility
+        unitCount,
     } = property || {};
 
     // Calculate premium flag
@@ -353,22 +359,45 @@ out center;
                         </div>
 
                         <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-6 py-6 border-y border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
-                                    {listingType === 'sale' ? <Layers size={20} /> : <Bed size={20} />}
-                                </div>
-                                <div>
-                                    <p className="font-black text-xl">{unitCount}</p>
-                                    <p className="text-[10px] uppercase font-bold text-gray-400">{listingType === 'sale' ? 'Floors' : 'Bedrooms'}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Bath size={20} /></div>
-                                <div>
-                                    <p className="font-black text-xl">{bathrooms}</p>
-                                    <p className="text-[10px] uppercase font-bold text-gray-400">Baths</p>
-                                </div>
-                            </div>
+                            {propertyType === "building" ? (
+                                <>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
+                                            <Layers size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-xl">{floorCount || unitCount || "N/A"}</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Floors</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Bed size={20} /></div>
+                                        <div>
+                                            <p className="font-black text-xl">{totalUnits || "N/A"}</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Total Units</p>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
+                                            <Bed size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-xl">{roomCount || unitCount || "N/A"}</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Rooms</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Bath size={20} /></div>
+                                        <div>
+                                            <p className="font-black text-xl">{bathrooms || "N/A"}</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Baths</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl"><Square size={20} /></div>
                                 <div>

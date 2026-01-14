@@ -159,7 +159,10 @@ const PendingPropertyListings = () => {
                                     </span>
                                 </td>
                                 <td className="px-4 py-5 text-sm font-bold text-[#67748e] border-r border-gray-200">
-                                    {prop.unitCount} {prop.propertyType === 'flat' ? 'Bedrooms' : 'Floors'}
+                                    {prop.propertyType === 'building' 
+                                        ? `${prop.floorCount || prop.unitCount || 'N/A'} Floors, ${prop.totalUnits || 'N/A'} Units`
+                                        : `${prop.roomCount || prop.unitCount || 'N/A'} Rooms, ${prop.bathrooms || 'N/A'} Baths`
+                                    }
                                 </td>
                                 <td className="px-4 py-5 text-sm font-medium text-[#67748e] border-r border-gray-200">
                                     {prop.areaSqFt} <span className="text-[10px] font-bold">SQFT</span>
