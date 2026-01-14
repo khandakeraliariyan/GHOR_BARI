@@ -385,7 +385,7 @@ const ProfilePage = () => {
                                 type="submit"
                                 className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-orange-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {uploading ? <Loader2 className="animate-spin" size={18} /> : "Submit Verification"}
+                                {uploading ? "Uploading..." : "Submit Verification"}
                             </button>
                             <button
                                 type="button"

@@ -3,12 +3,10 @@ import Banner from "../Components/Banner.jsx";
 import WhyChooseUs from '../Components/WhyChooseUs.jsx';
 import HomePageStats from '../Components/HomePageStats.jsx';
 import BeginYourPropertyJourney from '../Components/BeginYourPropertyJourney.jsx';
-import Loading from '../Components/Loading.jsx'; 
+import Loading from '../Components/Loading.jsx';
 
 const HomePage = () => {
-
     const [initialLoading, setInitialLoading] = useState(true);
-
 
     // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
     useEffect(() => {
