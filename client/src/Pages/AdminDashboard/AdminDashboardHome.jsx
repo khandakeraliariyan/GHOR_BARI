@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ShieldAlert, Clock, CheckCircle, Handshake, ArrowRight, Eye, ExternalLink, XCircle, Trash2, ShieldCheck, LayoutGrid } from 'lucide-react';
+import { ShieldAlert, Clock, CheckCircle, Handshake, ArrowRight, Eye, ExternalLink, XCircle, Trash2, ShieldCheck, LayoutGrid, Inbox } from 'lucide-react';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import Swal from 'sweetalert2';
 
@@ -199,19 +199,34 @@ const AdminDashboardHome = () => {
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-center table-auto border-collapse">
-                        <thead className="bg-[#f8f9fa]">
-                            <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
-                                <th className="px-4 py-4 text-left border-r border-gray-200">User Identity</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Contact Number</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Role</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Application Time</th>
-                                <th className="px-4 py-4 border-r border-gray-200">NID Documents</th>
-                                <th className="px-4 py-4">Verification Status</th>
-                            </tr>
-                        </thead>
+                        {users.length > 0 && (
+                            <thead className="bg-[#f8f9fa]">
+                                <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
+                                    <th className="px-4 py-4 text-left border-r border-gray-200">User Identity</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Contact Number</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Role</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Application Time</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">NID Documents</th>
+                                    <th className="px-4 py-4">Verification Status</th>
+                                </tr>
+                            </thead>
+                        )}
                         <tbody className="divide-y divide-gray-200">
-                            {users.map(user => (
-                                <tr key={user._id} className="hover:bg-gray-50/80 transition-colors group">
+                            {users.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-4 py-16">
+                                        <div className="flex flex-col items-center justify-center text-center">
+                                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                                <Inbox size={32} className="text-gray-400" />
+                                            </div>
+                                            <p className="text-[#67748e] font-bold text-sm uppercase tracking-wider mb-1">No Pending Verifications</p>
+                                            <p className="text-gray-400 text-xs">All user verifications have been processed.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                users.map(user => (
+                                    <tr key={user._id} className="hover:bg-gray-50/80 transition-colors group">
                                     <td className="px-4 py-5 text-left border-r border-gray-200 bg-white group-hover:bg-gray-50/80">
                                         <div className="flex items-center gap-3">
                                             <img src={user.profileImage} className="w-10 h-10 rounded-full object-cover border border-gray-100" alt="" />
@@ -250,7 +265,8 @@ const AdminDashboardHome = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -272,21 +288,36 @@ const AdminDashboardHome = () => {
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-center table-auto border-collapse">
-                        <thead className="bg-[#f8f9fa]">
-                            <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
-                                <th className="px-4 py-4 text-left border-r border-gray-200">Property Title</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Owner Contact</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Mode</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Category</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Price Structure</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Specifications</th>
-                                <th className="px-4 py-4 border-r border-gray-200">Size</th>
-                                <th className="px-4 py-4">Administrative Actions</th>
-                            </tr>
-                        </thead>
+                        {properties.length > 0 && (
+                            <thead className="bg-[#f8f9fa]">
+                                <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
+                                    <th className="px-4 py-4 text-left border-r border-gray-200">Property Title</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Owner Contact</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Mode</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Category</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Price Structure</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Specifications</th>
+                                    <th className="px-4 py-4 border-r border-gray-200">Size</th>
+                                    <th className="px-4 py-4">Administrative Actions</th>
+                                </tr>
+                            </thead>
+                        )}
                         <tbody className="divide-y divide-gray-200">
-                            {properties.map(prop => (
-                                <tr key={prop._id} className="hover:bg-gray-50/80 transition-colors group">
+                            {properties.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" className="px-4 py-16">
+                                        <div className="flex flex-col items-center justify-center text-center">
+                                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                                <Inbox size={32} className="text-gray-400" />
+                                            </div>
+                                            <p className="text-[#67748e] font-bold text-sm uppercase tracking-wider mb-1">No Pending Properties</p>
+                                            <p className="text-gray-400 text-xs">All property listings have been processed.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                properties.map(prop => (
+                                    <tr key={prop._id} className="hover:bg-gray-50/80 transition-colors group">
                                     <td className="px-4 py-5 text-left border-r border-gray-200 bg-white group-hover:bg-gray-50/80">
                                         <span className="font-bold text-sm text-[#344767] leading-snug">{prop.title}</span>
                                     </td>
@@ -325,7 +356,8 @@ const AdminDashboardHome = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
