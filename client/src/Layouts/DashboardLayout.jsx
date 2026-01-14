@@ -6,7 +6,9 @@ import {
     ClipboardList,
     UserCheck,
     LogOut,
-    Building2
+    Building2,
+    Users,
+    Layers
 } from 'lucide-react';
 import { Tooltip } from 'react-tooltip';
 import { useQuery } from '@tanstack/react-query';
@@ -52,9 +54,11 @@ const DashboardLayout = () => {
     };
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard Home', path: '/dashboard', badge: null },
-        { icon: ClipboardList, label: 'Pending Property Approvals', path: '/dashboard/pending-properties', badge: pendingProperties.length },
-        { icon: UserCheck, label: 'Pending User Verifications', path: '/dashboard/pending-verifications', badge: pendingUsers.length },
+        { icon: LayoutDashboard, label: 'Admin Dashboard', path: '/admin-dashboard', badge: null },
+        { icon: ClipboardList, label: 'Pending Property Approvals', path: '/admin-dashboard/pending-properties', badge: pendingProperties.length },
+        { icon: UserCheck, label: 'Pending User Verifications', path: '/admin-dashboard/pending-verifications', badge: pendingUsers.length },
+        { icon: Users, label: 'All Users', path: '/admin-dashboard/all-users', badge: null },
+        { icon: Layers, label: 'All Property Listings', path: '/admin-dashboard/all-properties', badge: null },
     ];
 
     return (
