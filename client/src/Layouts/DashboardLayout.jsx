@@ -9,13 +9,35 @@ import {
     Building2
 } from 'lucide-react';
 import { Tooltip } from 'react-tooltip';
+import { useQuery } from '@tanstack/react-query';
 import useAuth from '../Hooks/useAuth';
+import useAxiosSecure from '../Hooks/useAxiosSecure';
 import { showToast } from '../Utilities/ToastMessage';
 
 const DashboardLayout = () => {
     // Destructure logoutUser
     const { logoutUser } = useAuth();
     const navigate = useNavigate();
+    const axiosSecure = useAxiosSecure();
+
+    // Fetch pending counts for badges
+    const { data: pendingProperties = [] } = useQuery({
+        queryKey: ['pending-properties'],
+        queryFn: async () => {
+            const res = await axiosSecure.get('/admin/pending-properties');
+            return res.data;
+        },
+        refetchInterval: 30000, // Refetch every 30 seconds
+    });
+
+    const { data: pendingUsers = [] } = useQuery({
+        queryKey: ['pending-users'],
+        queryFn: async () => {
+            const res = await axiosSecure.get('/admin/pending-verifications');
+            return res.data;
+        },
+        refetchInterval: 30000, // Refetch every 30 seconds
+    });
 
     const handleLogout = async () => {
         try {
@@ -30,9 +52,9 @@ const DashboardLayout = () => {
     };
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard Home', path: '/dashboard' },
-        { icon: ClipboardList, label: 'Pending Property Approvals', path: '/dashboard/pending-properties' },
-        { icon: UserCheck, label: 'Pending User Verifications', path: '/dashboard/pending-verifications' },
+        { icon: LayoutDashboard, label: 'Dashboard Home', path: '/dashboard', badge: null },
+        { icon: ClipboardList, label: 'Pending Property Approvals', path: '/dashboard/pending-properties', badge: pendingProperties.length },
+        { icon: UserCheck, label: 'Pending User Verifications', path: '/dashboard/pending-verifications', badge: pendingUsers.length },
     ];
 
     return (
@@ -51,14 +73,21 @@ const DashboardLayout = () => {
                             data-tooltip-id="dash-tooltip"
                             data-tooltip-content={item.label}
                             className={({ isActive }) => `
-                p-3 rounded-2xl transition-all duration-300 group
+                p-3 rounded-2xl transition-all duration-300 group relative
                 ${isActive
                                     ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 scale-110'
                                     : 'text-gray-400 hover:bg-white/5 hover:text-white'}
             `}
                         >
                             {({ isActive }) => (
-                                <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                                <>
+                                    <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                                    {item.badge !== null && item.badge > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-red-500 text-white text-[10px] font-black rounded-full border-2 border-[#1A1A2E]">
+                                            {item.badge > 99 ? '99+' : item.badge}
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </NavLink>
                     ))}
