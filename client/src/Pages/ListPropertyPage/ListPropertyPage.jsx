@@ -2,9 +2,10 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import MyPropertyCard from './MyPropertyCard';
+import MyRequestedProperties from './MyRequestedProperties';
 import useAuth from '../../Hooks/useAuth';
 import useAxios from '../../Hooks/useAxios';
-import { PlusCircle, Building2, Activity, Users, Star, Loader2 } from 'lucide-react';
+import { PlusCircle, Building2, Activity, Users, Star, Loader2, FileText } from 'lucide-react';
 
 const ListProperty = () => {
     const { user } = useAuth();
@@ -12,7 +13,7 @@ const ListProperty = () => {
     const navigate = useNavigate();
 
     // Fetch User Listings
-    const { data: properties = [], isLoading } = useQuery({
+    const { data: properties = [], isLoading: propertiesLoading } = useQuery({
         queryKey: ['my-properties', user?.email],
         queryFn: async () => {
             if (!user) return [];
@@ -20,6 +21,24 @@ const ListProperty = () => {
             const token = await user.getIdToken(); // get Firebase token
 
             const res = await axios.get(`/my-properties?email=${user.email}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return res.data;
+        },
+    });
+
+    // Fetch User Applications
+    const { data: applications = [], isLoading: applicationsLoading } = useQuery({
+        queryKey: ['my-applications', user?.email],
+        queryFn: async () => {
+            if (!user) return [];
+
+            const token = await user.getIdToken();
+
+            const res = await axios.get(`/my-applications?email=${user.email}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -44,9 +63,9 @@ const ListProperty = () => {
             bg: "bg-yellow-50"
         },
         {
-            label: "Total Requests",
-            value: "12", // Placeholder for seeker requests - will need to debug later
-            icon: <Users className="text-orange-600" />,
+            label: "My Applications",
+            value: applications?.length || 0,
+            icon: <FileText className="text-orange-600" />,
             bg: "bg-orange-100/50"
         },
     ];
@@ -96,28 +115,36 @@ const ListProperty = () => {
                     ))}
                 </div>
 
-                {/* Listings Section */}
-                <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-8">Your Listings</h2>
+                {/* Two-Column Grid: My Listings and My Requested Properties */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* My Listings Column */}
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-8">My Listings</h2>
 
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <Loader2 className="animate-spin text-orange-500 mb-4" size={40} />
-                            <p className="font-bold text-gray-400 uppercase tracking-widest text-xs">Loading Listings...</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {properties.length > 0 ? (
-                                properties.map(property => (
-                                    <MyPropertyCard key={property._id} property={property} />
-                                ))
-                            ) : (
-                                <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-[2rem]">
-                                    <p className="text-gray-400 font-medium">No properties found. Start by adding one!</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        {propertiesLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <Loader2 className="animate-spin text-orange-500 mb-4" size={40} />
+                                <p className="font-bold text-gray-400 uppercase tracking-widest text-xs">Loading Listings...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {properties.length > 0 ? (
+                                    properties.map(property => (
+                                        <MyPropertyCard key={property._id} property={property} />
+                                    ))
+                                ) : (
+                                    <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-[2rem]">
+                                        <p className="text-gray-400 font-medium">No properties found. Start by adding one!</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* My Requested Properties Column */}
+                    <div>
+                        <MyRequestedProperties />
+                    </div>
                 </div>
             </div>
         </div>

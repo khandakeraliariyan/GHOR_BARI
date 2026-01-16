@@ -30,4 +30,7 @@ router.put("/property/:id", verifyToken, verifyPropertyOwner, propertyController
 // Delete property (only owner)
 router.delete("/property/:id", verifyToken, verifyPropertyOwner, propertyController.deleteProperty);
 
+// Toggle property visibility (hide/unhide)
+router.patch("/property/:id/visibility", verifyToken, verifyPropertyOwner, propertyController.togglePropertyVisibility);
+
 export default router;
