@@ -30,31 +30,37 @@ const HomePageStats = () => {
     ];
 
     return (
-        <section className="bg-white pb-8 pt-5 md:pb-16 pt-10">
-            <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <section className="bg-gradient-to-b from-white to-gray-50 py-12 md:py-20">
+            <div className="w-11/12 mx-auto px-4 md:px-6">
                 {/* 2 columns on mobile, 4 on desktop */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {stats.map((stat) => (
                         <div
                             key={stat.id}
-                            className="bg-gray-100 flex flex-col items-center justify-center p-5 md:p-8 lg:aspect-square rounded-2xl md:rounded-3xl shadow-xl border border-orange-100"
+                            className="group relative bg-white flex flex-col items-center justify-center p-6 md:p-8 lg:p-10 rounded-lg shadow-lg hover:shadow-2xl border border-gray-100 hover:border-orange-200 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
                         >
-                            {/* Icon Container */}
-                            <div className="mb-3 md:mb-6 p-3 md:p-4 rounded-xl md:rounded-2xl bg-orange-500 text-white">
-                                {stat.icon}
+                            {/* Decorative gradient background */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-50/0 to-yellow-50/0 group-hover:from-orange-50/50 group-hover:to-yellow-50/30 transition-all duration-300"></div>
+                            
+                            {/* Content */}
+                            <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                                {/* Icon Container with enhanced styling */}
+                                <div className="mb-4 md:mb-6 p-3 md:p-4 rounded-md bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200 group-hover:shadow-xl group-hover:shadow-orange-300 group-hover:scale-110 transition-all duration-300">
+                                    {stat.icon}
+                                </div>
+
+                                {/* Value with enhanced gradient */}
+                                <h3 className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold mb-2 md:mb-3">
+                                    <span className="bg-gradient-to-r from-orange-500 via-orange-600 to-yellow-500 bg-clip-text text-transparent group-hover:from-orange-600 group-hover:via-orange-700 group-hover:to-yellow-600 transition-all duration-300">
+                                        {stat.value}
+                                    </span>
+                                </h3>
+
+                                {/* Label with better styling */}
+                                <p className="text-gray-500 group-hover:text-gray-700 text-[10px] md:text-xs lg:text-sm uppercase tracking-wider font-semibold text-center transition-colors duration-300">
+                                    {stat.label}
+                                </p>
                             </div>
-
-                            {/* Value with gradient */}
-                            <h3 className="text-xl md:text-3xl lg:text-5xl font-extrabold text-gray-900 mb-1">
-                                <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">
-                                    {stat.value}
-                                </span>
-                            </h3>
-
-                            {/* Label */}
-                            <p className="text-gray-400 text-[10px] md:text-xs lg:text-sm uppercase tracking-widest font-bold">
-                                {stat.label}
-                            </p>
                         </div>
                     ))}
                 </div>

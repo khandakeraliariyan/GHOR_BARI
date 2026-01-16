@@ -1,38 +1,54 @@
-const express = require("express");
+import express from "express";
+
+import { verifyToken } from "../middleware/verifyToken.js";
+
+import { verifyAdmin } from "../middleware/verifyAdmin.js";
+
+import * as adminController from "../controllers/adminController.js";
+
+
 const router = express.Router();
 
-const {
-    getAllUsers,
-    toggleBlockUser,
-    getAllPropertiesAdmin,
-    togglePropertyApproval,
-} = require("../controllers/adminController");
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+// Get all users with pending NID submissions
 
-// User management
-router.get("/users", protect, authorizeRoles("admin"), getAllUsers);
-router.put(
-    "/users/:userId/block",
-    protect,
-    authorizeRoles("admin"),
-    toggleBlockUser
-);
+router.get("/admin/pending-verifications", verifyToken, adminController.getPendingVerifications);
 
-// Property moderation
-router.get(
-    "/properties",
-    protect,
-    authorizeRoles("admin"),
-    getAllPropertiesAdmin
-);
+// Update user verification status
 
-router.put(
-    "/properties/:propertyId/approve",
-    protect,
-    authorizeRoles("admin"),
-    togglePropertyApproval
-);
+router.patch("/admin/verify-user/:id", verifyToken, adminController.verifyUser);
 
-module.exports = router;
+// Get all pending property listings
+
+router.get("/admin/pending-properties", verifyToken, adminController.getPendingProperties);
+
+// Update property status (Approve/Delete)
+
+router.patch("/admin/property-status/:id", verifyToken, adminController.updatePropertyStatus);
+
+// Permanently delete a property from the database
+
+router.delete("/admin/delete-property/:id", verifyToken, adminController.deleteProperty);
+
+// Dashboard Stats API
+
+router.get("/admin/stats", verifyToken, adminController.getStats);
+
+// API for admin to get property by id regardless of status
+
+router.get("/admin/property/:id", verifyToken, verifyAdmin, adminController.getAdminPropertyById);
+
+// Get all users
+
+router.get("/admin/all-users", verifyToken, adminController.getAllUsers);
+
+// Get all properties
+
+router.get("/admin/all-properties", verifyToken, adminController.getAllProperties);
+
+// Delete user
+
+router.delete("/admin/delete-user/:id", verifyToken, adminController.deleteUser);
+
+export default router;
+

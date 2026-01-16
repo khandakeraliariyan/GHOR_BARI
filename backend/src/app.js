@@ -1,31 +1,43 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
 
-const authRoutes = require("./routes/authRoutes");
-const testRoutes = require("./routes/testRoutes");
-const nidRoutes = require("./routes/nidRoutes");
-const propertyRoutes = require("./routes/propertyRoutes");
-const wishlistRoutes = require("./routes/wishlistRoutes");
-const chatRoutes = require("./routes/chatRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const adminRoutes = require("./routes/adminRoutes");
+import cors from "cors";
+
+import dotenv from "dotenv";
+
+import userRoutes from "./routes/userRoutes.js";
+
+import propertyRoutes from "./routes/propertyRoutes.js";
+
+import adminRoutes from "./routes/adminRoutes.js";
+
+import applicationRoutes from "./routes/applicationRoutes.js";
+
+dotenv.config();
 
 const app = express();
 
+// Middlewares
+
 app.use(cors());
+
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
-app.use("/api/nid", nidRoutes);
-app.use("/api/properties", propertyRoutes);
-app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/admin", adminRoutes);
+// Test route
 
 app.get("/", (req, res) => {
-  res.send("GhorBari Backend Running 🚀");
+
+    res.send("🏠 GhorBari server is running");
+
 });
 
-module.exports = app;
+// Routes
+
+app.use("/", userRoutes);
+
+app.use("/", propertyRoutes);
+
+app.use("/", adminRoutes);
+
+app.use("/", applicationRoutes);
+
+export default app;

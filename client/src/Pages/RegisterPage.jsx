@@ -1,62 +1,130 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Upload, CheckCircle2 } from "lucide-react";
 import { useNavigate, Link } from "react-router";
+import Loading from "../Components/Loading";
 
 import registerImg from "../assets/registerImage.jpg";
 import { uploadImageToImgBB } from "../Utilities/UploadImage";
 import { showToast } from "../Utilities/ToastMessage";
 import useAuth from "../Hooks/useAuth";
+import useAxios from "../Hooks/useAxios";
 
 const RegisterPage = () => {
     const { registerUserWithEmailPassword, updateUserProfile, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
+    const axios = useAxios();
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [fileName, setFileName] = useState("");
+    const [initialLoading, setInitialLoading] = useState(true);
+
 
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const password = watch("password");
 
-    // Email & Password Registration
+    // Email Password Registration
     const onSubmit = async (data) => {
         try {
             setLoading(true);
-            const userCredential = await registerUserWithEmailPassword(data.email, data.password);
-            const imageFile = data.avatar[0];
-            const imageUrl = await uploadImageToImgBB(imageFile);
 
+            // 1️⃣ Firebase email/password registration
+            const userCredential = await registerUserWithEmailPassword(data.email, data.password);
+            const user = userCredential.user;
+
+            // Upload avatar to ImgBB
+            let imageUrl = "";
+            if (data.avatar && data.avatar.length > 0) {
+                imageUrl = await uploadImageToImgBB(data.avatar[0]);
+            }
+
+            // Update Firebase profile
             await updateUserProfile({
                 displayName: data.fullName,
                 photoURL: imageUrl,
             });
 
+            // Update backend DB (store URL only)
+            const { data: existingUser } = await axios.get(`/check-user-exist?email=${data.email}`);
+            if (!existingUser.exists) {
+                await axios.post("/register-user", {
+                    email: data.email,
+                    name: data.fullName,
+                    profileImage: imageUrl || "",
+                    phone: data.phone ? `+88${data.phone}` : "",
+                    role: "user",
+                });
+            }
+
             navigate("/");
             showToast(`Welcome, ${data.fullName}! 🎉`, "success");
+
         } catch (error) {
-            showToast(error.message || "Registration failed", "error");
+            showToast(error.response?.data?.message || error.message || "Registration failed", "error");
         } finally {
             setLoading(false);
         }
     };
+
+
 
     // Google Sign-In
     const handleGoogleSignIn = async () => {
         try {
             setLoading(true);
+
+            // Firebase Google sign in
             const result = await loginWithGoogle();
             const user = result.user;
 
+            // Check if user exists in DB
+            const { data } = await axios.get(`/check-user-exist?email=${user.email}`);
+
+            // Create DB entry if not exists
+            if (!data.exists) {
+                await axios.post("/register-user", {
+                    email: user.email,
+                    name: user.displayName || "User",
+                    profileImage: user.photoURL || "",
+                    phone: "",
+                    role: "user",
+                });
+            }
+
             navigate("/");
-            showToast(`Welcome, ${user.displayName}! 🚀`, "success");
+            showToast(`Welcome, ${user.displayName || "User"}! 🚀`, "success");
+
         } catch (error) {
-            showToast(error.message || "Google sign-in failed", "error");
+            showToast(
+                error.response?.data?.message || error.message || "Google sign-in failed",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
     };
+
+
+
+    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (initialLoading) {
+        return <Loading />;
+    }
+
+
+
+
+
 
     return (
         <div className="min-h-screen flex bg-white">
@@ -79,10 +147,11 @@ const RegisterPage = () => {
                                 type="text"
                                 placeholder="e.g. John Doe"
                                 {...register("fullName", { required: "Full name is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.fullName.message}</p>}
                         </div>
+
 
                         {/* EMAIL */}
                         <div className="space-y-1">
@@ -91,9 +160,38 @@ const RegisterPage = () => {
                                 type="email"
                                 placeholder="name@example.com"
                                 {...register("email", { required: "Email is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
+                        </div>
+
+                        {/* PHONE NUMBER */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-700 ml-1">Phone Number</label>
+                            <div className="flex items-center bg-white border border-gray-200 rounded-md focus-within:border-orange-500 transition-all">
+                                <span className="px-4 py-2.5 text-gray-700 font-medium select-none">+88</span>
+                                <input
+                                    type="tel"
+                                    placeholder="01XXXXXXXXX"
+                                    maxLength="11"
+                                    {...register("phone", {
+                                        pattern: {
+                                            value: /^\d{11}$/,
+                                            message: "Phone number must be exactly 11 digits"
+                                        },
+                                        validate: (value) => {
+                                            if (!value) return true; // Optional field
+                                            return value.length === 11 || "Phone number must be exactly 11 digits";
+                                        }
+                                    })}
+                                    onInput={(e) => {
+                                        // Only allow digits
+                                        e.target.value = e.target.value.replace(/\D/g, '');
+                                    }}
+                                    className="flex-1 bg-transparent py-2.5 pr-4 text-gray-800 focus:outline-none"
+                                />
+                            </div>
+                            {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone.message}</p>}
                         </div>
 
                         {/* PASSWORD */}
@@ -111,12 +209,12 @@ const RegisterPage = () => {
                                             hasLower: (v) => /[a-z]/.test(v) || "Must include a small letter"
                                         }
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -135,12 +233,12 @@ const RegisterPage = () => {
                                         required: "Confirm your password",
                                         validate: (value) => value === password || "Passwords do not match",
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -151,7 +249,7 @@ const RegisterPage = () => {
                         {/* AVATAR UPLOAD */}
                         <div className="space-y-1">
                             <label className="text-sm font-semibold text-gray-700 ml-1">Profile Picture <span className="text-orange-500">*</span></label>
-                            <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-2.5 cursor-pointer transition-all ${fileName ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-orange-300'}`}>
+                            <label className={`flex items-center gap-3 border-2 border-dashed rounded-md px-4 py-2.5 cursor-pointer transition-all ${fileName ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-orange-300'}`}>
                                 {fileName ? <CheckCircle2 className="text-green-500" size={18} /> : <Upload className="text-gray-400" size={18} />}
                                 <span className={`text-sm truncate ${fileName ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
                                     {fileName || "Choose avatar image"}
@@ -173,7 +271,7 @@ const RegisterPage = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
+                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-md font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -195,7 +293,7 @@ const RegisterPage = () => {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={loading}
-                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-4"
+                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-md font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-4"
                     >
                         <img
                             src="https://www.svgrepo.com/show/475656/google-color.svg"

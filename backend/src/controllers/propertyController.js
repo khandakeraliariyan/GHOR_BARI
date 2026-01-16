@@ -1,133 +1,366 @@
-const Property = require("../models/Property");
+import { getDatabase } from "../config/db.js";
 
-// CREATE PROPERTY (Owner only & Verified)
-exports.createProperty = async (req, res) => {
+import { ObjectId } from "mongodb";
+
+export const postProperty = async (req, res) => {
+
     try {
-        if (!req.user.isVerified) {
-            return res
-                .status(403)
-                .json({ message: "NID verification required" });
+
+        const db = getDatabase();
+
+        const data = req.body;
+
+        const propertyType = data.propertyType; // flat | building
+
+        // Base property object
+        const property = {
+
+            title: data.title,
+            listingType: data.listingType,        // rent | sale
+            propertyType: propertyType,           // flat | building
+            price: Number(data.price),             // sale price or rent per month
+            areaSqFt: Number(data.areaSqFt),
+
+            // Address object now stores IDs + full address
+            address: {
+                division_id: data.address.division_id,
+                district_id: data.address.district_id,
+                upazila_id: data.address.upazila_id,
+                street: data.address.street
+            },
+
+            // Array of image URLs from ImgBB
+            images: data.images || [],
+
+            overview: data.overview,
+            amenities: data.amenities || [],
+
+            location: {
+                lat: Number(data.location.lat),
+                lng: Number(data.location.lng)
+            },
+
+            owner: {
+                uid: req.user.uid,
+                name: req.user.name,
+                email: req.user.email,
+                photoURL: req.user.photoURL
+            },
+
+            isOwnerVerified: req.user.isVerified,
+            status: "pending", // pending → active (approved) → hidden (owner hides) → in_progress → sold/rented
+            active_proposal_id: null, // No active proposal initially
+            createdAt: new Date()
+        };
+
+        // Dynamic fields based on property type
+        if (propertyType === "building") {
+            // For building: floorCount and totalUnits
+            property.floorCount = Number(data.floorCount);
+            property.totalUnits = Number(data.totalUnits);
+        } else if (propertyType === "flat") {
+            // For flat: roomCount and bathrooms
+            property.roomCount = Number(data.roomCount);
+            property.bathrooms = Number(data.bathrooms);
         }
 
-        const property = await Property.create({
-            ...req.body,
-            owner: req.user._id,
-        });
+        // Insert directly into the "properties" collection
 
-        res.status(201).json({
-            message: "Property listed successfully",
-            property,
-        });
+        const result = await db.collection("properties").insertOne(property);
+
+        res.status(201).send({ success: true, id: result.insertedId });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+
+        console.error(error);
+
+        res.status(500).send({ message: "Server error" });
+
     }
+
 };
 
-// GET ALL PROPERTIES (Public)
-exports.getAllProperties = async (req, res) => {
+export const getMyProperties = async (req, res) => {
+
     try {
-        const properties = await Property.find().populate(
-            "owner",
-            "name rating"
-        );
-        res.json(properties);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
-// GET SINGLE PROPERTY
-exports.getPropertyById = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id).populate(
-            "owner",
-            "name rating"
-        );
+        const db = getDatabase();
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
+        const email = req.query.email;
 
-        res.json(property);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+        const query = { "owner.email": email };
 
-// UPDATE PROPERTY (Owner only)
-exports.updateProperty = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id);
+        // Sorting by newest first
+        const properties = await db.collection("properties")
+            .find(query)
+            .sort({ createdAt: -1 })
+            .toArray();
 
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
-
-        if (property.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Not authorized" });
-        }
-
-        Object.assign(property, req.body);
-        await property.save();
-
-        res.json({
-            message: "Property updated successfully",
-            property,
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// DELETE PROPERTY (Owner only)
-exports.deleteProperty = async (req, res) => {
-    try {
-        const property = await Property.findById(req.params.id);
-
-        if (!property) {
-            return res.status(404).json({ message: "Property not found" });
-        }
-
-        if (property.owner.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Not authorized" });
-        }
-
-        await property.deleteOne();
-
-        res.json({ message: "Property deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// GET ALL PROPERTIES + SEARCH & FILTER
-exports.getAllProperties = async (req, res) => {
-    try {
-        const { minPrice, maxPrice, rooms, location } = req.query;
-
-        let query = {};
-
-        if (minPrice || maxPrice) {
-            query.price = {};
-            if (minPrice) query.price.$gte = Number(minPrice);
-            if (maxPrice) query.price.$lte = Number(maxPrice);
-        }
-
-        if (rooms) {
-            query.rooms = Number(rooms);
-        }
-
-        if (location) {
-            query.location = { $regex: location, $options: "i" };
-        }
-
-        const properties = await Property.find(query).populate(
-            "owner",
-            "name rating"
+        // Get application counts for each property
+        const propertiesWithCounts = await Promise.all(
+            properties.map(async (property) => {
+                const applicationCount = await db.collection("applications").countDocuments({
+                    propertyId: property._id,
+                    status: { $in: ["pending", "counter", "accepted"] }
+                });
+                return {
+                    ...property,
+                    requestsCount: applicationCount
+                };
+            })
         );
 
-        res.json(properties);
+        res.send(propertiesWithCounts);
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+
+        console.error("GET /my-properties error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
     }
+
 };
+
+export const getPropertyById = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        const result = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+
+        if (!result) return res.status(404).send({ message: "Property not found" });
+
+        res.send(result);
+
+    } catch (error) {
+
+        console.error("GET /property/:id error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};
+
+export const getActiveProperties = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        // Only show active properties (not pending, rejected, hidden, sold, rented, removed)
+        const result = await db.collection("properties")
+            .find({ 
+                status: "active"  // Only active properties are shown in marketplace
+            })
+            .sort({ createdAt: -1 })          // newest first
+            .toArray();
+
+        return res.json(result);
+
+    } catch (error) {
+
+        console.error("GET /properties error:", error);
+
+        res.status(500).json({ message: "Server error" });
+
+    }
+    
+};
+
+export const updateProperty = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        const data = req.body;
+
+        // Get the existing property to check propertyType
+        const existingProperty = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+        
+        if (!existingProperty) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        const propertyType = existingProperty.propertyType; // flat | building
+
+        // Only allow updating specific fields
+        const updateData = {
+
+            price: Number(data.price),
+            areaSqFt: Number(data.areaSqFt),
+            images: data.images || [],
+            overview: data.overview,
+            amenities: data.amenities || [],
+            location: {
+                lat: Number(data.location.lat),
+                lng: Number(data.location.lng)
+            },
+            updatedAt: new Date()
+
+        };
+
+        // Dynamic fields based on property type
+        if (propertyType === "building") {
+            // For building: floorCount and totalUnits
+            updateData.floorCount = Number(data.floorCount);
+            updateData.totalUnits = Number(data.totalUnits);
+        } else if (propertyType === "flat") {
+            // For flat: roomCount and bathrooms
+            updateData.roomCount = Number(data.roomCount);
+            updateData.bathrooms = Number(data.bathrooms);
+        }
+
+        const result = await db.collection("properties").updateOne(
+            { _id: new ObjectId(id), "owner.email": req.user.email },
+            { $set: updateData }
+        );
+
+        if (result.matchedCount === 0) {
+
+            return res.status(404).send({ message: "Property not found or you don't have permission" });
+
+        }
+
+        res.send({ success: true, message: "Property updated successfully" });
+
+    } catch (error) {
+
+        console.error("UPDATE /property/:id error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};
+
+export const deleteProperty = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        const result = await db.collection("properties").deleteOne(
+            { _id: new ObjectId(id), "owner.email": req.user.email }
+        );
+
+        if (result.deletedCount === 0) {
+
+            return res.status(404).send({ message: "Property not found or you don't have permission" });
+
+        }
+
+        res.send({ success: true, message: "Property deleted successfully" });
+
+    } catch (error) {
+
+        console.error("DELETE /property/:id error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};
+
+// Toggle property status (hide/unhide) - switches between "active" and "hidden"
+export const togglePropertyVisibility = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        // Get the property
+        const property = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+
+        if (!property) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        // Verify ownership
+        if (property.owner.email !== req.user.email) {
+
+            return res.status(403).send({ message: "You don't have permission to update this property" });
+
+        }
+
+        // Can only toggle between active and hidden
+        if (!["active", "hidden"].includes(property.status)) {
+
+            return res.status(400).send({ 
+                message: "Can only hide/unhide active properties" 
+            });
+
+        }
+
+        // Toggle status: active ↔ hidden
+        const newStatus = property.status === "active" ? "hidden" : "active";
+
+        const result = await db.collection("properties").updateOne(
+            { _id: new ObjectId(id) },
+            { 
+                $set: { 
+                    status: newStatus,
+                    updatedAt: new Date()
+                } 
+            }
+        );
+
+        if (result.matchedCount === 0) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        res.send({ 
+            success: true, 
+            message: `Property ${newStatus === "active" ? "shown" : "hidden"} successfully`,
+            status: newStatus
+        });
+
+    } catch (error) {
+
+        console.error("PATCH /property/:id/visibility error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};
+
