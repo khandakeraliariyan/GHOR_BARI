@@ -48,7 +48,8 @@ export const postProperty = async (req, res) => {
             },
 
             isOwnerVerified: req.user.isVerified,
-            status: "pending",
+            status: "pending", // pending → active (approved) → hidden (owner hides) → in_progress → sold/rented
+            active_proposal_id: null, // No active proposal initially
             createdAt: new Date()
         };
 
@@ -90,12 +91,26 @@ export const getMyProperties = async (req, res) => {
         const query = { "owner.email": email };
 
         // Sorting by newest first
-        const result = await db.collection("properties")
+        const properties = await db.collection("properties")
             .find(query)
             .sort({ createdAt: -1 })
             .toArray();
 
-        res.send(result);
+        // Get application counts for each property
+        const propertiesWithCounts = await Promise.all(
+            properties.map(async (property) => {
+                const applicationCount = await db.collection("applications").countDocuments({
+                    propertyId: property._id,
+                    status: { $in: ["pending", "counter", "accepted"] }
+                });
+                return {
+                    ...property,
+                    requestsCount: applicationCount
+                };
+            })
+        );
+
+        res.send(propertiesWithCounts);
 
     } catch (error) {
 
@@ -143,8 +158,11 @@ export const getActiveProperties = async (req, res) => {
 
         const db = getDatabase();
 
+        // Only show active properties (not pending, rejected, hidden, sold, rented, removed)
         const result = await db.collection("properties")
-            .find({ status: "active" })       // only show active approved listings
+            .find({ 
+                status: "active"  // Only active properties are shown in marketplace
+            })
             .sort({ createdAt: -1 })          // newest first
             .toArray();
 
@@ -264,6 +282,81 @@ export const deleteProperty = async (req, res) => {
     } catch (error) {
 
         console.error("DELETE /property/:id error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};
+
+// Toggle property status (hide/unhide) - switches between "active" and "hidden"
+export const togglePropertyVisibility = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        // Get the property
+        const property = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+
+        if (!property) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        // Verify ownership
+        if (property.owner.email !== req.user.email) {
+
+            return res.status(403).send({ message: "You don't have permission to update this property" });
+
+        }
+
+        // Can only toggle between active and hidden
+        if (!["active", "hidden"].includes(property.status)) {
+
+            return res.status(400).send({ 
+                message: "Can only hide/unhide active properties" 
+            });
+
+        }
+
+        // Toggle status: active ↔ hidden
+        const newStatus = property.status === "active" ? "hidden" : "active";
+
+        const result = await db.collection("properties").updateOne(
+            { _id: new ObjectId(id) },
+            { 
+                $set: { 
+                    status: newStatus,
+                    updatedAt: new Date()
+                } 
+            }
+        );
+
+        if (result.matchedCount === 0) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        res.send({ 
+            success: true, 
+            message: `Property ${newStatus === "active" ? "shown" : "hidden"} successfully`,
+            status: newStatus
+        });
+
+    } catch (error) {
+
+        console.error("PATCH /property/:id/visibility error:", error);
 
         res.status(500).send({ message: "Server error" });
 

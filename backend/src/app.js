@@ -10,6 +10,8 @@ import propertyRoutes from "./routes/propertyRoutes.js";
 
 import adminRoutes from "./routes/adminRoutes.js";
 
+import applicationRoutes from "./routes/applicationRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -35,5 +37,7 @@ app.use("/", userRoutes);
 app.use("/", propertyRoutes);
 
 app.use("/", adminRoutes);
+
+app.use("/", applicationRoutes);
 
 export default app;

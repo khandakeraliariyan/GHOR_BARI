@@ -86,7 +86,7 @@ const Navbar = () => {
                             }`
                         }
                     >
-                        List Property
+                        My Properties
                     </NavLink>
 
                     {/* Only show Messages if logged in */}
@@ -236,7 +236,7 @@ const Navbar = () => {
                                     }`
                                 }
                             >
-                                List Property
+                                My Properties
                             </NavLink>
 
                             {user && (

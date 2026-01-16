@@ -5,11 +5,12 @@ import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import PropertyDetailsMap from './PropertyDetailsMap';
 import NearbyPlaces from './NearbyPlaces';
+import ApplicationModal from './ApplicationModal';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import {
     MapPin, Bed, Bath, Square, CheckCircle, XCircle,
-    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star, Tag
+    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star, Tag, Send
 } from 'lucide-react';
 
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
@@ -27,6 +28,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
 
     const [geoMaps, setGeoMaps] = useState({ divisionMap: new Map(), districtMap: new Map(), upazilaMap: new Map() });
     const [selectedPlace, setSelectedPlace] = useState(null);
+    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
     // 1. Fetch Property Data
     const { data: property, isLoading: propLoading } = useQuery({
@@ -457,9 +459,16 @@ out center;
                             </div>
                         </div>
                         <div className="space-y-3">
-                            <button className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100">
-                                <MessageSquare size={16} /> Send Inquiry
-                            </button>
+                            {/* Show Apply button only if property is active and user is not the owner */}
+                            {property?.status === 'active' && 
+                             property?.owner?.email !== user?.email && (
+                                <button 
+                                    onClick={() => setIsApplicationModalOpen(true)}
+                                    className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
+                                >
+                                    <Send size={16} /> Apply Now
+                                </button>
+                            )}
                             <button onClick={() => navigate(`/owner-profile/${ownerProfile?.email}`)} className="w-full py-4 bg-gray-50 text-gray-600 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-gray-100 transition-all border border-gray-100">
                                 View Full Profile
                             </button>
@@ -496,6 +505,13 @@ out center;
 
                 </div>
             </div>
+
+            {/* Application Modal */}
+            <ApplicationModal
+                isOpen={isApplicationModalOpen}
+                onClose={() => setIsApplicationModalOpen(false)}
+                property={property}
+            />
         </div>
     );
 };
