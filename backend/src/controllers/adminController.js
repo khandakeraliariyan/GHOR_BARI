@@ -77,13 +77,55 @@ export const updatePropertyStatus = async (req, res) => {
 
         const id = req.params.id;
 
-        const { status } = req.body; // status can be: "active", "rejected", "rented", "sold", "deal-in-progress", "deal-cancelled"
+        const { status } = req.body; // status can be: "active", "rejected", "removed", "hidden"
 
         // Get the current property to check its status
         const property = await db.collection("properties").findOne({ _id: new ObjectId(id) });
         
         if (!property) {
             return res.status(404).send({ message: "Property not found" });
+        }
+
+        // Handle REMOVED status (soft delete - permanent)
+        if (status === "removed") {
+            const result = await db.collection("properties").updateOne(
+                { _id: new ObjectId(id) },
+                { 
+                    $set: { 
+                        status: "removed",
+                        updatedAt: new Date()
+                    } 
+                }
+            );
+            return res.send(result);
+        }
+
+        // Handle ACTIVE status (approve property)
+        if (status === "active") {
+            const result = await db.collection("properties").updateOne(
+                { _id: new ObjectId(id) },
+                { 
+                    $set: { 
+                        status: "active",
+                        updatedAt: new Date()
+                    } 
+                }
+            );
+            return res.send(result);
+        }
+
+        // Handle REJECTED status
+        if (status === "rejected") {
+            const result = await db.collection("properties").updateOne(
+                { _id: new ObjectId(id) },
+                { 
+                    $set: { 
+                        status: "rejected",
+                        updatedAt: new Date()
+                    } 
+                }
+            );
+            return res.send(result);
         }
 
         // If status is "deal-cancelled", restore previous status from the property document
@@ -94,7 +136,8 @@ export const updatePropertyStatus = async (req, res) => {
                 { 
                     $set: { 
                         status: statusToRestore,
-                        previousStatus: null // Clear previous status after restoration
+                        previousStatus: null, // Clear previous status after restoration
+                        updatedAt: new Date()
                     } 
                 }
             );
@@ -133,7 +176,10 @@ export const updatePropertyStatus = async (req, res) => {
         }
 
         // For other status changes
-        let updateData = { status: status };
+        let updateData = { 
+            status: status,
+            updatedAt: new Date()
+        };
         
         // Store previous status if changing from active or pending to deal-in-progress
         if ((property.status === "active" || property.status === "pending") && status === "deal-in-progress") {

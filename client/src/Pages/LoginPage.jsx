@@ -145,7 +145,7 @@ const LoginPage = () => {
                                 type="email"
                                 placeholder="name@example.com"
                                 {...register("email", { required: "Email is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
                         </div>
@@ -161,7 +161,7 @@ const LoginPage = () => {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     {...register("password", { required: "Password is required" })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
@@ -178,7 +178,7 @@ const LoginPage = () => {
                         <button
                             type="submit"
                             disabled={actionLoading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
+                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-md font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
                         >
                             {actionLoading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -200,7 +200,7 @@ const LoginPage = () => {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={actionLoading}
-                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-6"
+                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-md font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-6"
                     >
                         <img
                             src="https://www.svgrepo.com/show/475656/google-color.svg"
