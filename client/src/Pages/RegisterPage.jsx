@@ -54,7 +54,7 @@ const RegisterPage = () => {
                     name: data.fullName,
                     profileImage: imageUrl || "",
                     phone: data.phone ? `+88${data.phone}` : "",
-                    role: data.role || "user",
+                    role: "user",
                 });
             }
 
@@ -193,23 +193,6 @@ const RegisterPage = () => {
                             </div>
                             {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone.message}</p>}
                         </div>
-
-                        {/* ROLE SELECTION */}
-                        <div className="space-y-1">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Role <span className="text-orange-500">*</span></label>
-                            <select
-                                {...register("role", { required: "Please select a role" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
-                                defaultValue=""
-                            >
-                                <option value="" disabled>Select your role</option>
-                                <option value="property_seeker">Property Seeker</option>
-                                <option value="property_owner">Property Owner</option>
-                                <option value="user">Both</option>
-                            </select>
-                            {errors.role && <p className="text-red-500 text-xs mt-1 ml-1">{errors.role.message}</p>}
-                        </div>
-
 
                         {/* PASSWORD */}
                         <div className="space-y-1">
