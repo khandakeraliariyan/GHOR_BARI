@@ -216,12 +216,12 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         console.error('ApplicationManagementModal: Property is null or undefined');
         return (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-[2.5rem] max-w-2xl w-full p-6 shadow-2xl">
+                <div className="bg-white rounded-lg w-11/12 max-w-2xl mx-auto p-6 shadow-2xl">
                     <div className="flex flex-col items-center justify-center py-10">
                         <XCircle className="text-red-500 mb-4" size={40} />
                         <p className="font-bold text-red-500 mb-2">Invalid Property Data</p>
                         <p className="text-sm text-gray-500 text-center mb-4">Property information is missing.</p>
-                        <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-xl">Close</button>
+                        <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-md">Close</button>
                     </div>
                 </div>
             </div>
@@ -232,12 +232,12 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         console.error('ApplicationManagementModal: Property._id is missing', property);
         return (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-[2.5rem] max-w-2xl w-full p-6 shadow-2xl">
+                <div className="bg-white rounded-lg w-11/12 max-w-2xl mx-auto p-6 shadow-2xl">
                     <div className="flex flex-col items-center justify-center py-10">
                         <XCircle className="text-red-500 mb-4" size={40} />
                         <p className="font-bold text-red-500 mb-2">Missing Property ID</p>
                         <p className="text-sm text-gray-500 text-center mb-4">Property ID is missing. Please refresh the page.</p>
-                        <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-xl">Close</button>
+                        <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-md">Close</button>
                     </div>
                 </div>
             </div>
@@ -249,16 +249,16 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2.5rem] max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="bg-white rounded-lg max-w-4xl w-11/12 mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between rounded-t-[2.5rem] z-10">
+                <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between rounded-t-lg z-10">
                     <div>
                         <h2 className="text-2xl font-black text-gray-900">Manage Applications</h2>
                         <p className="text-sm text-gray-500 mt-1">{property.title}</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-md transition-colors"
                     >
                         <X size={20} className="text-gray-500" />
                     </button>
@@ -280,7 +280,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                             </p>
                             <button
                                 onClick={() => queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] })}
-                                className="px-4 py-2 bg-orange-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-orange-600 transition-all"
+                                className="px-4 py-2 bg-orange-500 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-orange-600 transition-all"
                             >
                                 Retry
                             </button>
@@ -295,12 +295,12 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                         {activeApplications.map((application) => (
                                             <div
                                                 key={application._id}
-                                                className="bg-gray-50 rounded-2xl p-5 border border-gray-200"
+                                                className="bg-gray-50 rounded-md p-5 border border-gray-200"
                                             >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-3 mb-3">
-                                                            <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden">
+                                                            <div className="w-12 h-12 rounded-md bg-orange-100 flex items-center justify-center overflow-hidden">
                                                                 {application.seeker.photoURL ? (
                                                                     <img src={application.seeker.photoURL} alt={application.seeker.name} className="w-full h-full object-cover" />
                                                                 ) : (
@@ -311,7 +311,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <h4 className="font-bold text-gray-900">{application.seeker.name}</h4>
                                                                 <p className="text-xs text-gray-500">{application.seeker.email}</p>
                                                             </div>
-                                                            <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
+                                                            <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
                                                                 {application.status}
                                                             </div>
                                                         </div>
@@ -343,7 +343,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <button
                                                                     onClick={() => handleAccept(application)}
                                                                     disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    className="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2"
                                                                 >
                                                                     {processingId === application._id ? (
                                                                         <Loader2 size={14} className="animate-spin" />
@@ -355,7 +355,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <button
                                                                     onClick={() => handleCounter(application)}
                                                                     disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    className="px-4 py-2 bg-blue-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center gap-2"
                                                                 >
                                                                     <Send size={14} />
                                                                     Counter
@@ -363,7 +363,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <button
                                                                     onClick={() => handleReject(application)}
                                                                     disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    className="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
                                                                 >
                                                                     <XCircle size={14} />
                                                                     Reject
@@ -375,7 +375,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <button
                                                                     onClick={() => handleAccept(application)}
                                                                     disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    className="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2"
                                                                 >
                                                                     {processingId === application._id ? (
                                                                         <Loader2 size={14} className="animate-spin" />
@@ -387,7 +387,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <button
                                                                     onClick={() => handleReject(application)}
                                                                     disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    className="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
                                                                 >
                                                                     <XCircle size={14} />
                                                                     Reject
@@ -395,7 +395,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                             </>
                                                         )}
                                                         {application.status === 'accepted' && (
-                                                            <div className="px-4 py-2 bg-green-100 text-green-700 rounded-xl font-bold text-xs uppercase tracking-wider text-center">
+                                                            <div className="px-4 py-2 bg-green-100 text-green-700 rounded-md font-bold text-xs uppercase tracking-wider text-center">
                                                                 Accepted
                                                             </div>
                                                         )}
@@ -415,10 +415,10 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                         {otherApplications.map((application) => (
                                             <div
                                                 key={application._id}
-                                                className="bg-gray-50 rounded-xl p-4 border border-gray-200 flex items-center justify-between"
+                                                className="bg-gray-50 rounded-md p-4 border border-gray-200 flex items-center justify-between"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center overflow-hidden">
                                                         {application.seeker.photoURL ? (
                                                             <img src={application.seeker.photoURL} alt={application.seeker.name} className="w-full h-full object-cover" />
                                                         ) : (
@@ -430,7 +430,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                         <p className="text-xs text-gray-500">{new Date(application.createdAt).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
-                                                <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
+                                                <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
                                                     {application.status}
                                                 </div>
                                             </div>
