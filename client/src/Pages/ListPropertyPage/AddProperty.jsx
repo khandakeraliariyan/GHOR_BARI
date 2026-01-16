@@ -158,8 +158,8 @@ const AddProperty = () => {
     const sectionTitle = "text-xl font-bold text-gray-800 flex items-center gap-2 mb-6";
 
     return (
-        <section className="min-h-screen bg-[#F8FAFC] py-12 px-4">
-            <div className="max-w-7xl mx-auto">
+        <section className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-12 px-4">
+            <div className="w-11/12 mx-auto">
                 {/* Header Section */}
                 <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-center md:text-left">

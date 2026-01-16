@@ -61,7 +61,7 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2.5rem] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="bg-white rounded-lg w-11/12 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between rounded-t-[2.5rem]">
                     <div>
@@ -70,7 +70,7 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-md transition-colors"
                     >
                         <X size={20} className="text-gray-500" />
                     </button>
@@ -79,7 +79,7 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                 {/* Form */}
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
                     {/* Property Info */}
-                    <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2">
+                    <div className="bg-gray-50 rounded-md p-4 border border-gray-100 space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-gray-500 uppercase">Original Listing Price</span>
                             <span className="text-xl font-black text-gray-900">
@@ -124,7 +124,7 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                                     message: "Price must be greater than 0"
                                 }
                             })}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                            className="w-full bg-white border border-gray-200 rounded-md px-4 py-3 text-gray-800 focus:border-orange-500 outline-none transition-all"
                         />
                         {errors.proposedPrice && (
                             <p className="text-red-500 text-xs mt-1">{errors.proposedPrice.message}</p>
@@ -139,14 +139,14 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-gray-200 transition-all"
+                            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-md font-bold uppercase text-xs tracking-wider hover:bg-gray-200 transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-md font-bold uppercase text-xs tracking-wider hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isSubmitting ? (
                                 <>

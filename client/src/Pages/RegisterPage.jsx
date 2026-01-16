@@ -147,7 +147,7 @@ const RegisterPage = () => {
                                 type="text"
                                 placeholder="e.g. John Doe"
                                 {...register("fullName", { required: "Full name is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.fullName.message}</p>}
                         </div>
@@ -160,7 +160,7 @@ const RegisterPage = () => {
                                 type="email"
                                 placeholder="name@example.com"
                                 {...register("email", { required: "Email is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
                         </div>
@@ -168,7 +168,7 @@ const RegisterPage = () => {
                         {/* PHONE NUMBER */}
                         <div className="space-y-1">
                             <label className="text-sm font-semibold text-gray-700 ml-1">Phone Number</label>
-                            <div className="flex items-center bg-white border border-gray-200 rounded-xl focus-within:border-orange-500 transition-all">
+                            <div className="flex items-center bg-white border border-gray-200 rounded-md focus-within:border-orange-500 transition-all">
                                 <span className="px-4 py-2.5 text-gray-700 font-medium select-none">+88</span>
                                 <input
                                     type="tel"
@@ -209,7 +209,7 @@ const RegisterPage = () => {
                                             hasLower: (v) => /[a-z]/.test(v) || "Must include a small letter"
                                         }
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
@@ -233,7 +233,7 @@ const RegisterPage = () => {
                                         required: "Confirm your password",
                                         validate: (value) => value === password || "Passwords do not match",
                                     })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
@@ -249,7 +249,7 @@ const RegisterPage = () => {
                         {/* AVATAR UPLOAD */}
                         <div className="space-y-1">
                             <label className="text-sm font-semibold text-gray-700 ml-1">Profile Picture <span className="text-orange-500">*</span></label>
-                            <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-2.5 cursor-pointer transition-all ${fileName ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-orange-300'}`}>
+                            <label className={`flex items-center gap-3 border-2 border-dashed rounded-md px-4 py-2.5 cursor-pointer transition-all ${fileName ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-orange-300'}`}>
                                 {fileName ? <CheckCircle2 className="text-green-500" size={18} /> : <Upload className="text-gray-400" size={18} />}
                                 <span className={`text-sm truncate ${fileName ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
                                     {fileName || "Choose avatar image"}
@@ -271,7 +271,7 @@ const RegisterPage = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
+                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-md font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -293,7 +293,7 @@ const RegisterPage = () => {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={loading}
-                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-4"
+                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-md font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-4"
                     >
                         <img
                             src="https://www.svgrepo.com/show/475656/google-color.svg"

@@ -322,11 +322,11 @@ out center;
     );
 
     return (
-        <div className="bg-[#F8FAFC] min-h-screen pt-10 pb-20">
+        <div className="bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 min-h-screen pt-10 pb-20">
             <div className="w-11/12 mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* LEFT SIDE */}
                 <div className="lg:col-span-3 space-y-6">
-                    <div className="w-full h-[550px] bg-gray-200 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100">
+                    <div className="w-full h-[550px] bg-gray-200 rounded-lg overflow-hidden shadow-sm border border-gray-100">
                         <Swiper modules={[Pagination, Autoplay]} pagination={{ clickable: true }} autoplay={{ delay: 5000 }} loop={true} className="h-full w-full">
                             {images?.map((img, idx) => (
                                 <SwiperSlide key={idx}><img src={img} alt={title} className="w-full h-full object-cover object-center" /></SwiperSlide>
@@ -334,7 +334,7 @@ out center;
                         </Swiper>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
                         <div className="flex flex-wrap gap-2 mb-6">
                             <span className="bg-slate-900 text-white text-sm font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md uppercase">
                                 <Tag size={14} /> {listingType}
@@ -364,7 +364,7 @@ out center;
                             {propertyType === "building" ? (
                                 <>
                                     <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
+                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-md">
                                             <Layers size={20} />
                                         </div>
                                         <div>
@@ -373,7 +373,7 @@ out center;
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Bed size={20} /></div>
+                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-md"><Bed size={20} /></div>
                                         <div>
                                             <p className="font-black text-xl">{totalUnits || "N/A"}</p>
                                             <p className="text-[10px] uppercase font-bold text-gray-400">Total Units</p>
@@ -383,7 +383,7 @@ out center;
                             ) : (
                                 <>
                                     <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
+                                        <div className="p-3 bg-orange-50 text-orange-500 rounded-md">
                                             <Bed size={20} />
                                         </div>
                                         <div>
@@ -392,7 +392,7 @@ out center;
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Bath size={20} /></div>
+                                        <div className="p-3 bg-yellow-50 text-yellow-600 rounded-md"><Bath size={20} /></div>
                                         <div>
                                             <p className="font-black text-xl">{bathrooms || "N/A"}</p>
                                             <p className="text-[10px] uppercase font-bold text-gray-400">Baths</p>
@@ -401,7 +401,7 @@ out center;
                                 </>
                             )}
                             <div className="flex items-center gap-3">
-                                <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl"><Square size={20} /></div>
+                                <div className="p-3 bg-orange-50 text-orange-500 rounded-md"><Square size={20} /></div>
                                 <div>
                                     <p className="font-black text-xl">{areaSqFt}</p>
                                     <p className="text-[10px] uppercase font-bold text-gray-400">Sq Ft</p>
@@ -416,7 +416,7 @@ out center;
                         </div>
                     </div>
 
-                    <div className="h-[500px] rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-md bg-white">
+                    <div className="h-[500px] rounded-lg overflow-hidden border-[6px] border-white shadow-md bg-white">
                         <PropertyDetailsMap 
                             location={location} 
                             title={title} 
@@ -435,10 +435,10 @@ out center;
 
                 {/* RIGHT SIDE */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
                         <h3 className="text-xs font-black mb-6 text-gray-400 uppercase tracking-[0.3em]">Property Owner</h3>
                         <div className="flex items-center gap-4 mb-8">
-                            <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center overflow-hidden border border-orange-100">
+                            <div className="w-16 h-16 rounded-md bg-orange-50 flex items-center justify-center overflow-hidden border border-orange-100">
                                 {ownerProfile?.profileImage ? (
                                     <img src={ownerProfile.profileImage} className="w-full h-full object-cover" alt="owner" />
                                 ) : (
@@ -464,24 +464,24 @@ out center;
                              property?.owner?.email !== user?.email && (
                                 <button 
                                     onClick={() => setIsApplicationModalOpen(true)}
-                                    className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
+                                    className="w-full py-4 bg-orange-600 text-white rounded-md font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
                                 >
                                     <Send size={16} /> Apply Now
                                 </button>
                             )}
-                            <button onClick={() => navigate(`/owner-profile/${ownerProfile?.email}`)} className="w-full py-4 bg-gray-50 text-gray-600 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-gray-100 transition-all border border-gray-100">
+                            <button onClick={() => navigate(`/owner-profile/${ownerProfile?.email}`)} className="w-full py-4 bg-gray-50 text-gray-600 rounded-md font-black uppercase text-[10px] tracking-[0.2em] hover:bg-gray-100 transition-all border border-gray-100">
                                 View Full Profile
                             </button>
                         </div>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
                         <h3 className="text-xl font-black text-gray-900 mb-4">Property Description</h3>
                         <p className="text-gray-500 leading-relaxed font-medium mb-8 text-sm">{overview}</p>
                         <h3 className="text-xs font-black text-gray-400 mb-6 border-t pt-8 uppercase tracking-[0.3em]">Key Amenities</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {amenities?.map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-100/50">
+                                <div key={i} className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-md border border-gray-100/50">
                                     <CheckCircle size={14} className="text-orange-500" />
                                     <span className="text-xs font-bold text-gray-700">{item}</span>
                                 </div>
@@ -489,7 +489,7 @@ out center;
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-[#f97316] to-[#fbbf24] p-9 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-[#f97316] to-[#fbbf24] p-9 rounded-lg shadow-xl text-white relative overflow-hidden">
                         <Sparkles className="absolute -right-8 -top-8 opacity-20 rotate-12" size={160} />
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-5">

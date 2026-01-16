@@ -227,8 +227,8 @@ const BuyOrRentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
-            <div className="max-w-7xl mx-auto mb-10 space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-6 lg:py-10">
+            <div className="w-11/12 mx-auto mb-10 space-y-6">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -236,7 +236,7 @@ const BuyOrRentPage = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search by location or property title..."
-                            className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-slate-900 outline-none transition-all shadow-sm bg-white"
+                            className="w-full pl-12 pr-4 py-4 rounded-md border border-gray-200 focus:ring-2 focus:ring-slate-900 outline-none transition-all shadow-sm bg-white"
                         />
                     </div>
 
@@ -246,7 +246,7 @@ const BuyOrRentPage = () => {
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="pl-8 pr-3 py-4 rounded-xl border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900 appearance-none cursor-pointer text-left min-w-[105px]"
+                                className="pl-8 pr-3 py-4 rounded-md border border-gray-200 bg-white font-medium text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-900 appearance-none cursor-pointer text-left min-w-[105px]"
                             >
                                 <option value="newest">Newest</option>
                                 <option value="priceLow">Price: Low to High</option>
@@ -255,32 +255,32 @@ const BuyOrRentPage = () => {
                             </select>
                         </div>
 
-                        <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
+                        <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center justify-center gap-2 px-6 py-4 rounded-md font-medium transition-all shadow-sm border ${showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}>
                             <SlidersHorizontal size={20} /> Filters
                         </button>
                     </div>
                 </div>
 
                 {showFilters && (
-                    <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white p-8 rounded-lg shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200 w-11/12 mx-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Price Range (৳)</label>
                                 <div className="flex items-center gap-2">
-                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minPrice} onChange={(e) => setTempFilters({ ...tempFilters, minPrice: e.target.value })} />
-                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxPrice} onChange={(e) => setTempFilters({ ...tempFilters, maxPrice: e.target.value })} />
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minPrice} onChange={(e) => setTempFilters({ ...tempFilters, minPrice: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxPrice} onChange={(e) => setTempFilters({ ...tempFilters, maxPrice: e.target.value })} />
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Area (SqFt)</label>
                                 <div className="flex items-center gap-2">
-                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minArea} onChange={(e) => setTempFilters({ ...tempFilters, minArea: e.target.value })} />
-                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxArea} onChange={(e) => setTempFilters({ ...tempFilters, maxArea: e.target.value })} />
+                                    <input type="number" placeholder="Min" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.minArea} onChange={(e) => setTempFilters({ ...tempFilters, minArea: e.target.value })} />
+                                    <input type="number" placeholder="Max" className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.maxArea} onChange={(e) => setTempFilters({ ...tempFilters, maxArea: e.target.value })} />
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Property Type</label>
-                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.propertyType} onChange={(e) => setTempFilters({ ...tempFilters, propertyType: e.target.value })}>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.propertyType} onChange={(e) => setTempFilters({ ...tempFilters, propertyType: e.target.value })}>
                                     <option value="all">All Types</option>
                                     <option value="flat">Flat</option>
                                     <option value="building">Building</option>
@@ -288,7 +288,7 @@ const BuyOrRentPage = () => {
                             </div>
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Listing Status</label>
-                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.listingType} onChange={(e) => setTempFilters({ ...tempFilters, listingType: e.target.value })}>
+                                <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.listingType} onChange={(e) => setTempFilters({ ...tempFilters, listingType: e.target.value })}>
                                     <option value="all">Sale & Rent</option>
                                     <option value="sale">For Sale</option>
                                     <option value="rent">For Rent</option>
@@ -309,7 +309,7 @@ const BuyOrRentPage = () => {
                                 <button onClick={handleResetFilters} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
                                     <RotateCcw size={16} /> Reset
                                 </button>
-                                <button onClick={handleApplyFilters} className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
+                                <button onClick={handleApplyFilters} className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
                                     Apply Filters
                                 </button>
                             </div>
@@ -337,12 +337,12 @@ const BuyOrRentPage = () => {
             {viewMode === "grid" ? (
                 <>
                     {totalItems === 0 ? (
-                        <div className="max-w-7xl mx-auto">
+                        <div className="w-11/12 mx-auto">
                             {/* Empty State Message */}
-                            <div className="bg-white rounded-3xl p-12 border border-gray-100 shadow-sm">
+                            <div className="bg-white rounded-lg p-12 border border-gray-100 shadow-sm">
                                 <div className="text-center">
                                     <div className="mb-6 flex justify-center">
-                                        <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center">
+                                        <div className="w-24 h-24 rounded-lg bg-orange-100 flex items-center justify-center">
                                             <Search className="text-orange-500" size={48} />
                                         </div>
                                     </div>
@@ -352,7 +352,7 @@ const BuyOrRentPage = () => {
                                             setSearchQuery("");
                                             handleResetFilters();
                                         }}
-                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-bold hover:brightness-110 transition-all"
+                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-md font-bold hover:brightness-110 transition-all"
                                     >
                                         Clear All Filters
                                     </button>
@@ -361,7 +361,7 @@ const BuyOrRentPage = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-6">
+                            <div className="w-11/12 mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-6">
                                 {pageItems.map((property) => (
                                     <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
                                         <PropertyCard property={property} />
@@ -373,7 +373,7 @@ const BuyOrRentPage = () => {
                     )}
                 </>
             ) : (
-                <div className="max-w-7xl mx-auto h-[600px] bg-white rounded-3xl overflow-hidden border border-gray-100">
+                <div className="w-11/12 mx-auto h-[600px] bg-white rounded-lg overflow-hidden border border-gray-100">
                     <BuyOrRentMap properties={filteredProperties} onMarkerClick={(id) => navigate(`/property-details/${id}`)} />
                 </div>
             )}

@@ -163,16 +163,14 @@ const MyRequestedProperties = () => {
     };
 
     return (
-        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-800 mb-8">My Requested Properties</h2>
-
+        <>
             {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-gray-100">
                     <Loader2 className="animate-spin text-orange-500 mb-4" size={40} />
                     <p className="font-bold text-gray-400 uppercase tracking-widest text-xs">Loading Applications...</p>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
                     {applications.length > 0 ? (
                         applications.map((application) => {
                             const property = application.property;
@@ -181,87 +179,104 @@ const MyRequestedProperties = () => {
                             return (
                                 <div
                                     key={application._id}
-                                    className="bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-orange-50 transition-all group"
+                                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all group flex flex-row"
                                 >
-                                    {/* Image Section - Top */}
-                                    <div className="relative w-full h-56 overflow-hidden">
-                                        <img
-                                            src={property.images?.[0] || "https://via.placeholder.com/400"}
-                                            alt={property.title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                        />
-                                        <div className="absolute top-3 right-3">
-                                            <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1 ${getStatusColor(application.status)}`}>
-                                                {getStatusIcon(application.status)}
-                                                {application.status}
+                                    {/* Image Section - Left */}
+                                    <div className="relative w-72 flex-shrink-0 p-4">
+                                        <div className="relative w-full h-40 overflow-hidden bg-gray-100 rounded-lg">
+                                            <img
+                                                src={property.images?.[0] || "https://via.placeholder.com/400"}
+                                                alt={property.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                            <div className="absolute top-2 right-2">
+                                                <div className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1 ${getStatusColor(application.status)}`}>
+                                                    {getStatusIcon(application.status)}
+                                                    {application.status}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Details Section - Middle */}
-                                    <div className="p-5">
-                                        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-500 transition-colors line-clamp-1">
-                                            {property.title}
-                                        </h3>
-                                        <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
-                                            <MapPin size={14} className="text-orange-500" />
-                                            <span className="line-clamp-1">{property.address?.street}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-4 mb-3">
-                                            <div className="text-lg font-black text-gray-900">
-                                                ৳{property.price?.toLocaleString()}
-                                                <span className="text-sm font-medium text-gray-400">
-                                                    /{property.listingType === 'rent' ? 'month' : 'total'}
-                                                </span>
-                                            </div>
-                                            {application.proposedPrice && (
-                                                <div className="flex items-center gap-1 text-blue-600">
-                                                    <DollarSign size={16} />
-                                                    <span className="text-sm font-bold">
-                                                        Your Offer: ৳{application.proposedPrice.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {application.message && (
-                                            <div className="mb-3 p-3 bg-gray-50 rounded-xl">
-                                                <div className="flex items-start gap-2">
-                                                    <MessageSquare size={16} className="text-gray-400 mt-0.5" />
-                                                    <p className="text-sm text-gray-600">{application.message}</p>
+                                    <div className="flex-1 p-4 flex flex-col justify-between">
+                                        <div className="space-y-2">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-gray-900 mb-1.5 group-hover:text-orange-600 transition-colors line-clamp-2">
+                                                    {property.title}
+                                                </h3>
+                                                <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                                                    <MapPin size={14} className="text-orange-500 flex-shrink-0" />
+                                                    <span className="line-clamp-1">{property.address?.street || 'Address not available'}</span>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Status Message */}
-                                        <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                                            <p className="text-xs font-medium text-blue-700">
-                                                {getStatusMessage(application.status)}
-                                            </p>
+                                            {/* Price Comparison */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-baseline justify-between gap-2">
+                                                    <div>
+                                                        <span className="text-xs text-gray-500 block">Listed</span>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-xl font-black text-gray-700">
+                                                                ৳{property.price?.toLocaleString()}
+                                                            </span>
+                                                            <span className="text-sm font-medium text-gray-500">
+                                                                /{property.listingType === 'rent' ? 'mo' : 'total'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {application.proposedPrice && (
+                                                        <div className="text-right">
+                                                            <span className="text-xs text-gray-500 block">Your Offer</span>
+                                                            <div className="flex items-baseline gap-1 justify-end">
+                                                                <DollarSign size={16} className="text-blue-600" />
+                                                                <span className="text-xl font-black text-blue-600">
+                                                                    ৳{application.proposedPrice.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Status Message - Compact */}
+                                            <div className={`p-2.5 rounded-md border text-xs font-medium ${
+                                                application.status === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                application.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                application.status === 'counter' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                            }`}>
+                                                <span className="line-clamp-2">{getStatusMessage(application.status)}</span>
+                                            </div>
                                         </div>
 
-                                        <div className="text-xs text-gray-400 mb-4">
-                                            Applied: {new Date(application.createdAt).toLocaleString()}
+                                        <div className="text-xs text-gray-400">
+                                            {new Date(application.createdAt).toLocaleDateString('en-US', { 
+                                                month: 'short', 
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
                                         </div>
                                     </div>
 
-                                    {/* Actions Section - Bottom */}
-                                    <div className="px-5 pb-5 pt-0 flex gap-2">
+                                    {/* Actions Section - Right */}
+                                    <div className="p-4 flex flex-col gap-2 border-l border-gray-100 justify-center">
                                         <button
                                             onClick={() => navigate(`/property-details/${property._id}`)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-gradient-to-r hover:from-orange-500 hover:to-yellow-500 hover:text-white transition-all font-bold text-[10px] uppercase tracking-wider"
+                                            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-orange-50 text-orange-600 rounded-md hover:bg-orange-100 transition-all text-sm font-semibold"
                                         >
-                                            <Eye size={14} /> View Property
+                                            <Eye size={16} />
+                                            <span>View</span>
                                         </button>
 
                                         {/* Accept Counter Offer button - only for counter status */}
                                         {application.status === 'counter' && (
                                             <button
                                                 onClick={() => handleAcceptCounter(application)}
-                                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-all font-bold text-[10px] uppercase tracking-wider"
+                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-all text-sm font-semibold"
                                             >
-                                                <Handshake size={14} /> Accept
+                                                <Handshake size={16} />
+                                                <span>Accept</span>
                                             </button>
                                         )}
 
@@ -272,9 +287,10 @@ const MyRequestedProperties = () => {
                                                     setSelectedApplication(application);
                                                     setReviseModalOpen(true);
                                                 }}
-                                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all font-bold text-[10px] uppercase tracking-wider"
+                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-all text-sm font-semibold"
                                             >
-                                                <Edit size={14} /> Revise
+                                                <Edit size={16} />
+                                                <span>Revise</span>
                                             </button>
                                         )}
 
@@ -282,9 +298,10 @@ const MyRequestedProperties = () => {
                                         {['pending', 'counter'].includes(application.status) && (
                                             <button
                                                 onClick={() => handleWithdraw(application)}
-                                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all font-bold text-[10px] uppercase tracking-wider"
+                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all text-sm font-semibold"
                                             >
-                                                <LogOut size={14} /> Withdraw
+                                                <LogOut size={16} />
+                                                <span>Withdraw</span>
                                             </button>
                                         )}
                                     </div>
@@ -292,7 +309,7 @@ const MyRequestedProperties = () => {
                             );
                         })
                     ) : (
-                        <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-[2rem]">
+                        <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-lg">
                             <MessageSquare size={48} className="text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-400 font-medium">No applications found. Start applying to properties!</p>
                         </div>
@@ -309,7 +326,7 @@ const MyRequestedProperties = () => {
                 }}
                 application={selectedApplication}
             />
-        </div>
+        </>
     );
 };
 
