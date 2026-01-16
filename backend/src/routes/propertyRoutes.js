@@ -1,41 +1,36 @@
-const express = require("express");
+import express from "express";
+
+import { verifyToken } from "../middleware/verifyToken.js";
+
+import { verifyOwner } from "../middleware/verifyOwner.js";
+
+import { verifyPropertyOwner } from "../middleware/verifyPropertyOwner.js";
+
+import * as propertyController from "../controllers/propertyController.js";
+
+
 const router = express.Router();
 
-const {
-    createProperty,
-    getAllProperties,
-    getPropertyById,
-    updateProperty,
-    deleteProperty,
-} = require("../controllers/propertyController");
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+// Create property
+router.post("/post-property", verifyToken, propertyController.postProperty);
 
-// Public routes
-router.get("/", getAllProperties);
-router.get("/:id", getPropertyById);
+// Get all property data of a user
+router.get("/my-properties", verifyToken, verifyOwner, propertyController.getMyProperties);
 
-// Owner routes
-router.post(
-    "/",
-    protect,
-    authorizeRoles("owner"),
-    createProperty
-);
+// Get single property by ID
+router.get("/property/:id", verifyToken, propertyController.getPropertyById);
 
-router.put(
-    "/:id",
-    protect,
-    authorizeRoles("owner"),
-    updateProperty
-);
+// Get all ACTIVE property listings
+router.get("/active-properties", verifyToken, propertyController.getActiveProperties);
 
-router.delete(
-    "/:id",
-    protect,
-    authorizeRoles("owner"),
-    deleteProperty
-);
+// Update property (only owner)
+router.put("/property/:id", verifyToken, verifyPropertyOwner, propertyController.updateProperty);
 
-module.exports = router;
+// Delete property (only owner)
+router.delete("/property/:id", verifyToken, verifyPropertyOwner, propertyController.deleteProperty);
+
+// Toggle property visibility (hide/unhide)
+router.patch("/property/:id/visibility", verifyToken, verifyPropertyOwner, propertyController.togglePropertyVisibility);
+
+export default router;

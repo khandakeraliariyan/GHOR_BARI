@@ -6,6 +6,19 @@ import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
 import HomePage from "./Pages/HomePage";
 import RegisterPage from "./Pages/RegisterPage";
 import LoginPage from "./Pages/LoginPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
+import AddProperty from "./Pages/ListPropertyPage/AddProperty";
+import PropertyDetails from "./Pages/PropertyDetails/PropertyDetails";
+import ProfilePage from "./Pages/ProfilePage/ProfilePage";
+import PrivateRoute from "./PrivateRoute/PrivateRoute";
+import PublicUserProfile from "./Pages/ProfilePage/PublicUserProfile";
+import DashboardLayout from "./Layouts/DashboardLayout";
+import AdminDashboardHome from "./Pages/AdminDashboard/AdminDashboardHome";
+import AdminRoute from "./PrivateRoute/AdminRoute";
+import PendingPropertyListings from "./Pages/AdminDashboard/PendingPropertyListings";
+import PendingUserVerifications from "./Pages/AdminDashboard/PendingUserVerifications";
+import AllUsers from "./Pages/AdminDashboard/AllUsers";
+import AllPropertyListings from "./Pages/AdminDashboard/AllPropertyListings";
 
 
 const router = createBrowserRouter([
@@ -18,26 +31,74 @@ const router = createBrowserRouter([
                 element: <HomePage></HomePage>,
             },
             {
-                path: "/properties",
-                element: <BuyOrRentPage></BuyOrRentPage>
-            },
-            {
-                path: "/list-property",
-                element: <ListPropertyPage></ListPropertyPage>
-            },
-            {
                 path: "/register",
                 element: <RegisterPage></RegisterPage>
             },
             {
                 path: "/login",
                 element: <LoginPage></LoginPage>
+            },
+            {
+                path: "/reset-password",
+                element: <ResetPasswordPage></ResetPasswordPage>
+            },
+            {
+                path: "/properties",
+                element: <PrivateRoute><BuyOrRentPage></BuyOrRentPage></PrivateRoute>
+            },
+            {
+                path: "/property-details/:id",
+                element: <PrivateRoute><PropertyDetails></PropertyDetails></PrivateRoute>
+            },
+            {
+                path: "/list-property",
+                element: <PrivateRoute><ListPropertyPage></ListPropertyPage></PrivateRoute>
+            },
+            {
+                path: "/add-property",
+                element: <PrivateRoute><AddProperty></AddProperty></PrivateRoute>
+            },
+
+            {
+                path: "/profile",
+                element: <PrivateRoute><ProfilePage></ProfilePage></PrivateRoute>
+            },
+            {
+                path: "/owner-profile/:email",
+                element: <PrivateRoute><PublicUserProfile></PublicUserProfile></PrivateRoute>
             }
-
         ]
-
     },
-
+    {
+        path: "/admin-dashboard",
+        element: <AdminRoute><DashboardLayout /></AdminRoute>,
+        children: [
+            {
+                index: true,
+                element: <AdminDashboardHome></AdminDashboardHome>
+            },
+            {
+                path: "pending-properties",
+                element: <AdminRoute><PendingPropertyListings></PendingPropertyListings></AdminRoute>
+            },
+            {
+                path: "pending-verifications",
+                element: <AdminRoute><PendingUserVerifications></PendingUserVerifications></AdminRoute>
+            },
+            {
+                path: "all-users",
+                element: <AdminRoute><AllUsers></AllUsers></AdminRoute>
+            },
+            {
+                path: "all-properties",
+                element: <AdminRoute><AllPropertyListings></AllPropertyListings></AdminRoute>
+            },
+            {
+                path: "property-details/:id",
+                element: <AdminRoute><PropertyDetails isAdminPreview={true} /></AdminRoute>
+            },
+        ]
+    },
     {
         path: "*",
         element: <Error404Page></Error404Page>,
