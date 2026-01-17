@@ -3,10 +3,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import useAuth from '../../Hooks/useAuth';
 import useAxios from '../../Hooks/useAxios';
-import { MapPin, Eye, Loader2, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, LogOut, Edit, Handshake } from 'lucide-react';
+import { MapPin, Eye, Loader2, Clock, CheckCircle, XCircle, MessageSquare, LogOut, Edit, Handshake, History, CheckCircle2, Ban } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { showToast } from '../../Utilities/ToastMessage';
 import ReviseOfferModal from './ReviseOfferModal';
+import BiddingHistoryModal from './BiddingHistoryModal';
+import { 
+    getApplicationStatusDisplay, 
+    getApplicationStatusMessage, 
+    getApplicationStatusColor,
+    isActiveApplicationStatus 
+} from '../../Utilities/StatusDisplay';
 
 const MyRequestedProperties = () => {
     const { user } = useAuth();
@@ -15,6 +22,8 @@ const MyRequestedProperties = () => {
     const queryClient = useQueryClient();
     const [reviseModalOpen, setReviseModalOpen] = useState(false);
     const [selectedApplication, setSelectedApplication] = useState(null);
+    const [biddingHistoryModalOpen, setBiddingHistoryModalOpen] = useState(false);
+    const [selectedApplicationForHistory, setSelectedApplicationForHistory] = useState(null);
 
     // Fetch User Applications
     const { data: applications = [], isLoading } = useQuery({
@@ -77,7 +86,7 @@ const MyRequestedProperties = () => {
                     <p><strong>Owner's Counter Offer:</strong> ৳${application.proposedPrice?.toLocaleString() || 'N/A'}</p>
                     <p><strong>Original Listing Price:</strong> ৳${application.property?.price?.toLocaleString() || 'N/A'}</p>
                 </div>
-                <p class="text-left mt-4 text-sm text-gray-600">Accepting this will close the deal and the property will be marked as in progress.</p>
+                <p class="text-left mt-4 text-sm text-gray-600">Accepting this will complete the deal and the property will be marked as deal-in-progress.</p>
             `,
             icon: 'question',
             showCancelButton: true,
@@ -97,68 +106,116 @@ const MyRequestedProperties = () => {
                 showToast('Counter offer accepted! Deal is now in progress.', 'success');
                 queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
                 queryClient.invalidateQueries({ queryKey: ['property', application.propertyId] });
+                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
             } catch (error) {
                 showToast(error.response?.data?.message || 'Failed to accept counter offer', 'error');
             }
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'counter':
-                return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'accepted':
-                return 'bg-green-100 text-green-700 border-green-200';
-            case 'rejected':
-                return 'bg-red-100 text-red-700 border-red-200';
-            case 'withdrawn':
-                return 'bg-gray-100 text-gray-700 border-gray-200';
-            case 'completed':
-                return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'cancelled':
-                return 'bg-orange-100 text-orange-700 border-orange-200';
-            default:
-                return 'bg-gray-100 text-gray-700 border-gray-200';
+    const handleMarkDealCompleted = async (application) => {
+        const property = application.property;
+        if (!property) return;
+
+        const actionTextLower = property.listingType === 'sale' ? 'sold' : 'rented';
+
+        const result = await Swal.fire({
+            title: 'Mark Deal as Completed?',
+            html: `
+                <p class="text-left mb-4">Are you sure you want to mark this deal as completed?</p>
+                <div class="text-left space-y-2">
+                    <p><strong>Property:</strong> ${property.title}</p>
+                    <p><strong>Final Price:</strong> ৳${application.proposedPrice?.toLocaleString() || property.price?.toLocaleString() || 'N/A'}</p>
+                </div>
+                <p class="text-left mt-4 text-sm text-gray-600">This will mark the property as ${actionTextLower} and finalize the deal.</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#22c55e',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Mark as Completed',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const token = await user.getIdToken();
+                await axios.patch(`/property/${property._id}/deal`, {
+                    dealStatus: 'completed'
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                showToast(`Deal marked as ${actionTextLower} successfully!`, 'success');
+                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+                queryClient.invalidateQueries({ queryKey: ['property', property._id] });
+                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
+            } catch (error) {
+                showToast(error.response?.data?.message || `Failed to mark deal as ${actionTextLower}`, 'error');
+            }
+        }
+    };
+
+    const handleCancelDeal = async (application) => {
+        const property = application.property;
+        if (!property) return;
+
+        const result = await Swal.fire({
+            title: 'Cancel Deal?',
+            html: `
+                <p class="text-left mb-4">Are you sure you want to cancel this deal?</p>
+                <div class="text-left space-y-2">
+                    <p><strong>Property:</strong> ${property.title}</p>
+                    <p><strong>Final Price:</strong> ৳${application.proposedPrice?.toLocaleString() || property.price?.toLocaleString() || 'N/A'}</p>
+                </div>
+                <p class="text-left mt-4 text-sm text-gray-600">This will cancel the deal and restore the property to its previous status. Your application will be marked as cancelled.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Cancel Deal',
+            cancelButtonText: 'No, Keep Deal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const token = await user.getIdToken();
+                await axios.patch(`/property/${property._id}/deal`, {
+                    dealStatus: 'cancelled'
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                showToast('Deal cancelled successfully', 'success');
+                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+                queryClient.invalidateQueries({ queryKey: ['property', property._id] });
+                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
+            } catch (error) {
+                showToast(error.response?.data?.message || 'Failed to cancel deal', 'error');
+            }
         }
     };
 
     const getStatusIcon = (status) => {
-        switch (status) {
+        // Backward compatibility: treat 'accepted' as 'deal-in-progress'
+        const normalizedStatus = status === 'accepted' ? 'deal-in-progress' : status;
+        
+        switch (normalizedStatus) {
             case 'pending':
                 return <Clock size={14} />;
             case 'counter':
                 return <MessageSquare size={14} />;
-            case 'accepted':
+            case 'deal-in-progress':
+                return <Handshake size={14} />;
+            case 'completed':
                 return <CheckCircle size={14} />;
             case 'rejected':
                 return <XCircle size={14} />;
-            case 'completed':
-                return <CheckCircle size={14} />;
+            case 'cancelled':
+                return <XCircle size={14} />;
             default:
                 return <Clock size={14} />;
-        }
-    };
-
-    const getStatusMessage = (status) => {
-        switch (status) {
-            case 'pending':
-                return 'Your application is pending review by the property owner.';
-            case 'counter':
-                return 'The owner has sent you a counter offer. You can accept it to close the deal or revise your offer.';
-            case 'accepted':
-                return 'Congratulations! Your application has been accepted.';
-            case 'rejected':
-                return 'Your application has been rejected by the property owner.';
-            case 'withdrawn':
-                return 'You have withdrawn this application.';
-            case 'completed':
-                return 'This deal has been completed successfully.';
-            case 'cancelled':
-                return 'This deal has been cancelled.';
-            default:
-                return '';
         }
     };
 
@@ -179,10 +236,10 @@ const MyRequestedProperties = () => {
                             return (
                                 <div
                                     key={application._id}
-                                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all group flex flex-row"
+                                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all group flex flex-col md:flex-row"
                                 >
                                     {/* Image Section - Left */}
-                                    <div className="relative w-72 flex-shrink-0 p-4">
+                                    <div className="relative w-full md:w-72 flex-shrink-0 p-4">
                                         <div className="relative w-full h-40 overflow-hidden bg-gray-100 rounded-lg">
                                             <img
                                                 src={property.images?.[0] || "https://via.placeholder.com/400"}
@@ -190,9 +247,9 @@ const MyRequestedProperties = () => {
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                             <div className="absolute top-2 right-2">
-                                                <div className={`px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1 ${getStatusColor(application.status)}`}>
+                                                <div className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shadow-sm border flex items-center gap-1 ${getApplicationStatusColor(application.status)}`}>
                                                     {getStatusIcon(application.status)}
-                                                    {application.status}
+                                                    {getApplicationStatusDisplay(application.status, property)}
                                                 </div>
                                             </div>
                                         </div>
@@ -228,11 +285,8 @@ const MyRequestedProperties = () => {
                                                     {application.proposedPrice && (
                                                         <div className="text-right">
                                                             <span className="text-xs text-gray-500 block">Your Offer</span>
-                                                            <div className="flex items-baseline gap-1 justify-end">
-                                                                <DollarSign size={16} className="text-blue-600" />
-                                                                <span className="text-xl font-black text-blue-600">
-                                                                    ৳{application.proposedPrice.toLocaleString()}
-                                                                </span>
+                                                            <div className="text-xl font-black text-blue-600">
+                                                                ৳{application.proposedPrice.toLocaleString()}
                                                             </div>
                                                         </div>
                                                     )}
@@ -240,14 +294,11 @@ const MyRequestedProperties = () => {
                                             </div>
 
                                             {/* Status Message - Compact */}
-                                            <div className={`p-2.5 rounded-md border text-xs font-medium ${
-                                                application.status === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                application.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                application.status === 'counter' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                            }`}>
-                                                <span className="line-clamp-2">{getStatusMessage(application.status)}</span>
-                                            </div>
+                                            {(application.status && getApplicationStatusMessage(application.status, property)) && (
+                                                <div className={`px-2.5 py-1 rounded-md border text-xs font-medium w-fit ${getApplicationStatusColor(application.status)}`}>
+                                                    {getApplicationStatusMessage(application.status, property)}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="text-xs text-gray-400">
@@ -260,13 +311,25 @@ const MyRequestedProperties = () => {
                                     </div>
 
                                     {/* Actions Section - Right */}
-                                    <div className="p-4 flex flex-col gap-2 border-l border-gray-100 justify-center">
+                                    <div className="p-4 flex flex-col gap-2 md:border-l md:border-t-0 border-t border-gray-100 justify-center">
                                         <button
                                             onClick={() => navigate(`/property-details/${property._id}`)}
                                             className="flex items-center justify-center gap-1.5 px-4 py-2 bg-orange-50 text-orange-600 rounded-md hover:bg-orange-100 transition-all text-sm font-semibold"
                                         >
                                             <Eye size={16} />
                                             <span>View</span>
+                                        </button>
+
+                                        {/* Bidding History Button */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedApplicationForHistory(application);
+                                                setBiddingHistoryModalOpen(true);
+                                            }}
+                                            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 transition-all text-sm font-semibold"
+                                        >
+                                            <History size={16} />
+                                            <span>History</span>
                                         </button>
 
                                         {/* Accept Counter Offer button - only for counter status */}
@@ -278,6 +341,26 @@ const MyRequestedProperties = () => {
                                                 <Handshake size={16} />
                                                 <span>Accept</span>
                                             </button>
+                                        )}
+
+                                        {/* Mark Deal as Completed/Rented/Sold and Cancel Deal buttons - only for deal-in-progress status */}
+                                        {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleMarkDealCompleted(application)}
+                                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-all text-sm font-semibold"
+                                                >
+                                                    <CheckCircle2 size={16} />
+                                                    <span>Mark as {property?.listingType === 'sale' ? 'Sold' : 'Rented'}</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCancelDeal(application)}
+                                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all text-sm font-semibold"
+                                                >
+                                                    <Ban size={16} />
+                                                    <span>Cancel Deal</span>
+                                                </button>
+                                            </>
                                         )}
 
                                         {/* Revise button - only for counter status */}
@@ -325,6 +408,16 @@ const MyRequestedProperties = () => {
                     setSelectedApplication(null);
                 }}
                 application={selectedApplication}
+            />
+
+            {/* Bidding History Modal */}
+            <BiddingHistoryModal
+                isOpen={biddingHistoryModalOpen}
+                onClose={() => {
+                    setBiddingHistoryModalOpen(false);
+                    setSelectedApplicationForHistory(null);
+                }}
+                application={selectedApplicationForHistory}
             />
         </>
     );
