@@ -38,5 +38,17 @@ router.get("/admin/stats", verifyToken, adminController.getStats);
 
 router.get("/admin/property/:id", verifyToken, verifyAdmin, adminController.getAdminPropertyById);
 
+// Get all users
+
+router.get("/admin/all-users", verifyToken, adminController.getAllUsers);
+
+// Get all properties
+
+router.get("/admin/all-properties", verifyToken, adminController.getAllProperties);
+
+// Delete user
+
+router.delete("/admin/delete-user/:id", verifyToken, adminController.deleteUser);
+
 export default router;
 

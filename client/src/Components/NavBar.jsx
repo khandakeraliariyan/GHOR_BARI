@@ -29,7 +29,7 @@ const Navbar = () => {
         if (isAdminLoading) return; // prevent premature navigation
 
         if (isAdmin) {
-            navigate("/dashboard");
+            navigate("/admin-dashboard");
         } else {
             navigate("/profile");
         }
@@ -38,8 +38,8 @@ const Navbar = () => {
 
 
     return (
-        <header className="w-full bg-white shadow-md relative z-50">
-            <nav className="mx-auto px-6 h-16 flex items-center justify-between">
+        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-white/20">
+            <nav className="w-11/12 mx-auto h-16 flex items-center justify-between">
                 {/* LOGO */}
                 <Link
                     to="/"
@@ -86,7 +86,7 @@ const Navbar = () => {
                             }`
                         }
                     >
-                        List Property
+                        My Properties
                     </NavLink>
 
                     {/* Only show Messages if logged in */}
@@ -195,8 +195,8 @@ const Navbar = () => {
             {/* MOBILE MENU */}
             {
                 menuOpen && (
-                    <div className="md:hidden bg-white shadow-inner">
-                        <div className="flex flex-col px-4 py-3 gap-2">
+                    <div className="md:hidden bg-white/70 backdrop-blur-md shadow-inner border-t border-white/20">
+                        <div className="w-11/12 mx-auto flex flex-col py-3 gap-2">
                             <NavLink
                                 to="/"
                                 onClick={() => setMenuOpen(false)}
@@ -236,7 +236,7 @@ const Navbar = () => {
                                     }`
                                 }
                             >
-                                List Property
+                                My Properties
                             </NavLink>
 
                             {user && (
