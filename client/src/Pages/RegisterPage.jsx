@@ -91,6 +91,26 @@ const RegisterPage = () => {
                     phone: "",
                     role: "user",
                 });
+            } else {
+                // User exists: sync Firebase photoURL with database profileImage
+                const token = await user.getIdToken();
+                const { data: userProfile } = await axios.get(`/user-profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                // Update Firebase photoURL if database has profileImage
+                if (userProfile?.profileImage && userProfile.profileImage !== user.photoURL) {
+                    await updateUserProfile({
+                        photoURL: userProfile.profileImage
+                    });
+                } else if (!userProfile?.profileImage && user.photoURL) {
+                    // Update database if it's missing profileImage but Firebase has it
+                    await axios.patch('/update-profile', {
+                        profileImage: user.photoURL
+                    }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                }
             }
 
             navigate("/");
