@@ -63,6 +63,26 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
         }
     });
 
+    // Fetch User Applications to check if already applied
+    const { data: userApplications = [] } = useQuery({
+        queryKey: ['my-applications', user?.email],
+        enabled: !!user && !!property?._id && !isAdminPreview,
+        queryFn: async () => {
+            if (!user) return [];
+            const token = await user.getIdToken();
+            const res = await axiosPublic.get(`/my-applications?email=${user.email}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return res.data || [];
+        }
+    });
+
+    // Check if user has already applied to this property
+    const hasApplied = userApplications.some(app => 
+        app.propertyId?.toString() === property?._id?.toString() || 
+        app.property?._id?.toString() === property?._id?.toString()
+    );
+
     // Fetch Nearby Places using Overpass API directly from frontend
     const { data: nearbyPlaces, isLoading: nearbyPlacesLoading } = useQuery({
         queryKey: ['nearby-places', property?.location?.lat, property?.location?.lng],
@@ -462,12 +482,20 @@ out center;
                             {/* Show Apply button only if property is active and user is not the owner */}
                             {property?.status === 'active' && 
                              property?.owner?.email !== user?.email && (
-                                <button 
-                                    onClick={() => setIsApplicationModalOpen(true)}
-                                    className="w-full py-4 bg-orange-600 text-white rounded-md font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
-                                >
-                                    <Send size={16} /> Apply Now
-                                </button>
+                                <>
+                                    {hasApplied ? (
+                                        <div className="w-full py-4 bg-blue-50 text-blue-700 rounded-md font-bold text-sm text-center flex items-center justify-center gap-2 border border-blue-200">
+                                            <CheckCircle size={16} /> You have already applied for this property
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setIsApplicationModalOpen(true)}
+                                            className="w-full py-4 bg-orange-600 text-white rounded-md font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
+                                        >
+                                            <Send size={16} /> Apply Now
+                                        </button>
+                                    )}
+                                </>
                             )}
                             <button onClick={() => navigate(`/owner-profile/${ownerProfile?.email}`)} className="w-full py-4 bg-gray-50 text-gray-600 rounded-md font-black uppercase text-[10px] tracking-[0.2em] hover:bg-gray-100 transition-all border border-gray-100">
                                 View Full Profile
