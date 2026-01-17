@@ -549,24 +549,58 @@ export const reviseApplication = async (req, res) => {
             });
         }
 
-        // Prepare update data
-        const updateData = {
+        // Prepare update data (same structure as owner's counter)
+        const setData = {
             status: "pending",
             proposedPrice: Number(proposedPrice),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            lastActionAt: new Date(),
+            lastActionBy: "seeker",
+            lastActionByEmail: req.user.email
         };
 
         // Update message if provided
         if (message !== undefined) {
-            updateData.message = message || "";
+            setData.message = message || "";
         }
+
+        // Prepare push data for history tracking (same structure as owner's counter)
+        const pushData = {
+            priceHistory: {
+                price: Number(proposedPrice),
+                setBy: "seeker",
+                setByEmail: req.user.email,
+                timestamp: new Date(),
+                note: "Seeker revised offer"
+            },
+            negotiationHistory: {
+                action: "offer_revised",
+                actor: "seeker",
+                actorEmail: req.user.email,
+                proposedPrice: Number(proposedPrice),
+                status: "pending",
+                message: message || "",
+                timestamp: new Date()
+            },
+            statusHistory: {
+                status: "pending",
+                changedBy: "seeker",
+                changedByEmail: req.user.email,
+                timestamp: new Date(),
+                note: "Seeker revised offer - waiting for owner response"
+            }
+        };
+
+        // Build update operation (same structure as owner's counter)
+        const updateOperation = {
+            $set: setData,
+            $push: pushData
+        };
 
         // Update application: new price, message (if provided) and status back to pending
         const result = await db.collection("applications").updateOne(
             { _id: new ObjectId(applicationId) },
-            {
-                $set: updateData
-            }
+            updateOperation
         );
 
         if (result.matchedCount === 0) {

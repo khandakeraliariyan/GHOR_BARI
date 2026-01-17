@@ -17,12 +17,16 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
 
     const property = application.property;
 
-    // Get user's previous offer from priceHistory
+    // Get user's previous offer from priceHistory (most recent seeker offer before owner's counter)
     const getUserPreviousOffer = () => {
         if (!application.priceHistory || !Array.isArray(application.priceHistory)) {
             return null;
         }
-        const seekerPrices = application.priceHistory.filter(entry => entry.setBy === 'seeker');
+        // Get all seeker prices, sorted by timestamp (most recent last)
+        const seekerPrices = application.priceHistory
+            .filter(entry => entry.setBy === 'seeker')
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        // Return the most recent seeker offer (last one in sorted array)
         return seekerPrices.length > 0 ? seekerPrices[seekerPrices.length - 1].price : null;
     };
 
@@ -139,21 +143,6 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
                             </div>
                         </div>
 
-                        {/* Property Quick Info */}
-                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <h3 className="font-bold text-gray-900 mb-2 text-sm">Property Details</h3>
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                    <span className="text-gray-500">Type:</span>
-                                    <span className="font-semibold text-gray-900 ml-2 capitalize">{property.propertyType || 'N/A'}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-500">Area:</span>
-                                    <span className="font-semibold text-gray-900 ml-2">{property.areaSqFt?.toLocaleString() || 'N/A'} sqft</span>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-3 pt-4">
                             <button
@@ -171,11 +160,6 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
                                 Accept Counter Offer
                             </button>
                         </div>
-
-                        {/* Info Text */}
-                        <p className="text-xs text-gray-500 text-center">
-                            You can revise your offer to negotiate further, or accept the owner's counter offer to proceed with the deal.
-                        </p>
                     </div>
                 </div>
             </div>
