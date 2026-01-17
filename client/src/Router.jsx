@@ -6,6 +6,7 @@ import ListPropertyPage from "./Pages/ListPropertyPage/ListPropertyPage"
 import HomePage from "./Pages/HomePage";
 import RegisterPage from "./Pages/RegisterPage";
 import LoginPage from "./Pages/LoginPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import AddProperty from "./Pages/ListPropertyPage/AddProperty";
 import PropertyDetails from "./Pages/PropertyDetails/PropertyDetails";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
@@ -16,6 +17,8 @@ import AdminDashboardHome from "./Pages/AdminDashboard/AdminDashboardHome";
 import AdminRoute from "./PrivateRoute/AdminRoute";
 import PendingPropertyListings from "./Pages/AdminDashboard/PendingPropertyListings";
 import PendingUserVerifications from "./Pages/AdminDashboard/PendingUserVerifications";
+import AllUsers from "./Pages/AdminDashboard/AllUsers";
+import AllPropertyListings from "./Pages/AdminDashboard/AllPropertyListings";
 
 
 const router = createBrowserRouter([
@@ -34,6 +37,10 @@ const router = createBrowserRouter([
             {
                 path: "/login",
                 element: <LoginPage></LoginPage>
+            },
+            {
+                path: "/reset-password",
+                element: <ResetPasswordPage></ResetPasswordPage>
             },
             {
                 path: "/properties",
@@ -63,7 +70,7 @@ const router = createBrowserRouter([
         ]
     },
     {
-        path: "/dashboard",
+        path: "/admin-dashboard",
         element: <AdminRoute><DashboardLayout /></AdminRoute>,
         children: [
             {
@@ -77,6 +84,14 @@ const router = createBrowserRouter([
             {
                 path: "pending-verifications",
                 element: <AdminRoute><PendingUserVerifications></PendingUserVerifications></AdminRoute>
+            },
+            {
+                path: "all-users",
+                element: <AdminRoute><AllUsers></AllUsers></AdminRoute>
+            },
+            {
+                path: "all-properties",
+                element: <AdminRoute><AllPropertyListings></AllPropertyListings></AdminRoute>
             },
             {
                 path: "property-details/:id",

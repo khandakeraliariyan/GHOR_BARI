@@ -8,6 +8,7 @@ import Loading from "../Components/Loading";
 import { showToast } from "../Utilities/ToastMessage";
 import useAuth from "../Hooks/useAuth";
 import useAxios from "../Hooks/useAxios";
+import useAdmin from "../Hooks/useAdmin";
 
 const LoginPage = () => {
     const { loginUserWithEmailPassword, loginWithGoogle } = useAuth();
@@ -37,8 +38,27 @@ const LoginPage = () => {
             const result = await loginUserWithEmailPassword(data.email, data.password);
             const user = result.user;
 
-            showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
-            navigate(location?.state?.from || "/");
+            // Check if user is admin
+            try {
+                const token = await user.getIdToken();
+                const adminCheck = await axios.get(`/users/admin/${user.email}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const isAdmin = adminCheck.data?.admin || false;
+
+                showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
+                
+                // Redirect admin to dashboard, others to intended location or home
+                if (isAdmin) {
+                    navigate("/admin-dashboard");
+                } else {
+                    navigate(location?.state?.from || "/");
+                }
+            } catch (error) {
+                // If admin check fails, redirect to normal location
+                showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
+                navigate(location?.state?.from || "/");
+            }
         } catch (error) {
             showToast(error.message || "Invalid email or password", "error");
         } finally {
@@ -69,8 +89,27 @@ const LoginPage = () => {
                 });
             }
 
-            navigate(location?.state?.from || "/");
-            showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+            // Check if user is admin
+            try {
+                const token = await user.getIdToken();
+                const adminCheck = await axios.get(`/users/admin/${user.email}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const isAdmin = adminCheck.data?.admin || false;
+
+                showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+                
+                // Redirect admin to dashboard, others to intended location or home
+                if (isAdmin) {
+                    navigate("/admin-dashboard");
+                } else {
+                    navigate(location?.state?.from || "/");
+                }
+            } catch (error) {
+                // If admin check fails, redirect to normal location
+                showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
+                navigate(location?.state?.from || "/");
+            }
 
         } catch (error) {
             showToast(
@@ -106,7 +145,7 @@ const LoginPage = () => {
                                 type="email"
                                 placeholder="name@example.com"
                                 {...register("email", { required: "Email is required" })}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
                         </div>
@@ -115,19 +154,19 @@ const LoginPage = () => {
                         <div className="space-y-1">
                             <div className="flex justify-between items-center ml-1">
                                 <label className="text-sm font-semibold text-gray-700">Password <span className="text-orange-500">*</span></label>
-                                <button type="button" className="text-xs text-orange-500 hover:underline">Forgot Password?</button>
+                                <Link to="/reset-password" className="text-xs text-orange-500 hover:underline">Forgot Password?</Link>
                             </div>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     {...register("password", { required: "Password is required" })}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 focus:border-orange-500 outline-none transition-all"
+                                    className="w-full bg-white border border-gray-200 rounded-md px-4 py-2.5 pr-12 text-gray-800 focus:border-orange-500 outline-none transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-orange-500 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors flex items-center justify-center"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -139,7 +178,7 @@ const LoginPage = () => {
                         <button
                             type="submit"
                             disabled={actionLoading}
-                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
+                            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-md font-bold shadow-lg shadow-orange-200 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70 mt-2"
                         >
                             {actionLoading ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -161,7 +200,7 @@ const LoginPage = () => {
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={actionLoading}
-                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-6"
+                        className="w-full border border-gray-200 bg-white flex items-center justify-center gap-3 py-2.5 rounded-md font-semibold text-gray-700 hover:bg-gray-50 transition-all mb-6"
                     >
                         <img
                             src="https://www.svgrepo.com/show/475656/google-color.svg"

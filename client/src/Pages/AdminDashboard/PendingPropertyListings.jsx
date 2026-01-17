@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
 import Swal from 'sweetalert2';
-import { CheckCircle, Trash2, ExternalLink, XCircle, ChevronDown, LayoutGrid } from 'lucide-react';
+import { CheckCircle, Trash2, ExternalLink, XCircle, ChevronDown, LayoutGrid, Inbox } from 'lucide-react';
+import Loading from '../../Components/Loading';
 
 const PendingPropertyListings = () => {
     const axiosSecure = useAxiosSecure();
@@ -69,7 +70,7 @@ const PendingPropertyListings = () => {
         });
     };
 
-    if (isLoading) return <div className="p-10 text-center font-bold">Loading...</div>;
+    if (isLoading) return <Loading />;
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -92,7 +93,7 @@ const PendingPropertyListings = () => {
                         onChange={(e) => setFilter(e.target.value)}
                         className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase tracking-wider text-[#344767] appearance-none cursor-pointer focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all outline-none"
                     >
-                        <option value="all">View: All Items</option>
+                        <option value="all">View : All Items</option>
                         <option value="rent">Type: For Rent</option>
                         <option value="sale">Type: For Sale</option>
                     </select>
@@ -102,21 +103,40 @@ const PendingPropertyListings = () => {
             {/* TABLE */}
             <div className="overflow-x-auto">
                 <table className="w-full text-center table-auto border-collapse">
-                    <thead className="bg-[#f8f9fa]">
-                        <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
-                            <th className="px-4 py-4 text-left border-r border-gray-200">Property Title</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Owner Contact</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Mode</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Category</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Price Structure</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Specifications</th>
-                            <th className="px-4 py-4 border-r border-gray-200">Size</th>
-                            <th className="px-4 py-4">Administrative Actions</th>
-                        </tr>
-                    </thead>
+                    {filteredProperties.length > 0 && (
+                        <thead className="bg-[#f8f9fa]">
+                            <tr className="text-[11px] uppercase text-[#344767] font-black tracking-widest border-b border-gray-200">
+                                <th className="px-4 py-4 text-left border-r border-gray-200">Property Title</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Owner Contact</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Mode</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Category</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Price Structure</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Specifications</th>
+                                <th className="px-4 py-4 border-r border-gray-200">Size</th>
+                                <th className="px-4 py-4">Administrative Actions</th>
+                            </tr>
+                        </thead>
+                    )}
                     <tbody className="divide-y divide-gray-200">
-                        {filteredProperties.map(prop => (
-                            <tr key={prop._id} className="hover:bg-gray-50/80 transition-colors group">
+                        {filteredProperties.length === 0 ? (
+                            <tr>
+                                <td colSpan="8" className="px-4 py-16">
+                                    <div className="flex flex-col items-center justify-center text-center">
+                                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                            <Inbox size={32} className="text-gray-400" />
+                                        </div>
+                                        <p className="text-[#67748e] font-bold text-sm uppercase tracking-wider mb-1">No Pending Properties</p>
+                                        <p className="text-gray-400 text-xs">
+                                            {filter === 'all' 
+                                                ? 'All property listings have been processed.' 
+                                                : `No properties found for ${filter === 'rent' ? 'rent' : 'sale'}.`}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredProperties.map(prop => (
+                                <tr key={prop._id} className="hover:bg-gray-50/80 transition-colors group">
                                 <td className="px-4 py-5 text-left border-r border-gray-200 bg-white group-hover:bg-gray-50/80">
                                     <span className="font-bold text-sm text-[#344767] leading-snug">{prop.title}</span>
                                 </td>
@@ -139,7 +159,10 @@ const PendingPropertyListings = () => {
                                     </span>
                                 </td>
                                 <td className="px-4 py-5 text-sm font-bold text-[#67748e] border-r border-gray-200">
-                                    {prop.unitCount} {prop.propertyType === 'flat' ? 'Bedrooms' : 'Floors'}
+                                    {prop.propertyType === 'building' 
+                                        ? `${prop.floorCount || prop.unitCount || 'N/A'} Floors, ${prop.totalUnits || 'N/A'} Units`
+                                        : `${prop.roomCount || prop.unitCount || 'N/A'} Rooms, ${prop.bathrooms || 'N/A'} Baths`
+                                    }
                                 </td>
                                 <td className="px-4 py-5 text-sm font-medium text-[#67748e] border-r border-gray-200">
                                     {prop.areaSqFt} <span className="text-[10px] font-bold">SQFT</span>
@@ -149,7 +172,7 @@ const PendingPropertyListings = () => {
                                         <button onClick={() => handleAction(prop._id, 'active')} className="w-9 h-9 flex items-center justify-center text-emerald-500 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all" title="Approve">
                                             <CheckCircle size={18} />
                                         </button>
-                                        <button onClick={() => navigate(`/dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
+                                        <button onClick={() => navigate(`/admin-dashboard/property-details/${prop._id}`)} className="w-9 h-9 flex items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" title="Details">
                                             <ExternalLink size={18} />
                                         </button>
                                         <button onClick={() => handleAction(prop._id, 'rejected')} className="w-9 h-9 flex items-center justify-center text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all" title="Reject">
@@ -162,7 +185,8 @@ const PendingPropertyListings = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

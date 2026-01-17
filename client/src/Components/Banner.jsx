@@ -1,6 +1,7 @@
 import React from "react";
 import { Search, Sparkles, ArrowRight } from "lucide-react";
 import { Typewriter } from "react-simple-typewriter";
+import { useNavigate } from "react-router";
 
 // Swiper
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -59,7 +60,7 @@ const Banner = () => {
                 {/* Text Content */}
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6">
                     {/* Capsule */}
-                    <div className="flex items-center gap-2 px-3 py-1 lg:px-4 lg:py-2 rounded-full 
+                    <div className="flex items-center gap-2 px-3 py-1 lg:px-4 lg:py-2 rounded-md 
               bg-orange-500/20 backdrop-blur-md border border-orange-400/30 
               text-orange-300 text-[10px] md:text-xs lg:text-sm font-semibold mb-3 lg:mb-6">
                         <Sparkles size={14} className="lg:w-[18px]" />
@@ -110,9 +111,25 @@ const Banner = () => {
 const SearchCard = () => {
     const [value, setValue] = React.useState("");
     const [focused, setFocused] = React.useState(false);
+    const navigate = useNavigate();
+
+    const handleSearch = () => {
+        const searchQuery = value.trim();
+        if (searchQuery) {
+            navigate(`/properties?search=${encodeURIComponent(searchQuery)}`);
+        } else {
+            navigate("/properties");
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            handleSearch();
+        }
+    };
 
     return (
-        <div className="bg-white rounded-xl lg:rounded-2xl shadow-xl lg:shadow-2xl p-5 lg:p-8 border border-gray-100">
+        <div className="bg-white rounded-md lg:rounded-lg shadow-xl lg:shadow-2xl p-5 lg:p-8 border border-gray-100">
             <div className="flex flex-col md:flex-row items-center gap-4">
                 {/* Input */}
                 <div className="relative flex items-center flex-1 w-full">
@@ -124,7 +141,8 @@ const SearchCard = () => {
                         onChange={(e) => setValue(e.target.value)}
                         onFocus={() => setFocused(true)}
                         onBlur={() => setFocused(false)}
-                        className="w-full pl-12 pr-4 py-4 lg:py-5 bg-gray-50 rounded-xl
+                        onKeyPress={handleKeyPress}
+                        className="w-full pl-12 pr-4 py-4 lg:py-5 bg-gray-50 rounded-md
               border border-gray-100 focus:border-orange-300 focus:bg-white
               outline-none transition-all text-sm lg:text-lg font-medium"
                     />
@@ -135,7 +153,7 @@ const SearchCard = () => {
                                 words={[
                                     "Search by location...",
                                     "Search by area...",
-                                    "Search by landmark...",
+                                    "Search by keywords...",
                                 ]}
                                 loop
                                 cursor
@@ -149,8 +167,11 @@ const SearchCard = () => {
                 </div>
 
                 {/* Button */}
-                <button className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-4 lg:py-5 rounded-xl text-white font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:brightness-110 hover:shadow-lg transition-all active:scale-95 shadow-orange-200">
-                    <span className="text-sm lg:text-base">Explore Properties</span>
+                <button 
+                    onClick={handleSearch}
+                    className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-4 lg:py-5 rounded-md text-white font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:brightness-110 hover:shadow-lg transition-all active:scale-95 shadow-orange-200"
+                >
+                    <span className="text-sm lg:text-base">Search Properties</span>
                     <ArrowRight size={20} />
                 </button>
             </div>

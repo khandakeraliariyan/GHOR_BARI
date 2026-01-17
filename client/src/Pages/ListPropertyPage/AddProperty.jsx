@@ -45,6 +45,7 @@ const AddProperty = () => {
     const propertyType = watch("propertyType");
     const watchDiv = watch("division_id");
     const watchDist = watch("district_id");
+    const watchUpazila = watch("upazila_id");
     const watchCoords = watch("coordinates");
 
     useEffect(() => {
@@ -68,6 +69,16 @@ const AddProperty = () => {
             setValue("upazila_id", "");
         }
     }, [watchDist, districts, setValue]);
+
+    useEffect(() => {
+        if (watchUpazila && lastUpdateRef.current.upazila !== watchUpazila) {
+            const upz = upazilas.find(u => String(u.id) === String(watchUpazila));
+            if (upz?.lat && upz.lon) {
+                setMapView({ center: [parseFloat(upz.lat), parseFloat(upz.lon)], zoom: 13 });
+                lastUpdateRef.current.upazila = watchUpazila;
+            }
+        }
+    }, [watchUpazila, upazilas]);
 
     const handleFilesChange = (e) => {
         const files = Array.from(e.target.files);
@@ -98,8 +109,6 @@ const AddProperty = () => {
                 ...data,
                 images: uploadedUrls,
                 price: Number(data.price),
-                unitCount: Number(data.unitCount),
-                bathrooms: Number(data.bathrooms),
                 areaSqFt: Number(data.areaSqFt),
                 address: {
                     division_id: data.division_id,
@@ -110,6 +119,15 @@ const AddProperty = () => {
                 location: data.coordinates,
                 createdAt: new Date().toISOString()
             };
+
+            // Dynamic fields based on property type
+            if (data.propertyType === "building") {
+                payload.floorCount = Number(data.floorCount);
+                payload.totalUnits = Number(data.totalUnits);
+            } else if (data.propertyType === "flat") {
+                payload.roomCount = Number(data.roomCount);
+                payload.bathrooms = Number(data.bathrooms);
+            }
 
             await axios.post("/post-property", payload, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -140,8 +158,8 @@ const AddProperty = () => {
     const sectionTitle = "text-xl font-bold text-gray-800 flex items-center gap-2 mb-6";
 
     return (
-        <section className="min-h-screen bg-[#F8FAFC] py-12 px-4">
-            <div className="max-w-7xl mx-auto">
+        <section className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-12 px-4">
+            <div className="w-11/12 mx-auto">
                 {/* Header Section */}
                 <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-center md:text-left">
@@ -247,16 +265,35 @@ const AddProperty = () => {
                                     <ErrorMsg name="price" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className={labelStyle}>{propertyType === "flat" ? "Beds" : "Floors"}</label>
-                                        <input type="number" {...register("unitCount", { required: "Required", min: 1 })} className={inputStyle("unitCount")} placeholder="Count" />
-                                        <ErrorMsg name="unitCount" />
-                                    </div>
-                                    <div>
-                                        <label className={labelStyle}>Baths</label>
-                                        <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
-                                        <ErrorMsg name="bathrooms" />
-                                    </div>
+                                    {propertyType === "flat" ? (
+                                        <>
+                                            <div>
+                                                <label className={labelStyle}>Rooms</label>
+                                                <input type="number" {...register("roomCount", { required: "Required", min: 1 })} className={inputStyle("roomCount")} placeholder="Count" />
+                                                <ErrorMsg name="roomCount" />
+                                            </div>
+                                            <div>
+                                                <label className={labelStyle}>Baths</label>
+                                                <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
+                                                <ErrorMsg name="bathrooms" />
+                                            </div>
+                                        </>
+                                    ) : propertyType === "building" ? (
+                                        <>
+                                            <div>
+                                                <label className={labelStyle}>Floors</label>
+                                                <input type="number" {...register("floorCount", { required: "Required", min: 1 })} className={inputStyle("floorCount")} placeholder="Count" />
+                                                <ErrorMsg name="floorCount" />
+                                            </div>
+                                            <div>
+                                                <label className={labelStyle}>Total Units</label>
+                                                <input type="number" {...register("totalUnits", { required: "Required", min: 1 })} className={inputStyle("totalUnits")} placeholder="Count" />
+                                                <ErrorMsg name="totalUnits" />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="col-span-2 text-sm text-gray-500">Please select a property type first</div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={labelStyle}>Area (Sq Ft)</label>
