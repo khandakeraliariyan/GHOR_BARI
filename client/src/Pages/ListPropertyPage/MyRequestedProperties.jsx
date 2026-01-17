@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import { showToast } from '../../Utilities/ToastMessage';
 import ReviseOfferModal from './ReviseOfferModal';
 import BiddingHistoryModal from './BiddingHistoryModal';
+import CounterOfferModal from './CounterOfferModal';
 import { 
     getApplicationStatusDisplay, 
     getApplicationStatusMessage, 
@@ -24,6 +25,8 @@ const MyRequestedProperties = () => {
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [biddingHistoryModalOpen, setBiddingHistoryModalOpen] = useState(false);
     const [selectedApplicationForHistory, setSelectedApplicationForHistory] = useState(null);
+    const [counterModalOpen, setCounterModalOpen] = useState(false);
+    const [selectedApplicationForCounter, setSelectedApplicationForCounter] = useState(null);
 
     // Fetch User Applications
     const { data: applications = [], isLoading } = useQuery({
@@ -76,42 +79,6 @@ const MyRequestedProperties = () => {
         }
     };
 
-    const handleAcceptCounter = async (application) => {
-        const result = await Swal.fire({
-            title: 'Accept Counter Offer?',
-            html: `
-                <p class="text-left mb-4">Are you sure you want to accept the owner's counter offer?</p>
-                <div class="text-left space-y-2">
-                    <p><strong>Property:</strong> ${application.property?.title || 'N/A'}</p>
-                    <p><strong>Owner's Counter Offer:</strong> ৳${application.proposedPrice?.toLocaleString() || 'N/A'}</p>
-                    <p><strong>Original Listing Price:</strong> ৳${application.property?.price?.toLocaleString() || 'N/A'}</p>
-                </div>
-                <p class="text-left mt-4 text-sm text-gray-600">Accepting this will complete the deal and the property will be marked as deal-in-progress.</p>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#22c55e',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, Accept & Close Deal',
-            cancelButtonText: 'Cancel'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const token = await user.getIdToken();
-                await axios.patch(`/application/${application._id}/accept-counter`, {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                showToast('Counter offer accepted! Deal is now in progress.', 'success');
-                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
-                queryClient.invalidateQueries({ queryKey: ['property', application.propertyId] });
-                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
-            } catch (error) {
-                showToast(error.response?.data?.message || 'Failed to accept counter offer', 'error');
-            }
-        }
-    };
 
     const handleMarkDealCompleted = async (application) => {
         const property = application.property;
@@ -257,7 +224,7 @@ const MyRequestedProperties = () => {
 
                                     {/* Details Section - Middle */}
                                     <div className="flex-1 p-4 flex flex-col justify-between">
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <div>
                                                 <h3 className="text-xl font-bold text-gray-900 mb-1.5 group-hover:text-orange-600 transition-colors line-clamp-2">
                                                     {property.title}
@@ -268,46 +235,50 @@ const MyRequestedProperties = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Price Comparison */}
-                                            <div className="space-y-2">
-                                                <div className="flex items-baseline justify-between gap-2">
-                                                    <div>
-                                                        <span className="text-xs text-gray-500 block">Listed</span>
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-xl font-black text-gray-700">
-                                                                ৳{property.price?.toLocaleString()}
-                                                            </span>
-                                                            <span className="text-sm font-medium text-gray-500">
-                                                                /{property.listingType === 'rent' ? 'mo' : 'total'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {application.proposedPrice && (
-                                                        <div className="text-right">
-                                                            <span className="text-xs text-gray-500 block">Your Offer</span>
-                                                            <div className="text-xl font-black text-blue-600">
-                                                                ৳{application.proposedPrice.toLocaleString()}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                            {/* Price and Last Offer */}
+                                            <div className="flex items-baseline justify-between gap-4">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-xl font-black text-gray-700">
+                                                        ৳{property.price?.toLocaleString()}
+                                                    </span>
+                                                    <span className="text-sm font-medium text-gray-500">
+                                                        /{property.listingType === 'rent' ? 'month' : 'total'}
+                                                    </span>
                                                 </div>
+                                                {/* Show last offer if available - on the right */}
+                                                {(() => {
+                                                    if (!application.priceHistory || !Array.isArray(application.priceHistory)) {
+                                                        return null;
+                                                    }
+                                                    const seekerPrices = application.priceHistory
+                                                        .filter(entry => entry.setBy === 'seeker')
+                                                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                                                    const lastOffer = seekerPrices.length > 0 ? seekerPrices[seekerPrices.length - 1].price : null;
+                                                    return lastOffer ? (
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">My Offer</span>
+                                                            <span className="text-xl font-black text-blue-600">
+                                                                ৳{lastOffer.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    ) : null;
+                                                })()}
                                             </div>
-
-                                            {/* Status Message - Compact */}
-                                            {(application.status && getApplicationStatusMessage(application.status, property)) && (
-                                                <div className={`px-2.5 py-1 rounded-md border text-xs font-medium w-fit ${getApplicationStatusColor(application.status)}`}>
-                                                    {getApplicationStatusMessage(application.status, property)}
-                                                </div>
-                                            )}
                                         </div>
 
-                                        <div className="text-xs text-gray-400">
-                                            {new Date(application.createdAt).toLocaleDateString('en-US', { 
-                                                month: 'short', 
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })}
-                                        </div>
+                                        {/* Counter Offer button - at bottom, same design as owner's request button */}
+                                        {application.status === 'counter' && (
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedApplicationForCounter(application);
+                                                    setCounterModalOpen(true);
+                                                }}
+                                                className="w-fit flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-sm transition-all bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
+                                            >
+                                                <MessageSquare size={16} />
+                                                <span>View Counter Offer</span>
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Actions Section - Right */}
@@ -332,17 +303,6 @@ const MyRequestedProperties = () => {
                                             <span>History</span>
                                         </button>
 
-                                        {/* Accept Counter Offer button - only for counter status */}
-                                        {application.status === 'counter' && (
-                                            <button
-                                                onClick={() => handleAcceptCounter(application)}
-                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-all text-sm font-semibold"
-                                            >
-                                                <Handshake size={16} />
-                                                <span>Accept</span>
-                                            </button>
-                                        )}
-
                                         {/* Mark Deal as Completed/Rented/Sold and Cancel Deal buttons - only for deal-in-progress status */}
                                         {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
                                             <>
@@ -361,20 +321,6 @@ const MyRequestedProperties = () => {
                                                     <span>Cancel Deal</span>
                                                 </button>
                                             </>
-                                        )}
-
-                                        {/* Revise button - only for counter status */}
-                                        {application.status === 'counter' && (
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedApplication(application);
-                                                    setReviseModalOpen(true);
-                                                }}
-                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-all text-sm font-semibold"
-                                            >
-                                                <Edit size={16} />
-                                                <span>Revise</span>
-                                            </button>
                                         )}
 
                                         {/* Withdraw button - only for pending and counter */}
@@ -399,6 +345,16 @@ const MyRequestedProperties = () => {
                     )}
                 </div>
             )}
+
+            {/* Counter Offer Modal */}
+            <CounterOfferModal
+                isOpen={counterModalOpen}
+                onClose={() => {
+                    setCounterModalOpen(false);
+                    setSelectedApplicationForCounter(null);
+                }}
+                application={selectedApplicationForCounter}
+            />
 
             {/* Revise Offer Modal */}
             <ReviseOfferModal
