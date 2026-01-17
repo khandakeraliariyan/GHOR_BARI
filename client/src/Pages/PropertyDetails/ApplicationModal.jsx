@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { X, FileText, Loader2 } from 'lucide-react';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import { showToast } from '../../Utilities/ToastMessage';
@@ -91,8 +91,7 @@ const ApplicationModal = ({ isOpen, onClose, property }) => {
 
                     {/* Proposed Price */}
                     <div>
-                        <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                            <DollarSign size={16} className="text-orange-500" />
+                        <label className="text-sm font-bold text-gray-700 mb-2">
                             Your Offer Price <span className="text-red-500">*</span>
                         </label>
                         <input

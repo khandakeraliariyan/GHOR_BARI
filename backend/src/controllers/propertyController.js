@@ -48,7 +48,7 @@ export const postProperty = async (req, res) => {
             },
 
             isOwnerVerified: req.user.isVerified,
-            status: "pending", // pending → active (approved) → hidden (owner hides) → in_progress → sold/rented
+            status: "pending", // pending → active (approved) → hidden (owner hides) → deal-in-progress → sold/rented
             active_proposal_id: null, // No active proposal initially
             createdAt: new Date()
         };
@@ -101,7 +101,7 @@ export const getMyProperties = async (req, res) => {
             properties.map(async (property) => {
                 const applicationCount = await db.collection("applications").countDocuments({
                     propertyId: property._id,
-                    status: { $in: ["pending", "counter", "accepted"] }
+                    status: { $in: ["pending", "counter", "deal-in-progress", "completed"] }
                 });
                 return {
                     ...property,
@@ -201,6 +201,13 @@ export const updateProperty = async (req, res) => {
             return res.status(404).send({ message: "Property not found" });
         }
 
+        // Prevent editing properties that are in deal-in-progress, sold, or rented
+        if (["deal-in-progress", "sold", "rented"].includes(existingProperty.status)) {
+            return res.status(400).send({ 
+                message: `Cannot edit property that is ${existingProperty.status}. Please complete or cancel the deal first.` 
+            });
+        }
+
         const propertyType = existingProperty.propertyType; // flat | building
 
         // Only allow updating specific fields
@@ -267,6 +274,39 @@ export const deleteProperty = async (req, res) => {
 
         }
 
+        // Get the property first to check status
+        const property = await db.collection("properties").findOne({
+            _id: new ObjectId(id)
+        });
+
+        if (!property) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        // Verify ownership
+        if (property.owner.email !== req.user.email) {
+            return res.status(403).send({ message: "You don't have permission to delete this property" });
+        }
+
+        // CRITICAL: Cannot delete properties with active deals
+        if (["deal-in-progress", "sold", "rented"].includes(property.status)) {
+            return res.status(400).send({ 
+                message: `Cannot delete property that is ${property.status}. Please complete or cancel the deal first.` 
+            });
+        }
+
+        // Check if property has any active applications
+        const activeApplications = await db.collection("applications").countDocuments({
+            propertyId: new ObjectId(id),
+            status: { $in: ["pending", "counter", "deal-in-progress"] }
+        });
+
+        if (activeApplications > 0) {
+            return res.status(400).send({ 
+                message: "Cannot delete property with active applications. Please wait for applications to be resolved or reject them first." 
+            });
+        }
+
         const result = await db.collection("properties").deleteOne(
             { _id: new ObjectId(id), "owner.email": req.user.email }
         );
@@ -320,25 +360,45 @@ export const togglePropertyVisibility = async (req, res) => {
 
         }
 
-        // Can only toggle between active and hidden
-        if (!["active", "hidden"].includes(property.status)) {
+        // Can toggle between active, hidden, and deal-in-progress
+        // Cannot toggle if property is sold, rented, rejected, pending, or removed
+        if (!["active", "hidden", "deal-in-progress"].includes(property.status)) {
 
             return res.status(400).send({ 
-                message: "Can only hide/unhide active properties" 
+                message: `Cannot toggle visibility for properties with status: ${property.status}. Can only toggle for active, hidden, or deal-in-progress properties.` 
             });
 
         }
 
-        // Toggle status: active ↔ hidden
-        const newStatus = property.status === "active" ? "hidden" : "active";
+        // Toggle status: active ↔ hidden (for deal-in-progress, toggle to hidden)
+        let newStatus;
+        let updateData = {
+            updatedAt: new Date()
+        };
+        
+        if (property.status === "active") {
+            newStatus = "hidden";
+        } else if (property.status === "hidden") {
+            // When unhiding, restore to previousStatus if it exists (deal-in-progress), otherwise active
+            newStatus = property.previousStatus || "active";
+            // Clear previousStatus if we're restoring
+            if (property.previousStatus) {
+                updateData.previousStatus = null;
+            }
+        } else if (property.status === "deal-in-progress") {
+            // For deal-in-progress, hide it but store deal-in-progress as previousStatus
+            newStatus = "hidden";
+            updateData.previousStatus = "deal-in-progress";
+        } else {
+            newStatus = "active"; // fallback
+        }
+        
+        updateData.status = newStatus;
 
         const result = await db.collection("properties").updateOne(
             { _id: new ObjectId(id) },
             { 
-                $set: { 
-                    status: newStatus,
-                    updatedAt: new Date()
-                } 
+                $set: updateData
             }
         );
 

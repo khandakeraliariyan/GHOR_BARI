@@ -22,6 +22,7 @@ import {
     RotateCcw
 } from 'lucide-react';
 import Loading from '../../Components/Loading';
+import { getPropertyStatusDisplay, getPropertyStatusColorAdmin } from '../../Utilities/StatusDisplay';
 
 const AllPropertyListings = () => {
     const axiosSecure = useAxiosSecure();
@@ -65,19 +66,6 @@ const AllPropertyListings = () => {
         setCurrentPage(1);
     }, [filter, searchTerm]);
 
-    // Status badge colors
-    const getStatusBadge = (status) => {
-        const badges = {
-            pending: 'bg-yellow-50 text-yellow-600 border-yellow-100',
-            active: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-            rejected: 'bg-red-50 text-red-600 border-red-100',
-            rented: 'bg-blue-50 text-blue-600 border-blue-100',
-            sold: 'bg-purple-50 text-purple-600 border-purple-100',
-            'deal-in-progress': 'bg-orange-50 text-orange-600 border-orange-100',
-            'deal-cancelled': 'bg-gray-50 text-gray-600 border-gray-100'
-        };
-        return badges[status] || 'bg-gray-50 text-gray-600 border-gray-100';
-    };
 
     // Mutation for status changes
     const statusMutation = useMutation({
@@ -110,16 +98,18 @@ const AllPropertyListings = () => {
             'rejected': 'reject this property',
             'rented': 'mark this property as rented',
             'sold': 'mark this property as sold',
-            'deal-in-progress': 'mark this property as deal in progress',
+            // 'deal-in-progress' removed - admin cannot set this status directly
             'deal-cancelled': 'cancel this deal (will restore previous status)'
         };
 
         const confirmMessages = {
             'active': 'This property will be approved and listed on the marketplace.',
-            'rejected': 'This property will be rejected and removed from listings.',
+            'rejected': (propStatus) => propStatus === 'pending' 
+                ? 'This property will be rejected and removed from listings.' 
+                : 'This property will be delisted and removed from the marketplace.',
             'rented': 'This property will be marked as rented and removed from active listings.',
             'sold': 'This property will be marked as sold and removed from active listings.',
-            'deal-in-progress': 'This property will be marked as deal in progress. The previous status will be saved.',
+            // 'deal-in-progress' removed - admin cannot set this status directly
             'deal-cancelled': 'This deal will be cancelled and the property will return to its previous status.'
         };
 
@@ -155,24 +145,32 @@ const AllPropertyListings = () => {
 
     // Check if action should be available - with proper business logic
     const canApprove = (status) => ['pending', 'rejected'].includes(status);
-    const canReject = (status) => ['pending', 'active'].includes(status);
+    const canReject = (status) => status === 'pending'; // Can reject only pending properties
+    const canDelist = (status) => status === 'active'; // Can delist only active properties
     
-    // Mark as Rented: Only for rent listings, and only if not already rented/sold
+    // Mark as Rented: Only for rent listings in deal-in-progress (has assigned seeker)
+    // Cannot mark active properties as rented - no deal in progress, no seeker assigned
     const canMarkRented = (property) => {
         return property.listingType === 'rent' 
             && !['rented', 'sold'].includes(property.status)
-            && ['active', 'deal-in-progress'].includes(property.status);
+            && property.status === 'deal-in-progress'; // Only when deal is in progress
     };
     
-    // Mark as Sold: Only for sale listings, and only if not already rented/sold
+    // Mark as Sold: Only for sale listings in deal-in-progress (has assigned seeker)
+    // Cannot mark active properties as sold - no deal in progress, no seeker assigned
     const canMarkSold = (property) => {
         return property.listingType === 'sale' 
             && !['rented', 'sold'].includes(property.status)
-            && ['active', 'deal-in-progress'].includes(property.status);
+            && property.status === 'deal-in-progress'; // Only when deal is in progress
     };
     
-    // Deal in Progress: Only for active or pending properties
-    const canMarkDealInProgress = (status) => ['active', 'pending'].includes(status);
+    // Deal in Progress: Admin CANNOT set this - only owner/user accepting application can
+    // Admin can only see properties that are already in deal-in-progress
+    const canMarkDealInProgress = (status, property) => {
+        // Admin should never be able to set deal-in-progress
+        // This status can only be set when owner/user accepts an application
+        return false;
+    };
     
     // Cancel Deal: Only for properties currently in deal-in-progress
     const canMarkDealCancelled = (status) => status === 'deal-in-progress';
@@ -221,7 +219,7 @@ const AllPropertyListings = () => {
                             <option value="rejected">Rejected</option>
                             <option value="rented">Rented</option>
                             <option value="sold">Sold</option>
-                            <option value="deal-in-progress">Deal in Progress</option>
+                            {/* Deal in Progress option removed - admin cannot set this status */}
                             <option value="deal-cancelled">Deal Cancelled</option>
                         </select>
                     </div>
@@ -296,8 +294,8 @@ const AllPropertyListings = () => {
                                         {prop.areaSqFt} <span className="text-[10px] font-bold">SQFT</span>
                                     </td>
                                     <td className="px-4 py-5 border-r border-gray-200 whitespace-nowrap">
-                                        <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border-2 ${getStatusBadge(prop.status)}`}>
-                                            {prop.status}
+                                        <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border-2 ${getPropertyStatusColorAdmin(prop.status)}`}>
+                                            {getPropertyStatusDisplay(prop.status)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-5 whitespace-nowrap">
@@ -305,7 +303,7 @@ const AllPropertyListings = () => {
                                             {/* Approve - only for pending/rejected */}
                                             {canApprove(prop.status) && (
                                                 <button 
-                                                    onClick={() => handleAction(prop._id, 'active')} 
+                                                    onClick={() => handleAction(prop._id, 'active', prop.status)} 
                                                     className="w-9 h-9 flex items-center justify-center text-emerald-500 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all" 
                                                     title="Approve Property"
                                                 >
@@ -322,10 +320,10 @@ const AllPropertyListings = () => {
                                                 <ExternalLink size={18} />
                                             </button>
 
-                                            {/* Reject - only for pending/active */}
+                                            {/* Reject - only for pending properties */}
                                             {canReject(prop.status) && (
                                                 <button 
-                                                    onClick={() => handleAction(prop._id, 'rejected')} 
+                                                    onClick={() => handleAction(prop._id, 'rejected', prop.status)} 
                                                     className="w-9 h-9 flex items-center justify-center text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all" 
                                                     title="Reject Property"
                                                 >
@@ -333,10 +331,21 @@ const AllPropertyListings = () => {
                                                 </button>
                                             )}
 
-                                            {/* Mark as Rented - only for rent listings that are active or deal-in-progress */}
+                                            {/* Delist - only for active properties (remove from marketplace) */}
+                                            {canDelist(prop.status) && (
+                                                <button 
+                                                    onClick={() => handleAction(prop._id, 'rejected', prop.status)} 
+                                                    className="w-9 h-9 flex items-center justify-center text-amber-500 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all" 
+                                                    title="Delist Property (Remove from Marketplace)"
+                                                >
+                                                    <XCircle size={18} />
+                                                </button>
+                                            )}
+
+                                            {/* Mark as Rented - only for rent listings in deal-in-progress (has assigned seeker) */}
                                             {canMarkRented(prop) && (
                                                 <button 
-                                                    onClick={() => handleAction(prop._id, 'rented')} 
+                                                    onClick={() => handleAction(prop._id, 'rented', prop.status)} 
                                                     className="w-9 h-9 flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all" 
                                                     title="Mark as Rented"
                                                 >
@@ -344,10 +353,10 @@ const AllPropertyListings = () => {
                                                 </button>
                                             )}
 
-                                            {/* Mark as Sold - only for sale listings that are active or deal-in-progress */}
+                                            {/* Mark as Sold - only for sale listings in deal-in-progress (has assigned seeker) */}
                                             {canMarkSold(prop) && (
                                                 <button 
-                                                    onClick={() => handleAction(prop._id, 'sold')} 
+                                                    onClick={() => handleAction(prop._id, 'sold', prop.status)} 
                                                     className="w-9 h-9 flex items-center justify-center text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all" 
                                                     title="Mark as Sold"
                                                 >
@@ -355,21 +364,13 @@ const AllPropertyListings = () => {
                                                 </button>
                                             )}
 
-                                            {/* Deal in Progress - only for active or pending */}
-                                            {canMarkDealInProgress(prop.status) && (
-                                                <button 
-                                                    onClick={() => handleAction(prop._id, 'deal-in-progress')} 
-                                                    className="w-9 h-9 flex items-center justify-center text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all" 
-                                                    title="Mark as Deal in Progress"
-                                                >
-                                                    <Clock size={18} />
-                                                </button>
-                                            )}
+                                            {/* Deal in Progress - REMOVED: Admin cannot set this status */}
+                                            {/* Only owner/user accepting an application can set deal-in-progress */}
 
                                             {/* Cancel Deal - only for deal-in-progress */}
                                             {canMarkDealCancelled(prop.status) && (
                                                 <button 
-                                                    onClick={() => handleAction(prop._id, 'deal-cancelled')} 
+                                                    onClick={() => handleAction(prop._id, 'deal-cancelled', prop.status)} 
                                                     className="w-9 h-9 flex items-center justify-center text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all" 
                                                     title="Cancel Deal (Restore Previous Status)"
                                                 >

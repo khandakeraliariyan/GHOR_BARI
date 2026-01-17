@@ -227,7 +227,7 @@ const BuyOrRentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-6 lg:py-10">
+        <div className="min-h-screen bg-gray-100 py-6 lg:py-10">
             <div className="w-11/12 mx-auto mb-10 space-y-6">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">

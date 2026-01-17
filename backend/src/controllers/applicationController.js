@@ -283,7 +283,7 @@ export const updateApplicationStatus = async (req, res) => {
         }
 
         // Valid statuses for owner actions
-        const validStatuses = ["accepted", "rejected", "counter"];
+        const validStatuses = ["deal-in-progress", "rejected", "counter"];
         if (!validStatuses.includes(status)) {
             return res.status(400).send({ 
                 message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` 
@@ -314,8 +314,8 @@ export const updateApplicationStatus = async (req, res) => {
             });
         }
 
-        // Business logic for accepting an application
-        if (status === "accepted") {
+        // Business logic for accepting an application (now using "deal-in-progress" status)
+        if (status === "deal-in-progress") {
             // Check if property already has an active proposal
             if (property.active_proposal_id) {
                 return res.status(400).send({ 
@@ -323,12 +323,12 @@ export const updateApplicationStatus = async (req, res) => {
                 });
             }
 
-            // Update property: set status to IN_PROGRESS, set active_proposal_id
+            // Update property: set status to deal-in-progress, set active_proposal_id
             await db.collection("properties").updateOne(
                 { _id: property._id },
                 {
                     $set: {
-                        status: "in_progress",
+                        status: "deal-in-progress",
                         active_proposal_id: new ObjectId(applicationId),
                         updatedAt: new Date()
                     }
@@ -424,7 +424,7 @@ export const updateApplicationStatus = async (req, res) => {
         } else {
             // For accept/reject, add to history
             pushData.negotiationHistory = {
-                action: status === "accepted" ? "application_accepted" : "application_rejected",
+                action: status === "deal-in-progress" ? "application_accepted" : "application_rejected",
                 actor: "owner",
                 actorEmail: req.user.email,
                 status: status,
@@ -435,7 +435,7 @@ export const updateApplicationStatus = async (req, res) => {
                 changedBy: "owner",
                 changedByEmail: req.user.email,
                 timestamp: new Date(),
-                note: status === "accepted" ? "Owner accepted application" : "Owner rejected application"
+                note: status === "deal-in-progress" ? "Owner accepted application - Deal in progress" : "Owner rejected application"
             };
         }
 
@@ -657,12 +657,12 @@ export const acceptCounterOffer = async (req, res) => {
             });
         }
 
-        // Update application: accept the counter offer
+        // Update application: accept the counter offer (now using "deal-in-progress" status)
         const result = await db.collection("applications").updateOne(
             { _id: new ObjectId(applicationId) },
             {
                 $set: {
-                    status: "accepted",
+                    status: "deal-in-progress",
                     updatedAt: new Date(),
                     lastActionAt: new Date(),
                     lastActionBy: "seeker",
@@ -674,16 +674,16 @@ export const acceptCounterOffer = async (req, res) => {
                         actor: "seeker",
                         actorEmail: req.user.email,
                         proposedPrice: application.proposedPrice, // Owner's counter price
-                        status: "accepted",
+                        status: "deal-in-progress",
                         timestamp: new Date(),
-                        note: "Seeker accepted owner's counter offer"
+                        note: "Seeker accepted owner's counter offer - Deal in progress"
                     },
                     statusHistory: {
-                        status: "accepted",
+                        status: "deal-in-progress",
                         changedBy: "seeker",
                         changedByEmail: req.user.email,
                         timestamp: new Date(),
-                        note: "Seeker accepted owner's counter offer"
+                        note: "Seeker accepted owner's counter offer - Deal in progress"
                     }
                 }
             }
@@ -693,12 +693,12 @@ export const acceptCounterOffer = async (req, res) => {
             return res.status(404).send({ message: "Application not found" });
         }
 
-        // Update property: set status to IN_PROGRESS, set active_proposal_id
+        // Update property: set status to deal-in-progress, set active_proposal_id
         await db.collection("properties").updateOne(
             { _id: property._id },
             {
                 $set: {
-                    status: "in_progress",
+                    status: "deal-in-progress",
                     active_proposal_id: new ObjectId(applicationId),
                     updatedAt: new Date()
                 }
@@ -777,22 +777,49 @@ export const updateDealStatus = async (req, res) => {
             return res.status(404).send({ message: "Property not found" });
         }
 
-        // Verify ownership or admin
-        if (property.owner.email !== req.user.email && req.user.role !== "admin") {
-            return res.status(403).send({ 
-                message: "You don't have permission to update this deal" 
-            });
-        }
-
-        if (property.status !== "in_progress" || !property.active_proposal_id) {
-            return res.status(400).send({ 
-                message: "Property is not in progress with an active proposal" 
-            });
-        }
-
+        // Get the active application ID first
         const activeApplicationId = property.active_proposal_id;
 
+        // Check if property is in deal-in-progress with an active proposal
+        if (property.status !== "deal-in-progress" || !activeApplicationId) {
+            return res.status(400).send({ 
+                message: "Property is not in deal-in-progress with an active proposal" 
+            });
+        }
+
+        // Convert to ObjectId if it's a string
+        const applicationId = typeof activeApplicationId === 'string' 
+            ? new ObjectId(activeApplicationId) 
+            : activeApplicationId;
+
+        // Get the active application
+        const application = await db.collection("applications").findOne({
+            _id: applicationId
+        });
+
+        if (!application) {
+            return res.status(404).send({ message: "Application not found" });
+        }
+
+        // Verify ownership, application ownership, or admin
+        const isOwner = property.owner.email === req.user.email;
+        const isSeeker = application.seeker.email === req.user.email;
+        const isAdmin = req.user.role === "admin";
+
+        if (!isOwner && !isSeeker && !isAdmin) {
+            return res.status(403).send({ 
+                message: "You don't have permission to update this deal. Only the property owner, applicant, or admin can update deals." 
+            });
+        }
+
         if (dealStatus === "completed") {
+            // Check if application is in deal-in-progress
+            if (application.status !== "deal-in-progress") {
+                return res.status(400).send({ 
+                    message: "Application must be in deal-in-progress status to be marked as completed" 
+                });
+            }
+
             // Mark property as sold/rented based on listingType
             const finalStatus = property.listingType === "sale" ? "sold" : "rented";
             
@@ -807,32 +834,33 @@ export const updateDealStatus = async (req, res) => {
                 }
             );
 
-            // Mark application as completed with history
+            // Update application status to completed
+            const actorType = isOwner ? "owner" : isSeeker ? "seeker" : "admin";
             await db.collection("applications").updateOne(
-                { _id: activeApplicationId },
+                { _id: applicationId },
                 {
                     $set: {
                         status: "completed",
                         updatedAt: new Date(),
                         lastActionAt: new Date(),
-                        lastActionBy: dealStatus === "completed" ? (property.owner.email === req.user.email ? "owner" : "admin") : "system",
+                        lastActionBy: actorType,
                         lastActionByEmail: req.user.email
                     },
                     $push: {
                         negotiationHistory: {
                             action: "deal_completed",
-                            actor: dealStatus === "completed" ? (property.owner.email === req.user.email ? "owner" : "admin") : "system",
+                            actor: actorType,
                             actorEmail: req.user.email,
                             status: "completed",
                             timestamp: new Date(),
-                            note: `Deal completed - Property ${finalStatus}`
+                            note: `Deal completed - Property marked as ${finalStatus}`
                         },
                         statusHistory: {
                             status: "completed",
-                            changedBy: dealStatus === "completed" ? (property.owner.email === req.user.email ? "owner" : "admin") : "system",
+                            changedBy: actorType,
                             changedByEmail: req.user.email,
                             timestamp: new Date(),
-                            note: `Deal completed - Property ${finalStatus}`
+                            note: `Deal completed - Property marked as ${finalStatus}`
                         }
                     }
                 }
@@ -842,7 +870,7 @@ export const updateDealStatus = async (req, res) => {
             await db.collection("applications").updateMany(
                 {
                     propertyId: new ObjectId(property._id),
-                    _id: { $ne: activeApplicationId },
+                    _id: { $ne: applicationId },
                     status: { $in: ["pending", "counter"] }
                 },
                 {
@@ -854,33 +882,43 @@ export const updateDealStatus = async (req, res) => {
             );
 
         } else if (dealStatus === "cancelled") {
-            // Restore property to active, clear active_proposal_id
+            // Check if application is in deal-in-progress
+            if (application.status !== "deal-in-progress") {
+                return res.status(400).send({ 
+                    message: "Application must be in deal-in-progress status to be cancelled" 
+                });
+            }
+
+            // Restore property to previous status or active, clear active_proposal_id
+            const previousStatus = property.previousStatus || "active";
             await db.collection("properties").updateOne(
                 { _id: property._id },
                 {
                     $set: {
-                        status: "active",
+                        status: previousStatus,
                         active_proposal_id: null,
+                        previousStatus: null, // Clear previous status
                         updatedAt: new Date()
                     }
                 }
             );
 
             // Mark application as cancelled with history
+            const actorType = isOwner ? "owner" : isSeeker ? "seeker" : "admin";
             await db.collection("applications").updateOne(
-                { _id: activeApplicationId },
+                { _id: applicationId },
                 {
                     $set: {
                         status: "cancelled",
                         updatedAt: new Date(),
                         lastActionAt: new Date(),
-                        lastActionBy: property.owner.email === req.user.email ? "owner" : "admin",
+                        lastActionBy: actorType,
                         lastActionByEmail: req.user.email
                     },
                     $push: {
                         negotiationHistory: {
                             action: "deal_cancelled",
-                            actor: property.owner.email === req.user.email ? "owner" : "admin",
+                            actor: actorType,
                             actorEmail: req.user.email,
                             status: "cancelled",
                             timestamp: new Date(),
@@ -888,7 +926,7 @@ export const updateDealStatus = async (req, res) => {
                         },
                         statusHistory: {
                             status: "cancelled",
-                            changedBy: property.owner.email === req.user.email ? "owner" : "admin",
+                            changedBy: actorType,
                             changedByEmail: req.user.email,
                             timestamp: new Date(),
                             note: "Deal cancelled"
@@ -900,7 +938,9 @@ export const updateDealStatus = async (req, res) => {
 
         res.send({ 
             success: true, 
-            message: `Deal ${dealStatus} successfully` 
+            message: `Deal ${dealStatus} successfully`,
+            propertyId: property._id,
+            applicationId: applicationId
         });
 
     } catch (error) {
