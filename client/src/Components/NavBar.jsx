@@ -92,7 +92,7 @@ const Navbar = () => {
                     {/* Only show Messages if logged in */}
                     {user && (
                         <NavLink
-                            to="/messages"
+                            to="/chat"
                             className={({ isActive }) =>
                                 `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
                   ${isActive
@@ -101,7 +101,7 @@ const Navbar = () => {
                                 }`
                             }
                         >
-                            Messages
+                            💬 Chat
                         </NavLink>
                     )}
 
@@ -241,7 +241,7 @@ const Navbar = () => {
 
                             {user && (
                                 <NavLink
-                                    to="/messages"
+                                    to="/chat"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
                                         `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
@@ -251,7 +251,7 @@ const Navbar = () => {
                                         }`
                                     }
                                 >
-                                    Messages
+                                    💬 Chat
                                 </NavLink>
                             )}
 
