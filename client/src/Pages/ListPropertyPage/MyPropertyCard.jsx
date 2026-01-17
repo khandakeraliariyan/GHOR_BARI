@@ -7,6 +7,7 @@ import useAuth from '../../Hooks/useAuth';
 import EditPropertyModal from './EditPropertyModal';
 import ApplicationManagementModal from './ApplicationManagementModal';
 import { useQueryClient } from '@tanstack/react-query';
+import { getPropertyStatusDisplay, getPropertyStatusColor } from '../../Utilities/StatusDisplay';
 
 const MyPropertyCard = ({ property }) => {
     const navigate = useNavigate();
@@ -109,29 +110,10 @@ const MyPropertyCard = ({ property }) => {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'active':
-                return 'bg-green-100 text-green-700';
-            case 'hidden':
-                return 'bg-gray-100 text-gray-700';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-700';
-            case 'rejected':
-                return 'bg-red-100 text-red-700';
-            case 'in_progress':
-                return 'bg-blue-100 text-blue-700';
-            case 'sold':
-            case 'rented':
-                return 'bg-purple-100 text-purple-700';
-            default:
-                return 'bg-gray-100 text-gray-700';
-        }
-    };
 
     return (
         <>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all group flex flex-row">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all group flex flex-col md:flex-row">
                 {/* Image Section - Left */}
                 <div className="relative w-72 flex-shrink-0 p-4">
                     <div className="relative w-full h-40 overflow-hidden bg-gray-100 rounded-lg">
@@ -141,8 +123,8 @@ const MyPropertyCard = ({ property }) => {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-2 right-2">
-                            <div className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shadow-sm border ${getStatusColor(status)}`}>
-                                {status || 'Pending'}
+                            <div className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider shadow-sm border ${getPropertyStatusColor(status)}`}>
+                                {getPropertyStatusDisplay(status)}
                             </div>
                         </div>
                     </div>
@@ -186,7 +168,7 @@ const MyPropertyCard = ({ property }) => {
                 </div>
 
                 {/* Actions Section - Right */}
-                <div className="p-4 flex flex-col gap-2 border-l border-gray-100 justify-center">
+                <div className="p-4 flex flex-col gap-2 md:border-l md:border-t-0 border-t border-gray-100 justify-center">
                     <button
                         onClick={() => navigate(`/property-details/${_id}`)}
                         className="flex items-center justify-center gap-1.5 px-4 py-2 bg-orange-50 text-orange-600 rounded-md hover:bg-orange-100 transition-all text-sm font-semibold"
@@ -218,19 +200,27 @@ const MyPropertyCard = ({ property }) => {
                         </button>
                     )}
 
+                    {/* Edit button - disabled for deal-in-progress/sold/rented */}
                     <button
                         onClick={() => setIsEditModalOpen(true)}
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-all text-sm font-semibold"
-                        title="Edit Property"
+                        disabled={['deal-in-progress', 'sold', 'rented'].includes(status)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={['deal-in-progress', 'sold', 'rented'].includes(status) 
+                            ? `Cannot edit property that is ${status}` 
+                            : "Edit Property"}
                     >
                         <Edit3 size={16} />
                         <span>Edit</span>
                     </button>
 
+                    {/* Delete button - disabled for deal-in-progress/sold/rented */}
                     <button
                         onClick={handleDelete}
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all text-sm font-semibold"
-                        title="Delete Property"
+                        disabled={['deal-in-progress', 'sold', 'rented'].includes(status)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={['deal-in-progress', 'sold', 'rented'].includes(status) 
+                            ? `Cannot delete property that is ${status}. Please complete or cancel the deal first.` 
+                            : "Delete Property"}
                     >
                         <Trash2 size={16} />
                         <span>Delete</span>

@@ -78,7 +78,7 @@ const ListProperty = () => {
     ];
 
     return (
-        <div className="bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 min-h-screen py-12">
+        <div className="bg-gray-100 min-h-screen py-12">
             <div className="w-11/12 mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
