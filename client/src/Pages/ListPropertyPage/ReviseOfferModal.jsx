@@ -16,28 +16,45 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
     
     const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
         defaultValues: {
-            proposedPrice: application?.proposedPrice || property?.price || ''
+            proposedPrice: application?.proposedPrice || property?.price || '',
+            message: application?.message || ''
         }
     });
 
-    // Auto-fill price when modal opens
+    // Auto-fill price and message when modal opens
     useEffect(() => {
         if (isOpen && application) {
             const priceToUse = application.proposedPrice || property?.price || '';
+            const messageToUse = application.message || '';
             setValue('proposedPrice', priceToUse);
+            setValue('message', messageToUse);
         }
     }, [isOpen, application, property?.price, setValue]);
 
     if (!isOpen || !application || !property) return null;
+
+    // Get user's previous offer from priceHistory (last seeker entry before counter)
+    const getUserPreviousOffer = () => {
+        if (!application.priceHistory || !Array.isArray(application.priceHistory)) {
+            return null;
+        }
+        // Find the last price set by seeker (before owner's counter)
+        const seekerPrices = application.priceHistory.filter(entry => entry.setBy === 'seeker');
+        return seekerPrices.length > 0 ? seekerPrices[seekerPrices.length - 1].price : null;
+    };
+
+    const userPreviousOffer = getUserPreviousOffer();
+    const ownerCounterOffer = application.status === 'counter' ? application.proposedPrice : null;
 
     const onSubmit = async (data) => {
         try {
             setIsSubmitting(true);
             const token = await user.getIdToken();
 
-            // Revise offer by updating the application with new price and setting status back to pending
+            // Revise offer by updating the application with new price, message and setting status back to pending
             await axios.patch(`/application/${application._id}/revise`, {
-                proposedPrice: Number(data.proposedPrice)
+                proposedPrice: Number(data.proposedPrice),
+                message: data.message || ''
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -89,19 +106,19 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                                 </span>
                             </span>
                         </div>
-                        {application.proposedPrice && (
+                        {userPreviousOffer && (
                             <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                                 <span className="text-sm font-bold text-gray-500 uppercase">Your Previous Offer</span>
                                 <span className="text-lg font-bold text-blue-600">
-                                    ৳{application.proposedPrice.toLocaleString()}
+                                    ৳{userPreviousOffer.toLocaleString()}
                                 </span>
                             </div>
                         )}
-                        {application.status === 'counter' && application.proposedPrice && (
+                        {ownerCounterOffer && (
                             <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                                 <span className="text-sm font-bold text-gray-500 uppercase">Owner's Counter Offer</span>
                                 <span className="text-lg font-bold text-orange-600">
-                                    ৳{application.proposedPrice.toLocaleString()}
+                                    ৳{ownerCounterOffer.toLocaleString()}
                                 </span>
                             </div>
                         )}
@@ -130,6 +147,22 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
                         )}
                         <p className="text-xs text-gray-400 mt-1">
                             Enter your revised offer price
+                        </p>
+                    </div>
+
+                    {/* Message */}
+                    <div>
+                        <label className="text-sm font-bold text-gray-700 mb-2">
+                            Message (Optional)
+                        </label>
+                        <textarea
+                            rows={4}
+                            placeholder="Add a message to accompany your revised offer..."
+                            {...register("message")}
+                            className="w-full bg-white border border-gray-200 rounded-md px-4 py-3 text-gray-800 focus:border-orange-500 outline-none transition-all resize-none"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            You can update your message to reflect your revised offer
                         </p>
                     </div>
 
