@@ -335,40 +335,8 @@ export const updateApplicationStatus = async (req, res) => {
                 }
             );
 
-            // Reject all other pending/counter applications for this property with history
-            await db.collection("applications").updateMany(
-                {
-                    propertyId: new ObjectId(property._id),
-                    _id: { $ne: new ObjectId(applicationId) },
-                    status: { $in: ["pending", "counter"] }
-                },
-                {
-                    $set: {
-                        status: "rejected",
-                        updatedAt: new Date(),
-                        lastActionAt: new Date(),
-                        lastActionBy: "system",
-                        lastActionByEmail: req.user.email
-                    },
-                    $push: {
-                        statusHistory: {
-                            status: "rejected",
-                            changedBy: "system",
-                            changedByEmail: req.user.email,
-                            timestamp: new Date(),
-                            note: "Auto-rejected: Another application was accepted"
-                        },
-                        negotiationHistory: {
-                            action: "application_auto_rejected",
-                            actor: "system",
-                            actorEmail: req.user.email,
-                            status: "rejected",
-                            timestamp: new Date(),
-                            note: "Auto-rejected because another application was accepted"
-                        }
-                    }
-                }
-            );
+            // NOTE: We do NOT auto-reject other applications here because deal-in-progress is not final.
+            // Other applications will only be auto-rejected when the deal is marked as sold/rented (completed).
         }
 
         // For counter offers, require proposedPrice
@@ -705,40 +673,8 @@ export const acceptCounterOffer = async (req, res) => {
             }
         );
 
-        // Reject all other pending/counter applications for this property with history
-        await db.collection("applications").updateMany(
-            {
-                propertyId: new ObjectId(property._id),
-                _id: { $ne: new ObjectId(applicationId) },
-                status: { $in: ["pending", "counter"] }
-            },
-            {
-                $set: {
-                    status: "rejected",
-                    updatedAt: new Date(),
-                    lastActionAt: new Date(),
-                    lastActionBy: "system",
-                    lastActionByEmail: req.user.email
-                },
-                $push: {
-                    statusHistory: {
-                        status: "rejected",
-                        changedBy: "system",
-                        changedByEmail: req.user.email,
-                        timestamp: new Date(),
-                        note: "Auto-rejected: Another application was accepted"
-                    },
-                    negotiationHistory: {
-                        action: "application_auto_rejected",
-                        actor: "system",
-                        actorEmail: req.user.email,
-                        status: "rejected",
-                        timestamp: new Date(),
-                        note: "Auto-rejected because another application was accepted"
-                    }
-                }
-            }
-        );
+        // NOTE: We do NOT auto-reject other applications here because deal-in-progress is not final.
+        // Other applications will only be auto-rejected when the deal is marked as sold/rented (completed).
 
         res.send({ 
             success: true, 
@@ -834,8 +770,43 @@ export const updateDealStatus = async (req, res) => {
                 }
             );
 
-            // Update application status to completed
+            // NOW reject all other pending/counter/deal-in-progress applications since deal is finalized
             const actorType = isOwner ? "owner" : isSeeker ? "seeker" : "admin";
+            await db.collection("applications").updateMany(
+                {
+                    propertyId: property._id,
+                    _id: { $ne: applicationId },
+                    status: { $in: ["pending", "counter", "deal-in-progress"] }
+                },
+                {
+                    $set: {
+                        status: "rejected",
+                        updatedAt: new Date(),
+                        lastActionAt: new Date(),
+                        lastActionBy: "system",
+                        lastActionByEmail: req.user.email
+                    },
+                    $push: {
+                        statusHistory: {
+                            status: "rejected",
+                            changedBy: "system",
+                            changedByEmail: req.user.email,
+                            timestamp: new Date(),
+                            note: "Auto-rejected: Property deal has been finalized (sold/rented)"
+                        },
+                        negotiationHistory: {
+                            action: "application_auto_rejected",
+                            actor: "system",
+                            actorEmail: req.user.email,
+                            status: "rejected",
+                            timestamp: new Date(),
+                            note: "Auto-rejected because property deal has been finalized (sold/rented)"
+                        }
+                    }
+                }
+            );
+
+            // Update application status to completed
             await db.collection("applications").updateOne(
                 { _id: applicationId },
                 {
@@ -862,21 +833,6 @@ export const updateDealStatus = async (req, res) => {
                             timestamp: new Date(),
                             note: `Deal completed - Property marked as ${finalStatus}`
                         }
-                    }
-                }
-            );
-
-            // Reject all other applications
-            await db.collection("applications").updateMany(
-                {
-                    propertyId: new ObjectId(property._id),
-                    _id: { $ne: applicationId },
-                    status: { $in: ["pending", "counter"] }
-                },
-                {
-                    $set: {
-                        status: "rejected",
-                        updatedAt: new Date()
                     }
                 }
             );
