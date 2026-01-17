@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, User, DollarSign, MessageSquare, CheckCircle, XCircle, Clock, Loader2, Send } from 'lucide-react';
+import { X, User, MessageSquare, CheckCircle, XCircle, Clock, Loader2, Send, Ban } from 'lucide-react';
 import Swal from 'sweetalert2';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import { showToast } from '../../Utilities/ToastMessage';
+import { getApplicationStatusDisplay, getApplicationStatusColor, isActiveApplicationStatus } from '../../Utilities/StatusDisplay';
 
 const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
     // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
@@ -67,22 +68,6 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         }
     });
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'counter':
-                return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'accepted':
-                return 'bg-green-100 text-green-700 border-green-200';
-            case 'rejected':
-                return 'bg-red-100 text-red-700 border-red-200';
-            case 'withdrawn':
-                return 'bg-gray-100 text-gray-700 border-gray-200';
-            default:
-                return 'bg-gray-100 text-gray-700 border-gray-200';
-        }
-    };
 
     const handleAccept = async (application) => {
         const result = await Swal.fire({
@@ -108,12 +93,12 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                 setProcessingId(application._id);
                 const token = await user.getIdToken();
                 await axios.patch(`/application/${application._id}`, {
-                    status: 'accepted'
+                    status: 'deal-in-progress'
                 }, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                showToast('Application accepted successfully!', 'success');
+                showToast('Application accepted! Deal is now in progress.', 'success');
                 queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
                 queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
             } catch (error) {
@@ -156,6 +141,49 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                 queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
             } catch (error) {
                 showToast(error.response?.data?.message || 'Failed to reject application', 'error');
+            } finally {
+                setProcessingId(null);
+            }
+        }
+    };
+
+    const handleCancelDeal = async (application) => {
+        const result = await Swal.fire({
+            title: 'Cancel Deal?',
+            html: `
+                <p class="text-left mb-4">Are you sure you want to cancel this deal?</p>
+                <div class="text-left space-y-2">
+                    <p><strong>Property:</strong> ${property.title}</p>
+                    <p><strong>Applicant:</strong> ${application.seeker.name}</p>
+                    <p><strong>Final Price:</strong> ৳${application.proposedPrice?.toLocaleString() || property.price?.toLocaleString() || 'N/A'}</p>
+                </div>
+                <p class="text-left mt-4 text-sm text-gray-600">This will cancel the deal and restore the property to its previous status. The application will be marked as cancelled.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Cancel Deal',
+            cancelButtonText: 'No, Keep Deal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setProcessingId(application._id);
+                const token = await user.getIdToken();
+                await axios.patch(`/property/${property._id}/deal`, {
+                    dealStatus: 'cancelled'
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                showToast('Deal cancelled successfully', 'success');
+                queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
+                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
+                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+                queryClient.invalidateQueries({ queryKey: ['property', property._id] });
+            } catch (error) {
+                showToast(error.response?.data?.message || 'Failed to cancel deal', 'error');
             } finally {
                 setProcessingId(null);
             }
@@ -244,8 +272,8 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         );
     }
 
-    const activeApplications = applications.filter(app => ['pending', 'counter', 'accepted'].includes(app.status));
-    const otherApplications = applications.filter(app => !['pending', 'counter', 'accepted'].includes(app.status));
+    const activeApplications = applications.filter(app => isActiveApplicationStatus(app.status));
+    const otherApplications = applications.filter(app => !isActiveApplicationStatus(app.status));
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -311,14 +339,13 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 <h4 className="font-bold text-gray-900">{application.seeker.name}</h4>
                                                                 <p className="text-xs text-gray-500">{application.seeker.email}</p>
                                                             </div>
-                                                            <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
-                                                                {application.status}
+                                                            <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getApplicationStatusColor(application.status)}`}>
+                                                                {getApplicationStatusDisplay(application.status, property)}
                                                             </div>
                                                         </div>
 
                                                         {application.proposedPrice && (
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <DollarSign size={16} className="text-blue-600" />
+                                                            <div className="mb-2">
                                                                 <span className="text-sm font-bold text-gray-700">
                                                                     Proposed: ৳{application.proposedPrice.toLocaleString()}
                                                                 </span>
@@ -394,9 +421,81 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                 </button>
                                                             </>
                                                         )}
-                                                        {application.status === 'accepted' && (
+                                                        {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
+                                                            <>
+                                                                <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-md font-bold text-xs uppercase tracking-wider text-center mb-2">
+                                                                    Deal in Progress
+                                                                </div>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        const result = await Swal.fire({
+                                                                            title: `Mark as ${property.listingType === 'sale' ? 'Sold' : 'Rented'}?`,
+                                                                            html: `
+                                                                                <p class="text-left mb-4">Are you sure you want to mark this deal as ${property.listingType === 'sale' ? 'sold' : 'rented'}?</p>
+                                                                                <div class="text-left space-y-2">
+                                                                                    <p><strong>Property:</strong> ${property.title}</p>
+                                                                                    <p><strong>Applicant:</strong> ${application.seeker.name}</p>
+                                                                                    <p><strong>Final Price:</strong> ৳${application.proposedPrice?.toLocaleString() || property.price?.toLocaleString() || 'N/A'}</p>
+                                                                                </div>
+                                                                                <p class="text-left mt-4 text-sm text-gray-600">This will mark the property as ${property.listingType === 'sale' ? 'sold' : 'rented'} and finalize the deal.</p>
+                                                                            `,
+                                                                            icon: 'question',
+                                                                            showCancelButton: true,
+                                                                            confirmButtonColor: '#22c55e',
+                                                                            cancelButtonColor: '#6b7280',
+                                                                            confirmButtonText: 'Yes, Mark as Completed',
+                                                                            cancelButtonText: 'Cancel'
+                                                                        });
+
+                                                                        if (result.isConfirmed) {
+                                                                            try {
+                                                                                setProcessingId(application._id);
+                                                                                const token = await user.getIdToken();
+                                                                                await axios.patch(`/property/${property._id}/deal`, {
+                                                                                    dealStatus: 'completed'
+                                                                                }, {
+                                                                                    headers: { Authorization: `Bearer ${token}` }
+                                                                                });
+
+                                                                                showToast(`Deal marked as ${property.listingType === 'sale' ? 'sold' : 'rented'} successfully!`, 'success');
+                                                                                queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
+                                                                                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
+                                                                                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+                                                                                queryClient.invalidateQueries({ queryKey: ['property', property._id] });
+                                                                            } catch (error) {
+                                                                                showToast(error.response?.data?.message || `Failed to mark deal as ${property.listingType === 'sale' ? 'sold' : 'rented'}`, 'error');
+                                                                            } finally {
+                                                                                setProcessingId(null);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    disabled={processingId === application._id}
+                                                                    className="w-full px-4 py-2 bg-emerald-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                                >
+                                                                    {processingId === application._id ? (
+                                                                        <Loader2 size={14} className="animate-spin" />
+                                                                    ) : (
+                                                                        <CheckCircle size={14} />
+                                                                    )}
+                                                                    Mark as {property.listingType === 'sale' ? 'Sold' : 'Rented'}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleCancelDeal(application)}
+                                                                    disabled={processingId === application._id}
+                                                                    className="w-full px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                                >
+                                                                    {processingId === application._id ? (
+                                                                        <Loader2 size={14} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Ban size={14} />
+                                                                    )}
+                                                                    Cancel Deal
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {(application.status === 'completed') && (
                                                             <div className="px-4 py-2 bg-green-100 text-green-700 rounded-md font-bold text-xs uppercase tracking-wider text-center">
-                                                                Accepted
+                                                                Completed
                                                             </div>
                                                         )}
                                                     </div>
@@ -430,8 +529,79 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                         <p className="text-xs text-gray-500">{new Date(application.createdAt).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
-                                                <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(application.status)}`}>
-                                                    {application.status}
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getApplicationStatusColor(application.status)}`}>
+                                                        {getApplicationStatusDisplay(application.status, property)}
+                                                    </div>
+                                                    {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const result = await Swal.fire({
+                                                                        title: `Mark as ${property.listingType === 'sale' ? 'Sold' : 'Rented'}?`,
+                                                                        html: `
+                                                                            <p class="text-left mb-4">Are you sure you want to mark this deal as ${property.listingType === 'sale' ? 'sold' : 'rented'}?</p>
+                                                                            <div class="text-left space-y-2">
+                                                                                <p><strong>Property:</strong> ${property.title}</p>
+                                                                                <p><strong>Applicant:</strong> ${application.seeker.name}</p>
+                                                                                <p><strong>Final Price:</strong> ৳${application.proposedPrice?.toLocaleString() || property.price?.toLocaleString() || 'N/A'}</p>
+                                                                            </div>
+                                                                            <p class="text-left mt-4 text-sm text-gray-600">This will mark the property as ${property.listingType === 'sale' ? 'sold' : 'rented'} and finalize the deal.</p>
+                                                                        `,
+                                                                        icon: 'question',
+                                                                        showCancelButton: true,
+                                                                        confirmButtonColor: '#22c55e',
+                                                                        cancelButtonColor: '#6b7280',
+                                                                        confirmButtonText: `Yes, Mark as ${property.listingType === 'sale' ? 'Sold' : 'Rented'}`,
+                                                                        cancelButtonText: 'Cancel'
+                                                                    });
+
+                                                                    if (result.isConfirmed) {
+                                                                        try {
+                                                                            setProcessingId(application._id);
+                                                                            const token = await user.getIdToken();
+                                                                            await axios.patch(`/property/${property._id}/deal`, {
+                                                                                dealStatus: 'completed'
+                                                                            }, {
+                                                                                headers: { Authorization: `Bearer ${token}` }
+                                                                            });
+
+                                                                            showToast(`Deal marked as ${property.listingType === 'sale' ? 'sold' : 'rented'} successfully!`, 'success');
+                                                                            queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
+                                                                            queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
+                                                                            queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+                                                                            queryClient.invalidateQueries({ queryKey: ['property', property._id] });
+                                                                        } catch (error) {
+                                                                            showToast(error.response?.data?.message || `Failed to mark deal as ${property.listingType === 'sale' ? 'sold' : 'rented'}`, 'error');
+                                                                        } finally {
+                                                                            setProcessingId(null);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                disabled={processingId === application._id}
+                                                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                                                            >
+                                                                {processingId === application._id ? (
+                                                                    <Loader2 size={12} className="animate-spin" />
+                                                                ) : (
+                                                                    <CheckCircle size={12} />
+                                                                )}
+                                                                Mark as {property.listingType === 'sale' ? 'Sold' : 'Rented'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleCancelDeal(application)}
+                                                                disabled={processingId === application._id}
+                                                                className="px-3 py-1.5 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                                                            >
+                                                                {processingId === application._id ? (
+                                                                    <Loader2 size={12} className="animate-spin" />
+                                                                ) : (
+                                                                    <Ban size={12} />
+                                                                )}
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}

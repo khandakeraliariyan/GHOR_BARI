@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, DollarSign, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
@@ -109,8 +109,7 @@ const ReviseOfferModal = ({ isOpen, onClose, application }) => {
 
                     {/* Proposed Price */}
                     <div>
-                        <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                            <DollarSign size={16} className="text-orange-500" />
+                        <label className="text-sm font-bold text-gray-700 mb-2">
                             Your New Offer <span className="text-red-500">*</span>
                         </label>
                         <input

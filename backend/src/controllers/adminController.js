@@ -165,6 +165,20 @@ export const updatePropertyStatus = async (req, res) => {
             return res.status(400).send({ message: "Property is already marked as rented or sold" });
         }
         
+        // CRITICAL: Admin CANNOT set property to deal-in-progress directly
+        // Only owner/user accepting an application can set deal-in-progress
+        // Admin can only see and manage properties that are already in deal-in-progress
+        if (status === "deal-in-progress") {
+            // Check if property already has an active application (meaning it's already in deal-in-progress)
+            if (!property.active_proposal_id) {
+                return res.status(400).send({ 
+                    message: "Cannot set property to deal-in-progress. Only property owner or applicant accepting an application can set this status." 
+                });
+            }
+            // If it already has active_proposal_id, it means it's already in deal-in-progress
+            // So admin is just confirming/keeping it, which is fine
+        }
+        
         // Can't mark deal-in-progress if already rented or sold
         if (status === "deal-in-progress" && ["rented", "sold"].includes(property.status)) {
             return res.status(400).send({ message: "Cannot mark rented or sold property as deal in progress" });
@@ -182,8 +196,12 @@ export const updatePropertyStatus = async (req, res) => {
         };
         
         // Store previous status if changing from active or pending to deal-in-progress
+        // Note: This should only happen if property already has active_proposal_id (from admin perspective)
         if ((property.status === "active" || property.status === "pending") && status === "deal-in-progress") {
-            updateData.previousStatus = property.status;
+            // Double check: only allow if active_proposal_id exists
+            if (property.active_proposal_id) {
+                updateData.previousStatus = property.status;
+            }
         }
 
         const result = await db.collection("properties").updateOne(
@@ -208,6 +226,34 @@ export const deleteProperty = async (req, res) => {
         const db = getDatabase();
 
         const id = req.params.id;
+
+        // Get the property first to check status
+        const property = await db.collection("properties").findOne({
+            _id: new ObjectId(id)
+        });
+
+        if (!property) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        // CRITICAL: Cannot delete properties with active deals (even admin)
+        if (["deal-in-progress", "sold", "rented"].includes(property.status)) {
+            return res.status(400).send({ 
+                message: `Cannot delete property that is ${property.status}. Please complete or cancel the deal first.` 
+            });
+        }
+
+        // Check if property has any active applications
+        const activeApplications = await db.collection("applications").countDocuments({
+            propertyId: new ObjectId(id),
+            status: { $in: ["pending", "counter", "deal-in-progress"] }
+        });
+
+        if (activeApplications > 0) {
+            return res.status(400).send({ 
+                message: "Cannot delete property with active applications. Please wait for applications to be resolved first." 
+            });
+        }
 
         const result = await db.collection("properties").deleteOne({
             _id: new ObjectId(id)
