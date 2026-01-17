@@ -516,7 +516,7 @@ export const reviseApplication = async (req, res) => {
     try {
         const db = getDatabase();
         const applicationId = req.params.id;
-        const { proposedPrice } = req.body;
+        const { proposedPrice, message } = req.body;
 
         if (!ObjectId.isValid(applicationId)) {
             return res.status(400).send({ message: "Invalid application ID format" });
@@ -549,15 +549,23 @@ export const reviseApplication = async (req, res) => {
             });
         }
 
-        // Update application: new price and status back to pending
+        // Prepare update data
+        const updateData = {
+            status: "pending",
+            proposedPrice: Number(proposedPrice),
+            updatedAt: new Date()
+        };
+
+        // Update message if provided
+        if (message !== undefined) {
+            updateData.message = message || "";
+        }
+
+        // Update application: new price, message (if provided) and status back to pending
         const result = await db.collection("applications").updateOne(
             { _id: new ObjectId(applicationId) },
             {
-                $set: {
-                    status: "pending",
-                    proposedPrice: Number(proposedPrice),
-                    updatedAt: new Date()
-                }
+                $set: updateData
             }
         );
 

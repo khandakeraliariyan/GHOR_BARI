@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import { showToast } from '../../Utilities/ToastMessage';
 import ReviseOfferModal from './ReviseOfferModal';
 import BiddingHistoryModal from './BiddingHistoryModal';
+import CounterOfferModal from './CounterOfferModal';
 import { 
     getApplicationStatusDisplay, 
     getApplicationStatusMessage, 
@@ -24,6 +25,8 @@ const MyRequestedProperties = () => {
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [biddingHistoryModalOpen, setBiddingHistoryModalOpen] = useState(false);
     const [selectedApplicationForHistory, setSelectedApplicationForHistory] = useState(null);
+    const [counterModalOpen, setCounterModalOpen] = useState(false);
+    const [selectedApplicationForCounter, setSelectedApplicationForCounter] = useState(null);
 
     // Fetch User Applications
     const { data: applications = [], isLoading } = useQuery({
@@ -76,42 +79,6 @@ const MyRequestedProperties = () => {
         }
     };
 
-    const handleAcceptCounter = async (application) => {
-        const result = await Swal.fire({
-            title: 'Accept Counter Offer?',
-            html: `
-                <p class="text-left mb-4">Are you sure you want to accept the owner's counter offer?</p>
-                <div class="text-left space-y-2">
-                    <p><strong>Property:</strong> ${application.property?.title || 'N/A'}</p>
-                    <p><strong>Owner's Counter Offer:</strong> ৳${application.proposedPrice?.toLocaleString() || 'N/A'}</p>
-                    <p><strong>Original Listing Price:</strong> ৳${application.property?.price?.toLocaleString() || 'N/A'}</p>
-                </div>
-                <p class="text-left mt-4 text-sm text-gray-600">Accepting this will complete the deal and the property will be marked as deal-in-progress.</p>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#22c55e',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, Accept & Close Deal',
-            cancelButtonText: 'Cancel'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const token = await user.getIdToken();
-                await axios.patch(`/application/${application._id}/accept-counter`, {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                showToast('Counter offer accepted! Deal is now in progress.', 'success');
-                queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
-                queryClient.invalidateQueries({ queryKey: ['property', application.propertyId] });
-                queryClient.invalidateQueries({ queryKey: ['my-properties', user?.email] });
-            } catch (error) {
-                showToast(error.response?.data?.message || 'Failed to accept counter offer', 'error');
-            }
-        }
-    };
 
     const handleMarkDealCompleted = async (application) => {
         const property = application.property;
@@ -295,8 +262,23 @@ const MyRequestedProperties = () => {
 
                                             {/* Status Message - Compact */}
                                             {(application.status && getApplicationStatusMessage(application.status, property)) && (
-                                                <div className={`px-2.5 py-1 rounded-md border text-xs font-medium w-fit ${getApplicationStatusColor(application.status)}`}>
-                                                    {getApplicationStatusMessage(application.status, property)}
+                                                <div className="space-y-2">
+                                                    <div className={`px-2.5 py-1 rounded-md border text-xs font-medium w-fit ${getApplicationStatusColor(application.status)}`}>
+                                                        {getApplicationStatusMessage(application.status, property)}
+                                                    </div>
+                                                    {/* Counter Offer button - same design as owner's request buttons */}
+                                                    {application.status === 'counter' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedApplicationForCounter(application);
+                                                                setCounterModalOpen(true);
+                                                            }}
+                                                            className="px-4 py-2 bg-blue-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-blue-700 transition-all flex items-center gap-2 w-fit"
+                                                        >
+                                                            <MessageSquare size={14} />
+                                                            View Counter Offer
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -332,17 +314,6 @@ const MyRequestedProperties = () => {
                                             <span>History</span>
                                         </button>
 
-                                        {/* Accept Counter Offer button - only for counter status */}
-                                        {application.status === 'counter' && (
-                                            <button
-                                                onClick={() => handleAcceptCounter(application)}
-                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-all text-sm font-semibold"
-                                            >
-                                                <Handshake size={16} />
-                                                <span>Accept</span>
-                                            </button>
-                                        )}
-
                                         {/* Mark Deal as Completed/Rented/Sold and Cancel Deal buttons - only for deal-in-progress status */}
                                         {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
                                             <>
@@ -361,20 +332,6 @@ const MyRequestedProperties = () => {
                                                     <span>Cancel Deal</span>
                                                 </button>
                                             </>
-                                        )}
-
-                                        {/* Revise button - only for counter status */}
-                                        {application.status === 'counter' && (
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedApplication(application);
-                                                    setReviseModalOpen(true);
-                                                }}
-                                                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-all text-sm font-semibold"
-                                            >
-                                                <Edit size={16} />
-                                                <span>Revise</span>
-                                            </button>
                                         )}
 
                                         {/* Withdraw button - only for pending and counter */}
@@ -399,6 +356,16 @@ const MyRequestedProperties = () => {
                     )}
                 </div>
             )}
+
+            {/* Counter Offer Modal */}
+            <CounterOfferModal
+                isOpen={counterModalOpen}
+                onClose={() => {
+                    setCounterModalOpen(false);
+                    setSelectedApplicationForCounter(null);
+                }}
+                application={selectedApplicationForCounter}
+            />
 
             {/* Revise Offer Modal */}
             <ReviseOfferModal
