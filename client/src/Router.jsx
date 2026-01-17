@@ -19,6 +19,7 @@ import PendingPropertyListings from "./Pages/AdminDashboard/PendingPropertyListi
 import PendingUserVerifications from "./Pages/AdminDashboard/PendingUserVerifications";
 import AllUsers from "./Pages/AdminDashboard/AllUsers";
 import AllPropertyListings from "./Pages/AdminDashboard/AllPropertyListings";
+import ChatPage from "./Pages/ChatPage/ChatPage";
 
 
 const router = createBrowserRouter([
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
             {
                 path: "/owner-profile/:email",
                 element: <PrivateRoute><PublicUserProfile></PublicUserProfile></PrivateRoute>
+            },
+            {
+                path: "/chat",
+                element: <PrivateRoute><ChatPage></ChatPage></PrivateRoute>
             }
         ]
     },
