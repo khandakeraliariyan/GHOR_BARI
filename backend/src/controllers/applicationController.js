@@ -318,6 +318,20 @@ export const updateApplicationStatus = async (req, res) => {
 
         // Business logic for accepting an application (now using "deal-in-progress" status)
         if (status === "deal-in-progress") {
+            // Owner cannot accept their own counter offer - only seeker can accept counter offers
+            if (application.status === "counter") {
+                return res.status(400).send({ 
+                    message: "You cannot accept your own counter offer. Wait for the seeker to respond." 
+                });
+            }
+
+            // Owner can only accept when status is "pending" (seeker's offer)
+            if (application.status !== "pending") {
+                return res.status(400).send({ 
+                    message: `Cannot accept application with status "${application.status}". Only pending applications can be accepted.` 
+                });
+            }
+
             // Check if property already has an active proposal
             if (property.active_proposal_id) {
                 return res.status(400).send({ 
@@ -358,6 +372,11 @@ export const updateApplicationStatus = async (req, res) => {
             lastActionBy: "owner",
             lastActionByEmail: req.user.email
         };
+
+        // Store final price when owner accepts the deal (deal closing price)
+        if (status === "deal-in-progress" && application.status === "pending") {
+            setData.finalPrice = application.proposedPrice; // Closing price = seeker's offer
+        }
 
         // When owner counters, update the proposedPrice to owner's counter offer
         if (status === "counter" && proposedPrice) {
@@ -662,11 +681,43 @@ export const acceptCounterOffer = async (req, res) => {
             return res.status(404).send({ message: "Property not found" });
         }
 
-        // Check if property already has an active proposal
+        // If property already has an active proposal, cancel it first
         if (property.active_proposal_id) {
-            return res.status(400).send({ 
-                message: "Property already has an accepted proposal" 
-            });
+            const existingApplicationId = property.active_proposal_id;
+            
+            // Don't cancel if it's the same application
+            if (existingApplicationId.toString() !== applicationId.toString()) {
+                // Cancel the existing deal-in-progress application
+                await db.collection("applications").updateOne(
+                    { _id: existingApplicationId },
+                    {
+                        $set: {
+                            status: "cancelled",
+                            updatedAt: new Date(),
+                            lastActionAt: new Date(),
+                            lastActionBy: "system",
+                            lastActionByEmail: "system@ghorbari.com"
+                        },
+                        $push: {
+                            negotiationHistory: {
+                                action: "deal_cancelled",
+                                actor: "system",
+                                actorEmail: "system@ghorbari.com",
+                                status: "cancelled",
+                                timestamp: new Date(),
+                                note: "Deal cancelled automatically: Another application was accepted"
+                            },
+                            statusHistory: {
+                                status: "cancelled",
+                                changedBy: "system",
+                                changedByEmail: "system@ghorbari.com",
+                                timestamp: new Date(),
+                                note: "Deal cancelled automatically: Another application was accepted"
+                            }
+                        }
+                    }
+                );
+            }
         }
 
         // Update application: accept the counter offer (now using "deal-in-progress" status)
@@ -675,6 +726,7 @@ export const acceptCounterOffer = async (req, res) => {
             {
                 $set: {
                     status: "deal-in-progress",
+                    finalPrice: application.proposedPrice, // Closing price = owner's counter offer
                     updatedAt: new Date(),
                     lastActionAt: new Date(),
                     lastActionBy: "seeker",
