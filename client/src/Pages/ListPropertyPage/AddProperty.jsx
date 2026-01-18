@@ -14,7 +14,8 @@ import { showToast } from "../../Utilities/ToastMessage";
 const AMENITIES = [
     "Air Conditioning", "Parking Space", "24/7 Security", "Elevator",
     "Backup Generator", "Gas Connection", "Water Supply", "Balcony",
-    "CCTV", "Fire Safety", "Playground", "Gym"
+    "CCTV", "Fire Safety", "Playground", "Gym",
+    "Electricity Connection", "Internet/WiFi"
 ];
 
 const DIVISION_COORDS = {
@@ -153,26 +154,26 @@ const AddProperty = () => {
         </span>
     );
 
-    const inputStyle = (fieldName) => `w-full px-4 py-3 bg-gray-50/50 border ${errors[fieldName] ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-500/5'} rounded-xl focus:bg-white focus:ring-4 outline-none transition-all text-gray-700 font-medium placeholder:text-gray-400`;
+    const inputStyle = (fieldName) => `w-full px-4 py-3 bg-gray-50/50 border ${errors[fieldName] ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-500/5'} rounded-md focus:bg-white focus:ring-4 outline-none transition-all text-gray-700 font-medium placeholder:text-gray-400`;
     const labelStyle = "block text-xs font-bold text-gray-500 mb-2 ml-1 uppercase tracking-widest";
     const sectionTitle = "text-xl font-bold text-gray-800 flex items-center gap-2 mb-6";
 
     return (
-        <section className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-12 px-4">
+        <section className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-12">
             <div className="w-11/12 mx-auto">
                 {/* Header Section */}
                 <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-center md:text-left">
                         
-                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
-                            Add New <span className="text-orange-500">Property</span>
+                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                            Add New <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">Property</span>
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-md border border-gray-100 shadow-sm">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Review time: <span className="text-gray-900">~24 Hours</span>
+                            Review time : <span className="text-gray-900">~24 Hours</span>
                         </span>
                     </div>
                 </div>
@@ -180,7 +181,7 @@ const AddProperty = () => {
                 <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* LEFT COLUMN */}
                     <div className="lg:col-span-7 space-y-8">
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><Home className="text-orange-500" size={20} /> Property Essentials</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
@@ -209,7 +210,7 @@ const AddProperty = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><MapPin className="text-orange-500" size={20} /> Location Details</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                 <div>
@@ -246,7 +247,7 @@ const AddProperty = () => {
                                 <input {...register("address", { required: "Street address is required" })} className={inputStyle("address")} placeholder="House, Road, Area..." />
                                 <ErrorMsg name="address" />
                             </div>
-                            <div className={`rounded-2xl overflow-hidden border ${!watchCoords && errors.submitCount > 0 ? 'border-red-300' : 'border-gray-100'} h-[400px] shadow-inner relative`}>
+                            <div className={`rounded-lg overflow-hidden border ${!watchCoords && errors.submitCount > 0 ? 'border-red-300' : 'border-gray-100'} h-[400px] shadow-inner relative`}>
                                 <MapPicker setValue={setValue} flyTo={mapView} />
                             </div>
                         </div>
@@ -254,10 +255,10 @@ const AddProperty = () => {
 
                     {/* RIGHT COLUMN */}
                     <div className="lg:col-span-5 space-y-8">
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><Layers className="text-orange-500" size={20} /> Specifications</h3>
                             <div className="space-y-6">
-                                <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100">
+                                <div className="bg-orange-50/50 p-6 rounded-md border border-orange-100">
                                     <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 block">
                                         {listingType === "rent" ? "Monthly Rent" : "Asking Price"} (BDT)
                                     </label>
@@ -303,9 +304,9 @@ const AddProperty = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><ImageIcon className="text-orange-500" size={20} /> Property Media</h3>
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-2xl cursor-pointer hover:bg-orange-50 transition-colors group">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-md cursor-pointer hover:bg-orange-50 transition-colors group">
                                 <Upload className="text-gray-300 group-hover:text-orange-400 transition-colors mb-2" size={32} />
                                 <span className="text-xs font-bold text-gray-400 group-hover:text-orange-500 uppercase tracking-tighter">Click to upload images</span>
                                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleFilesChange} />
@@ -317,7 +318,7 @@ const AddProperty = () => {
                                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                                         {selectedFiles.map((file, idx) => (
                                             <div key={idx} className="relative flex-shrink-0">
-                                                <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-xl border border-gray-100" />
+                                                <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-md border border-gray-100" />
                                                 <button type="button" onClick={() => removeFile(idx)} className="absolute -top-1 -right-1 bg-white shadow text-red-500 rounded-full p-1 border border-gray-100">
                                                     <X size={10} />
                                                 </button>
@@ -328,7 +329,7 @@ const AddProperty = () => {
                             )}
                         </div>
 
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><CheckCircle className="text-orange-500" size={20} /> Amenities</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 {AMENITIES.map(item => (
@@ -343,7 +344,7 @@ const AddProperty = () => {
 
                     {/* OVERVIEW */}
                     <div className="lg:col-span-12">
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                             <h3 className={sectionTitle}><Info className="text-orange-500" size={20} /> Detailed Overview</h3>
                             <textarea {...register("overview", { required: "Detailed description is required", minLength: { value: 20, message: "Please describe in at least 20 characters" } })} className={`${inputStyle("overview")} min-h-[150px] py-4 resize-none`} placeholder="Describe your property's best features..." />
                             <ErrorMsg name="overview" />
@@ -356,7 +357,7 @@ const AddProperty = () => {
                             type="submit"
                             disabled={isSubmitting}
                             className={`
-                                flex items-center justify-center gap-3 px-20 py-5 rounded-2xl font-black text-white uppercase tracking-[0.2em] transition-all
+                                flex items-center justify-center gap-3 px-20 py-5 rounded-lg font-black text-white uppercase tracking-[0.2em] transition-all
                                 ${isSubmitting ? 'bg-orange-400 cursor-not-allowed scale-95' : 'bg-orange-600 hover:bg-orange-700 hover:shadow-2xl hover:shadow-orange-200 active:scale-95 shadow-xl'}
                             `}
                         >

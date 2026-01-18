@@ -346,16 +346,7 @@ const BuyOrRentPage = () => {
                                             <Search className="text-orange-500" size={48} />
                                         </div>
                                     </div>
-                                    <h2 className="text-3xl font-black text-gray-900 mb-8">No Properties Found</h2>
-                                    <button
-                                        onClick={() => {
-                                            setSearchQuery("");
-                                            handleResetFilters();
-                                        }}
-                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-md font-bold hover:brightness-110 transition-all"
-                                    >
-                                        Clear All Filters
-                                    </button>
+                                    <h2 className="text-3xl font-black text-gray-900">No Properties Found</h2>
                                 </div>
                             </div>
                         </div>
