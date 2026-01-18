@@ -399,26 +399,19 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                         )}
                                                         {application.status === 'counter' && (
                                                             <>
-                                                                <button
-                                                                    onClick={() => handleAccept(application)}
-                                                                    disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-green-700 transition-all disabled:opacity-50 flex items-center gap-2"
-                                                                >
-                                                                    {processingId === application._id ? (
-                                                                        <Loader2 size={14} className="animate-spin" />
-                                                                    ) : (
-                                                                        <CheckCircle size={14} />
-                                                                    )}
-                                                                    Accept
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleReject(application)}
-                                                                    disabled={processingId === application._id}
-                                                                    className="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
-                                                                >
-                                                                    <XCircle size={14} />
-                                                                    Reject
-                                                                </button>
+                                                                <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md font-bold text-xs uppercase tracking-wider text-center border border-blue-200 mb-2">
+                                                                    Waiting for Seeker Response
+                                                                </div>
+                                                                <div className="flex justify-end">
+                                                                    <button
+                                                                        onClick={() => handleReject(application)}
+                                                                        disabled={processingId === application._id}
+                                                                        className="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                                                                    >
+                                                                        <XCircle size={14} />
+                                                                        Reject
+                                                                    </button>
+                                                                </div>
                                                             </>
                                                         )}
                                                         {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
