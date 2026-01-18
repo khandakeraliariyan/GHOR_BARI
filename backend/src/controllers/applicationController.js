@@ -681,11 +681,43 @@ export const acceptCounterOffer = async (req, res) => {
             return res.status(404).send({ message: "Property not found" });
         }
 
-        // Check if property already has an active proposal
+        // If property already has an active proposal, cancel it first
         if (property.active_proposal_id) {
-            return res.status(400).send({ 
-                message: "Property already has an accepted proposal" 
-            });
+            const existingApplicationId = property.active_proposal_id;
+            
+            // Don't cancel if it's the same application
+            if (existingApplicationId.toString() !== applicationId.toString()) {
+                // Cancel the existing deal-in-progress application
+                await db.collection("applications").updateOne(
+                    { _id: existingApplicationId },
+                    {
+                        $set: {
+                            status: "cancelled",
+                            updatedAt: new Date(),
+                            lastActionAt: new Date(),
+                            lastActionBy: "system",
+                            lastActionByEmail: "system@ghorbari.com"
+                        },
+                        $push: {
+                            negotiationHistory: {
+                                action: "deal_cancelled",
+                                actor: "system",
+                                actorEmail: "system@ghorbari.com",
+                                status: "cancelled",
+                                timestamp: new Date(),
+                                note: "Deal cancelled automatically: Another application was accepted"
+                            },
+                            statusHistory: {
+                                status: "cancelled",
+                                changedBy: "system",
+                                changedByEmail: "system@ghorbari.com",
+                                timestamp: new Date(),
+                                note: "Deal cancelled automatically: Another application was accepted"
+                            }
+                        }
+                    }
+                );
+            }
         }
 
         // Update application: accept the counter offer (now using "deal-in-progress" status)
