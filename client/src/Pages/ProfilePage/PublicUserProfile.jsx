@@ -44,7 +44,7 @@ const PublicUserProfile = () => {
     }
 
     const StatCard = ({ label, value, icon: Icon, color }) => (
-        <div className="w-40 p-4 bg-white/5 rounded-3xl border border-white/10 text-center">
+        <div className="w-40 p-4 bg-white/5 rounded-lg border border-white/10 text-center">
             <p className={`text-[10px] font-black uppercase mb-1 ${color}`}>
                 {label}
             </p>
@@ -57,19 +57,19 @@ const PublicUserProfile = () => {
     return (
         <div className="w-11/12 mx-auto my-12 font-sans antialiased">
             {/* HERO SECTION */}
-            <header className="relative bg-[#1A1A2E] rounded-[4rem] p-10 md:p-16 overflow-hidden shadow-2xl mb-10">
+            <header className="relative bg-[#1A1A2E] rounded-lg p-10 md:p-16 overflow-hidden shadow-2xl mb-10">
                 <div className="relative flex flex-col md:flex-row items-center gap-12">
                     <div className="relative shrink-0">
-                        <div className="p-1.5 bg-gradient-to-tr from-amber-400 to-orange-600 rounded-[3.5rem]">
+                        <div className="p-1.5 bg-gradient-to-tr from-amber-400 to-orange-600 rounded-lg">
                             <img
                                 src={profile.profileImage || "https://i.ibb.co/5GzXpdx/default-user.png"}
                                 alt=""
-                                className="w-48 h-48 rounded-[3.3rem] object-cover border-8 border-[#1A1A2E]"
+                                className="w-48 h-48 rounded-md object-cover border-8 border-[#1A1A2E]"
                             />
                         </div>
 
                         {profile.nidVerified && (
-                            <div className="absolute -bottom-1 -right-3 bg-emerald-500 text-white px-5 py-2 rounded-full border-[6px] border-[#1A1A2E] font-black text-[11px] uppercase tracking-widest">
+                            <div className="absolute -bottom-1 -right-3 bg-emerald-500 text-white px-5 py-2 rounded-lg border-[6px] border-[#1A1A2E] font-black text-[11px] uppercase tracking-widest">
                                 Verified
                             </div>
                         )}
@@ -109,13 +109,13 @@ const PublicUserProfile = () => {
 
             {/* INFO GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <div className="bg-white p-8 rounded-lg border border-gray-100 shadow-sm">
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-6">
                         Identity
                     </h3>
 
                     <div
-                        className={`flex items-center gap-4 p-6 rounded-[2rem] border-2 ${profile.nidVerified
+                        className={`flex items-center gap-4 p-6 rounded-md border-2 ${profile.nidVerified
                                 ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
                                 : 'bg-rose-50 border-rose-100 text-rose-600'
                             }`}
@@ -129,14 +129,14 @@ const PublicUserProfile = () => {
                     </div>
                 </div>
 
-                <div className="md:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative flex flex-col md:flex-row justify-between">
+                <div className="md:col-span-2 bg-white p-8 rounded-lg border border-gray-100 shadow-sm relative flex flex-col md:flex-row justify-between">
                     <div className="space-y-6">
                         <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
                             Contact
                         </h3>
 
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
+                            <div className="p-3 bg-orange-50 text-orange-600 rounded-md">
                                 <Mail size={20} />
                             </div>
                             <div>
@@ -150,7 +150,7 @@ const PublicUserProfile = () => {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                            <div className="p-3 bg-blue-50 text-blue-600 rounded-md">
                                 <Phone size={20} />
                             </div>
                             <div>
@@ -164,7 +164,7 @@ const PublicUserProfile = () => {
                         </div>
                     </div>
 
-                    <button className="mt-8 md:mt-0 md:self-end flex items-center gap-3 px-10 py-5 bg-orange-600 text-white rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">
+                    <button className="mt-8 md:mt-0 md:self-end flex items-center gap-3 px-10 py-5 bg-orange-600 text-white rounded-md font-black uppercase text-xs tracking-widest shadow-xl">
                         <MessageSquare size={18} />
                         Send Message
                     </button>

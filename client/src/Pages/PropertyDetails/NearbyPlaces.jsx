@@ -35,7 +35,7 @@ const NearbyPlaces = ({ nearbyPlaces, isLoading, onPlaceClick }) => {
 
     if (isLoading) {
         return (
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
                 <div className="flex items-center justify-center py-12">
                     <Loader2 className="animate-spin text-orange-500" size={32} />
                 </div>
@@ -51,7 +51,7 @@ const NearbyPlaces = ({ nearbyPlaces, isLoading, onPlaceClick }) => {
 
     if (!hasPlaces) {
         return (
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
                 <h3 className="text-xl font-black text-gray-900 mb-4">Nearby Places</h3>
                 <p className="text-gray-500 text-sm">No nearby places found in this area.</p>
             </div>
@@ -59,7 +59,7 @@ const NearbyPlaces = ({ nearbyPlaces, isLoading, onPlaceClick }) => {
     }
 
     return (
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
             <h3 className="text-xl font-black text-gray-900 mb-6">Nearby Places</h3>
             <div className="space-y-6">
                 {Object.entries(categoryConfig).map(([key, config]) => {
@@ -75,7 +75,7 @@ const NearbyPlaces = ({ nearbyPlaces, isLoading, onPlaceClick }) => {
                         <div key={key}>
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <div className={`p-2 rounded-xl ${config.color}`}>
+                                    <div className={`p-2 rounded-md ${config.color}`}>
                                         <Icon size={18} className={config.iconColor} />
                                     </div>
                                     <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">{config.label}</h4>
@@ -103,7 +103,7 @@ const NearbyPlaces = ({ nearbyPlaces, isLoading, onPlaceClick }) => {
                                     <div
                                         key={idx}
                                         onClick={() => onPlaceClick && onPlaceClick(place)}
-                                        className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-all cursor-pointer"
+                                        className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-100 hover:bg-gray-100 transition-all cursor-pointer"
                                     >
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <MapPin size={14} className="text-gray-400 shrink-0" />
