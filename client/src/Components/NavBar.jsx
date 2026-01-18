@@ -38,7 +38,7 @@ const Navbar = () => {
 
 
     return (
-        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-white/20">
+        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-[9999] border-b border-white/20">
             <nav className="w-11/12 mx-auto h-16 flex items-center justify-between">
                 {/* LOGO */}
                 <Link

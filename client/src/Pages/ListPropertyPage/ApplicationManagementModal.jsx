@@ -335,19 +335,21 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                     <User size={20} className="text-orange-500" />
                                                                 )}
                                                             </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-gray-900">{application.seeker.name}</h4>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <h4 className="font-bold text-gray-900">{application.seeker.name}</h4>
+                                                                    <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getApplicationStatusColor(application.status)}`}>
+                                                                        {getApplicationStatusDisplay(application.status, property)}
+                                                                    </div>
+                                                                </div>
                                                                 <p className="text-xs text-gray-500">{application.seeker.email}</p>
-                                                            </div>
-                                                            <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getApplicationStatusColor(application.status)}`}>
-                                                                {getApplicationStatusDisplay(application.status, property)}
                                                             </div>
                                                         </div>
 
                                                         {application.proposedPrice && (
                                                             <div className="mb-2">
                                                                 <span className="text-sm font-bold text-gray-700">
-                                                                    Proposed: ৳{application.proposedPrice.toLocaleString()}
+                                                                    Proposed : ৳{application.proposedPrice.toLocaleString()}
                                                                 </span>
                                                             </div>
                                                         )}
@@ -359,8 +361,8 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                             </div>
                                                         )}
 
-                                                        <p className="text-xs text-gray-400">
-                                                            Applied: {new Date(application.createdAt).toLocaleString()}
+                                                        <p className="text-xs text-gray-500">
+                                                            Applied : {new Date(application.createdAt).toLocaleString()}
                                                         </p>
                                                     </div>
 
