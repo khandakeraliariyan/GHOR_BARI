@@ -77,11 +77,15 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
         }
     });
 
-    // Check if user has already applied to this property
-    const hasApplied = userApplications.some(app => 
-        app.propertyId?.toString() === property?._id?.toString() || 
-        app.property?._id?.toString() === property?._id?.toString()
-    );
+    // Check if user has an active/blocking application for this property
+    // Blocked statuses: pending, counter, deal-in-progress, completed
+    // Allowed to reapply: rejected, withdrawn, cancelled
+    const hasApplied = userApplications.some(app => {
+        const matchesProperty = app.propertyId?.toString() === property?._id?.toString() || 
+                               app.property?._id?.toString() === property?._id?.toString();
+        const blockingStatuses = ["pending", "counter", "deal-in-progress", "completed"];
+        return matchesProperty && blockingStatuses.includes(app.status);
+    });
 
     // Fetch Nearby Places using Overpass API directly from frontend
     const { data: nearbyPlaces, isLoading: nearbyPlacesLoading } = useQuery({
