@@ -80,6 +80,8 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
         setShowReviseModal(false);
         // Refresh data when revise modal closes
         queryClient.invalidateQueries({ queryKey: ['my-applications', user?.email] });
+        // Close CounterOfferModal after revise since status changes to "pending"
+        onClose();
     };
 
     return (
@@ -152,13 +154,16 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
                                 <Edit size={18} />
                                 Revise Offer
                             </button>
-                            <button
-                                onClick={handleAcceptCounter}
-                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
-                            >
-                                <Handshake size={18} />
-                                Accept Counter Offer
-                            </button>
+                            {/* Only show Accept button when status is "counter" */}
+                            {application.status === 'counter' && (
+                                <button
+                                    onClick={handleAcceptCounter}
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
+                                >
+                                    <Handshake size={18} />
+                                    Accept Counter Offer
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
