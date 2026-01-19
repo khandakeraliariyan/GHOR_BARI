@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
-import { useAxiosSecure } from './useAxiosSecure';
+import useAuth from './useAuth';
+import useAxiosSecure from './useAxiosSecure';
 import { getSocket } from '../Utilities/socketClient';
 
 export const useChat = () => {

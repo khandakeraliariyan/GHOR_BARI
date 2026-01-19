@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSocket, initializeSocket, disconnectSocket } from '../Utilities/socketClient';
-import { useAuth } from './useAuth';
+import useAuth from './useAuth';
 
 export const useSocket = () => {
     const [socket, setSocket] = useState(null);
