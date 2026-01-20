@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Scale } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import useAuth from "../Hooks/useAuth";
 import { showToast } from "../Utilities/ToastMessage";
@@ -102,6 +102,22 @@ const Navbar = () => {
                             }
                         >
                             💬 Chat
+                        </NavLink>
+                    )}
+
+                    {/* Comparison link if logged in */}
+                    {user && (
+                        <NavLink
+                            to="/compare"
+                            className={({ isActive }) =>
+                                `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200 flex items-center gap-1
+                  ${isActive
+                                    ? "bg-blue-500 text-white"
+                                    : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                }`
+                            }
+                        >
+                            <Scale size={16} /> Compare
                         </NavLink>
                     )}
 
@@ -252,6 +268,22 @@ const Navbar = () => {
                                     }
                                 >
                                     💬 Chat
+                                </NavLink>
+                            )}
+
+                            {user && (
+                                <NavLink
+                                    to="/compare"
+                                    onClick={() => setMenuOpen(false)}
+                                    className={({ isActive }) =>
+                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1
+                    ${isActive
+                                            ? "bg-blue-500 text-white"
+                                            : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                        }`
+                                    }
+                                >
+                                    <Scale size={16} /> Compare
                                 </NavLink>
                             )}
 

@@ -1,4 +1,4 @@
-import { useAuth } from '../../Hooks/useAuth';
+import useAuth from '../../Hooks/useAuth';
 import { getInitials, formatTime, shouldShowTimestamp } from '../../Utilities/ChatHelpers';
 import { useEffect, useRef } from 'react';
 

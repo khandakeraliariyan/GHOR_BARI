@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { getInitials, formatDate, shouldShowTimestamp, getLastMessagePreview } from '../../Utilities/ChatHelpers';
 import { ChatContext } from '../../context/ChatContext';
-import { useAuth } from '../../Hooks/useAuth';
+import useAuth from '../../Hooks/useAuth';
 
 export default function ConversationList({ 
     conversations, 
