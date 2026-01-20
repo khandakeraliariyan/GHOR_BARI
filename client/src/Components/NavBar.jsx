@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Scale } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import useAuth from "../Hooks/useAuth";
 import { showToast } from "../Utilities/ToastMessage";
@@ -38,7 +38,7 @@ const Navbar = () => {
 
 
     return (
-        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-white/20">
+        <header className="w-full bg-white/70 backdrop-blur-md sticky top-0 z-[9999] border-b border-white/20">
             <nav className="w-11/12 mx-auto h-16 flex items-center justify-between">
                 {/* LOGO */}
                 <Link
@@ -92,7 +92,7 @@ const Navbar = () => {
                     {/* Only show Messages if logged in */}
                     {user && (
                         <NavLink
-                            to="/messages"
+                            to="/chat"
                             className={({ isActive }) =>
                                 `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
                   ${isActive
@@ -101,7 +101,23 @@ const Navbar = () => {
                                 }`
                             }
                         >
-                            Messages
+                            💬 Chat
+                        </NavLink>
+                    )}
+
+                    {/* Comparison link if logged in */}
+                    {user && (
+                        <NavLink
+                            to="/compare"
+                            className={({ isActive }) =>
+                                `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200 flex items-center gap-1
+                  ${isActive
+                                    ? "bg-blue-500 text-white"
+                                    : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                }`
+                            }
+                        >
+                            <Scale size={16} /> Compare
                         </NavLink>
                     )}
 
@@ -241,7 +257,7 @@ const Navbar = () => {
 
                             {user && (
                                 <NavLink
-                                    to="/messages"
+                                    to="/chat"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
                                         `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
@@ -251,7 +267,23 @@ const Navbar = () => {
                                         }`
                                     }
                                 >
-                                    Messages
+                                    💬 Chat
+                                </NavLink>
+                            )}
+
+                            {user && (
+                                <NavLink
+                                    to="/compare"
+                                    onClick={() => setMenuOpen(false)}
+                                    className={({ isActive }) =>
+                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1
+                    ${isActive
+                                            ? "bg-blue-500 text-white"
+                                            : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                        }`
+                                    }
+                                >
+                                    <Scale size={16} /> Compare
                                 </NavLink>
                             )}
 

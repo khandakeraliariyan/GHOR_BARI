@@ -1,5 +1,7 @@
 import admin from "../config/firebase.js";
 
+import { getDatabase } from "../config/db.js";
+
 export const verifyToken = async (req, res, next) => {
 
     const authHeader = req.headers.authorization;
@@ -19,6 +21,9 @@ export const verifyToken = async (req, res, next) => {
             photoURL: decoded.picture || "",
             isVerified: decoded.email_verified || false
         };
+
+        // Attach database to request
+        req.db = getDatabase();
 
         next();
     

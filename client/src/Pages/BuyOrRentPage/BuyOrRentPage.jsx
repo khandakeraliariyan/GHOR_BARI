@@ -227,7 +227,7 @@ const BuyOrRentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-100 py-6 lg:py-10">
+        <div className="min-h-screen bg-gray-100 py-6 lg:py-10">
             <div className="w-11/12 mx-auto mb-10 space-y-6">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">
@@ -346,16 +346,7 @@ const BuyOrRentPage = () => {
                                             <Search className="text-orange-500" size={48} />
                                         </div>
                                     </div>
-                                    <h2 className="text-3xl font-black text-gray-900 mb-8">No Properties Found</h2>
-                                    <button
-                                        onClick={() => {
-                                            setSearchQuery("");
-                                            handleResetFilters();
-                                        }}
-                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-md font-bold hover:brightness-110 transition-all"
-                                    >
-                                        Clear All Filters
-                                    </button>
+                                    <h2 className="text-3xl font-black text-gray-900">No Properties Found</h2>
                                 </div>
                             </div>
                         </div>
