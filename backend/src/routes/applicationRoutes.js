@@ -27,6 +27,9 @@ router.patch("/application/:id/revise", verifyToken, applicationController.revis
 // Accept counter offer (seeker action - accept owner's counter)
 router.patch("/application/:id/accept-counter", verifyToken, applicationController.acceptCounterOffer);
 
+// Send a standalone application message (owner or seeker)
+router.post("/application/:id/message", verifyToken, applicationController.sendApplicationMessage);
+
 // Complete or cancel deal (owner/admin actions)
 router.patch("/property/:propertyId/deal", verifyToken, applicationController.updateDealStatus);
 

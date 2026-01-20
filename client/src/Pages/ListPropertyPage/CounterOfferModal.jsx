@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Handshake, Edit, AlertCircle } from 'lucide-react';
+import { X, Handshake, Edit, AlertCircle, MessageSquare } from 'lucide-react';
 import Swal from 'sweetalert2';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
@@ -30,9 +30,33 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
         return seekerPrices.length > 0 ? seekerPrices[seekerPrices.length - 1].price : null;
     };
 
+    // Get owner's message from counter offer
+    const getOwnerCounterMessage = () => {
+        // First, try to get from messages array (new structure)
+        if (application.messages && Array.isArray(application.messages)) {
+            // Find the most recent message from owner with actionType 'counter_offer'
+            const ownerCounterMessages = application.messages
+                .filter(msg => msg.sender === 'owner' && msg.actionType === 'counter_offer')
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Most recent first
+            
+            if (ownerCounterMessages.length > 0 && ownerCounterMessages[0].text) {
+                return ownerCounterMessages[0].text;
+            }
+        }
+        
+        // Fallback: check if there's a message in the application (backward compatibility)
+        // Only use this if status is 'counter' and message exists
+        if (application.status === 'counter' && application.message) {
+            return application.message;
+        }
+        
+        return null;
+    };
+
     const userPreviousOffer = getUserPreviousOffer();
     const ownerCounterOffer = application.proposedPrice; // Current proposedPrice is owner's counter
     const originalListingPrice = property.price;
+    const ownerMessage = getOwnerCounterMessage();
 
     const handleAcceptCounter = async () => {
         const result = await Swal.fire({
@@ -144,6 +168,21 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
                                 </span>
                             </div>
                         </div>
+
+                        {/* Owner's Message Section */}
+                        {ownerMessage && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+                                <div className="flex items-start gap-3">
+                                    <MessageSquare className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                                    <div className="flex-1">
+                                        <p className="font-bold text-blue-900 text-sm mb-2">Message from Owner</p>
+                                        <p className="text-blue-800 text-sm leading-relaxed whitespace-pre-wrap">
+                                            {ownerMessage}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-3 pt-4">
