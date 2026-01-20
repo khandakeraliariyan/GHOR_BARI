@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useChat } from '../../Hooks/useChat';
 import { useSocket } from '../../Hooks/useSocket';
-import { useAuth } from '../../Hooks/useAuth';
+import useAuth from '../../Hooks/useAuth';
 import ChatHeader from './ChatHeader';
 import ConversationList from './ConversationList';
 import ChatMessages from './ChatMessages';
 import MessageInput from './MessageInput';
 import { ChatProvider } from '../../context/ChatContext';
-import { ToastMessage } from '../../Utilities/ToastMessage';
 
 function ChatWindowContent() {
     const { user } = useAuth();

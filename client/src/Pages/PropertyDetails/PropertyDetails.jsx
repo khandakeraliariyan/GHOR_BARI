@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
+import useComparison from '../../Hooks/useComparison';
 import PropertyDetailsMap from './PropertyDetailsMap';
 import NearbyPlaces from './NearbyPlaces';
 import ApplicationModal from './ApplicationModal';
@@ -10,7 +11,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import {
     MapPin, Bed, Bath, Square, CheckCircle, XCircle,
-    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star, Tag, Send
+    User, MessageSquare, ShieldCheck, Sparkles, Loader2, Layers, Star, Tag, Send, Scale, Check
 } from 'lucide-react';
 
 import useAxiosSecure from '../../Hooks/useAxiosSecure';
@@ -25,6 +26,7 @@ const PropertyDetails = ({ isAdminPreview = false }) => {
     const axiosPublic = useAxios();
     const axiosSecure = useAxiosSecure();
     const { user } = useAuth();
+    const comparison = useComparison();
 
     const [geoMaps, setGeoMaps] = useState({ divisionMap: new Map(), districtMap: new Map(), upazilaMap: new Map() });
     const [selectedPlace, setSelectedPlace] = useState(null);
@@ -534,6 +536,21 @@ out center;
                             </p>
                         </div>
                     </div>
+
+                    <button 
+                        onClick={() => {
+                            comparison.addProperty(property);
+                            navigate('/compare');
+                        }}
+                        className="w-full py-4 bg-blue-600 text-white rounded-md font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 border border-blue-500"
+                    >
+                        <Scale size={18} /> 
+                        {comparison.isPropertySelected(property?._id) ? (
+                            <>Added - Go to Comparison ({comparison.selectedCount}/5)</>
+                        ) : (
+                            <>Compare With Other Properties</>
+                        )}
+                    </button>
 
                 </div>
             </div>
