@@ -33,4 +33,7 @@ router.delete("/property/:id", verifyToken, verifyPropertyOwner, propertyControl
 // Toggle property visibility (hide/unhide)
 router.patch("/property/:id/visibility", verifyToken, verifyPropertyOwner, propertyController.togglePropertyVisibility);
 
+// Reopen listing for rented properties
+router.patch("/property/:id/reopen", verifyToken, verifyPropertyOwner, propertyController.reopenListing);
+
 export default router;

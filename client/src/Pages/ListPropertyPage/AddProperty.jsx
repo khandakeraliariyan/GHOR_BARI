@@ -232,7 +232,7 @@ const AddProperty = () => {
                                     <ErrorMsg name="district_id" />
                                 </div>
                                 <div>
-                                    <label className={labelStyle}>Upazila</label>
+                                    <label className={labelStyle}>Upazila/Area</label>
                                     <select {...register("upazila_id", { required: "Required" })} className={inputStyle("upazila_id")} disabled={!watchDist}>
                                         <option value="">Select</option>
                                         {upazilas.filter(u => String(u.district_id) === String(watchDist)).map(u => (
