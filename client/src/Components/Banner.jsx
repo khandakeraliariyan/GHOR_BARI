@@ -32,7 +32,7 @@ const images = [
 
 const Banner = () => {
     return (
-        <section className="w-full flex flex-col bg-white">
+        <section className="w-full flex flex-col bg-gray-100">
             {/* Image Slider */}
             <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[90vh]">
                 <Swiper
@@ -98,7 +98,7 @@ const Banner = () => {
             </div>
 
             {/* Search Card - Mobile & Tablet (stacked under slider) */}
-            <div className="lg:hidden w-full px-4 py-8 bg-white z-30">
+            <div className="lg:hidden w-full px-4 py-8 bg-gray-100 z-30">
                 <SearchCard />
             </div>
 

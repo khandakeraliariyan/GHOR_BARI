@@ -262,7 +262,7 @@ const BuyOrRentPage = () => {
                 </div>
 
                 {showFilters && (
-                    <div className="bg-white p-8 rounded-lg shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200 w-11/12 mx-auto">
+                    <div className="bg-white p-8 rounded-lg shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Price Range (৳)</label>

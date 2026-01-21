@@ -424,3 +424,77 @@ export const togglePropertyVisibility = async (req, res) => {
 
 };
 
+// Reopen listing for rented properties (change status from "rented" to "active")
+export const reopenListing = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+
+            return res.status(400).send({ message: "Invalid ID format" });
+
+        }
+
+        // Get the property
+        const property = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+
+        if (!property) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        // Verify ownership
+        if (property.owner.email !== req.user.email) {
+
+            return res.status(403).send({ message: "You don't have permission to update this property" });
+
+        }
+
+        // Only allow reopening rented properties, not sold properties
+        if (property.status !== "rented") {
+
+            return res.status(400).send({ 
+                message: "Can only reopen rented properties. Sold properties cannot be reopened." 
+            });
+
+        }
+
+        // Change status from "rented" to "active" and clear visibility
+        const result = await db.collection("properties").updateOne(
+            { _id: new ObjectId(id) },
+            { 
+                $set: { 
+                    status: "active",
+                    visibility: "visible",
+                    active_proposal_id: null, // Clear any active proposal
+                    updatedAt: new Date()
+                } 
+            }
+        );
+
+        if (result.matchedCount === 0) {
+
+            return res.status(404).send({ message: "Property not found" });
+
+        }
+
+        res.send({ 
+            success: true, 
+            message: "Listing reopened successfully. Your property is now active and visible on the marketplace.",
+            status: "active"
+        });
+
+    } catch (error) {
+
+        console.error("PATCH /property/:id/reopen error:", error);
+
+        res.status(500).send({ message: "Server error" });
+
+    }
+
+};

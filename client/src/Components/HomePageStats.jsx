@@ -1,37 +1,58 @@
 import React from 'react';
-import { Users, Home, Handshake, Star } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Home, Handshake, ShieldCheck, Building2 } from 'lucide-react';
+import useAxios from '../Hooks/useAxios';
 
 const HomePageStats = () => {
+    const axios = useAxios();
+
+    // Fetch public stats from API
+    const { data: statsData, isLoading } = useQuery({
+        queryKey: ['public-stats'],
+        queryFn: async () => {
+            const res = await axios.get('/public/stats');
+            return res.data;
+        }
+    });
+
+    // Format numbers with K suffix for large numbers
+    const formatNumber = (num) => {
+        if (num >= 1000) {
+            return `${(num / 1000).toFixed(1)}K+`;
+        }
+        return num.toString();
+    };
+
     const stats = [
         {
             id: 1,
-            label: "Active Users",
-            value: "250K+",
-            icon: <Users size={22} />,
-        },
-        {
-            id: 2,
-            label: "Listings",
-            value: "80.5K+",
+            label: "Active Property Listings",
+            value: isLoading ? "..." : formatNumber(statsData?.activeListings || 0),
             icon: <Home size={22} />,
         },
         {
-            id: 3,
-            label: "Deals",
-            value: "48K+",
+            id: 2,
+            label: "Successful Deals",
+            value: isLoading ? "..." : formatNumber(statsData?.successfulDeals || 0),
             icon: <Handshake size={22} />,
         },
         {
+            id: 3,
+            label: "Verified Users",
+            value: isLoading ? "..." : formatNumber(statsData?.verifiedUsers || 0),
+            icon: <ShieldCheck size={22} />,
+        },
+        {
             id: 4,
-            label: "Positive Reviews",
-            value: "97%",
-            icon: <Star size={22} />,
+            label: "Total Properties",
+            value: isLoading ? "..." : formatNumber(statsData?.totalProperties || 0),
+            icon: <Building2 size={22} />,
         },
     ];
 
     return (
-        <section className="bg-gradient-to-b from-white to-gray-50 py-12 md:py-20">
-            <div className="w-11/12 mx-auto px-4 md:px-6">
+        <section className="bg-gray-100 py-12 md:py-20">
+            <div className="w-11/12 mx-auto">
                 {/* 2 columns on mobile, 4 on desktop */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {stats.map((stat) => (
