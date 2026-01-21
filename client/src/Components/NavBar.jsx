@@ -55,7 +55,7 @@ const Navbar = () => {
                         className={({ isActive }) =>
                             `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
               ${isActive
-                                ? "bg-orange-400 text-white"
+                                ? "bg-orange-500 text-white"
                                 : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                             }`
                         }
@@ -68,7 +68,7 @@ const Navbar = () => {
                         className={({ isActive }) =>
                             `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
               ${isActive
-                                ? "bg-orange-400 text-white"
+                                ? "bg-orange-500 text-white"
                                 : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                             }`
                         }
@@ -81,7 +81,7 @@ const Navbar = () => {
                         className={({ isActive }) =>
                             `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
               ${isActive
-                                ? "bg-orange-400 text-white"
+                                ? "bg-orange-500 text-white"
                                 : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                             }`
                         }
@@ -96,7 +96,7 @@ const Navbar = () => {
                             className={({ isActive }) =>
                                 `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
                   ${isActive
-                                    ? "bg-orange-400 text-white"
+                                    ? "bg-orange-500 text-white"
                                     : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                 }`
                             }
@@ -112,8 +112,8 @@ const Navbar = () => {
                             className={({ isActive }) =>
                                 `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200 flex items-center gap-1
                   ${isActive
-                                    ? "bg-blue-500 text-white"
-                                    : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                    ? "bg-orange-500 text-white"
+                                    : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                 }`
                             }
                         >
@@ -128,7 +128,7 @@ const Navbar = () => {
                             className={({ isActive }) =>
                                 `px-4 py-2 rounded-md text-sm md:text-base font-medium transition-all duration-200
                   ${isActive
-                                    ? "bg-orange-400 text-white"
+                                    ? "bg-orange-500 text-white"
                                     : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                 }`
                             }
@@ -219,7 +219,7 @@ const Navbar = () => {
                                 className={({ isActive }) =>
                                     `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                 ${isActive
-                                        ? "bg-orange-400 text-white"
+                                        ? "bg-orange-500 text-white"
                                         : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                     }`
                                 }
@@ -233,7 +233,7 @@ const Navbar = () => {
                                 className={({ isActive }) =>
                                     `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                 ${isActive
-                                        ? "bg-orange-400 text-white"
+                                        ? "bg-orange-500 text-white"
                                         : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                     }`
                                 }
@@ -247,7 +247,7 @@ const Navbar = () => {
                                 className={({ isActive }) =>
                                     `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                 ${isActive
-                                        ? "bg-orange-400 text-white"
+                                        ? "bg-orange-500 text-white"
                                         : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                     }`
                                 }
@@ -262,7 +262,7 @@ const Navbar = () => {
                                     className={({ isActive }) =>
                                         `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                     ${isActive
-                                            ? "bg-orange-400 text-white"
+                                            ? "bg-orange-500 text-white"
                                             : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                         }`
                                     }
@@ -278,8 +278,8 @@ const Navbar = () => {
                                     className={({ isActive }) =>
                                         `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1
                     ${isActive
-                                            ? "bg-blue-500 text-white"
-                                            : "text-gray-700 hover:bg-blue-400/20 hover:text-blue-600"
+                                            ? "bg-orange-500 text-white"
+                                            : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
                                         }`
                                     }
                                 >

@@ -16,6 +16,8 @@ import chatRoutes from "./routes/chatRoutes.js";
 
 import comparisonRoutes from "./routes/comparisonRoutes.js";
 
+import statsRoutes from "./routes/statsRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -47,5 +49,7 @@ app.use("/", applicationRoutes);
 app.use("/", chatRoutes);
 
 app.use("/", comparisonRoutes);
+
+app.use("/", statsRoutes);
 
 export default app;

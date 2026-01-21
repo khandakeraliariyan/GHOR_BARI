@@ -60,19 +60,29 @@ const PublicUserProfile = () => {
             <header className="relative bg-[#1A1A2E] rounded-lg p-10 md:p-16 overflow-hidden shadow-2xl mb-10">
                 <div className="relative flex flex-col md:flex-row items-center gap-12">
                     <div className="relative shrink-0">
-                        <div className="p-1.5 bg-gradient-to-tr from-amber-400 to-orange-600 rounded-lg">
-                            <img
-                                src={profile.profileImage || "https://i.ibb.co/5GzXpdx/default-user.png"}
-                                alt=""
-                                className="w-48 h-48 rounded-md object-cover border-8 border-[#1A1A2E]"
-                            />
-                        </div>
-
-                        {profile.nidVerified && (
-                            <div className="absolute -bottom-1 -right-3 bg-emerald-500 text-white px-5 py-2 rounded-lg border-[6px] border-[#1A1A2E] font-black text-[11px] uppercase tracking-widest">
-                                Verified
+                        {/* Avatar container with gradient ring (match My Profile layout) */}
+                        <div className="relative p-1 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-[2.8rem]">
+                            <div className="relative">
+                                <img
+                                    src={profile.profileImage || "https://i.ibb.co/5GzXpdx/default-user.png"}
+                                    alt="Profile"
+                                    className="w-40 h-40 md:w-48 md:h-48 rounded-[2.5rem] object-cover border-4 md:border-8 border-[#1A1A2E] shadow-2xl"
+                                />
                             </div>
-                        )}
+
+                            {/* Verification capsule on avatar (same style as My Profile) */}
+                            <div className="absolute -bottom-2 -right-2">
+                                {profile?.nidVerified ? (
+                                    <span className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black uppercase rounded-full border-2 border-[#1A1A2E] shadow-lg">
+                                        <ShieldCheck size={12} /> Verified
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-500 text-white text-[10px] font-black uppercase rounded-full border-2 border-[#1A1A2E] shadow-lg">
+                                        <ShieldAlert size={12} /> Unverified
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="text-center md:text-left">
