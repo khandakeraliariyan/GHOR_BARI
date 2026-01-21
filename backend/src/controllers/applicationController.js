@@ -125,6 +125,22 @@ export const createApplication = async (req, res) => {
             proposedPrice: Number(data.proposedPrice), // Current proposed price
             message: data.message || "",
 
+            // Embedded Messages Thread (conversation between seeker and owner)
+            messages: [
+                ...(data.message
+                    ? [{
+                        _id: new ObjectId(),
+                        sender: "seeker",
+                        senderEmail: req.user.email,
+                        senderName: req.user.name,
+                        text: data.message,
+                        actionType: "application_submitted",
+                        linkedPrice: Number(data.proposedPrice),
+                        timestamp: new Date()
+                    }]
+                    : [])
+            ],
+
             // Negotiation History (track all changes)
             negotiationHistory: [
                 {
@@ -278,7 +294,7 @@ export const updateApplicationStatus = async (req, res) => {
     try {
         const db = getDatabase();
         const applicationId = req.params.id;
-        const { status, proposedPrice } = req.body;
+        const { status, proposedPrice, message } = req.body;
 
         if (!ObjectId.isValid(applicationId)) {
             return res.status(400).send({ message: "Invalid application ID format" });
@@ -382,6 +398,10 @@ export const updateApplicationStatus = async (req, res) => {
         if (status === "counter" && proposedPrice) {
             const newPrice = Number(proposedPrice);
             setData.proposedPrice = newPrice;
+            // Optionally update the top-level message to reflect latest owner note
+            if (message !== undefined) {
+                setData.message = message || "";
+            }
         }
 
         // Prepare push data for history tracking
@@ -401,6 +421,7 @@ export const updateApplicationStatus = async (req, res) => {
                 actorEmail: req.user.email,
                 proposedPrice: Number(proposedPrice),
                 status: "counter",
+                message: message || "",
                 timestamp: new Date()
             };
             pushData.statusHistory = {
@@ -410,6 +431,19 @@ export const updateApplicationStatus = async (req, res) => {
                 timestamp: new Date(),
                 note: "Owner sent counter offer"
             };
+            // Embed a message entry for this counter offer if message is provided
+            if (message !== undefined && message !== "") {
+                pushData.messages = {
+                    _id: new ObjectId(),
+                    sender: "owner",
+                    senderEmail: req.user.email,
+                    senderName: req.user.name,
+                    text: message,
+                    actionType: "counter_offer",
+                    linkedPrice: Number(proposedPrice),
+                    timestamp: new Date()
+                };
+            }
         } else {
             // For accept/reject, add to history
             pushData.negotiationHistory = {
@@ -532,6 +566,90 @@ export const withdrawApplication = async (req, res) => {
     }
 };
 
+// Generic: send a standalone message on an application (owner or seeker)
+export const sendApplicationMessage = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const applicationId = req.params.id;
+        const { text } = req.body;
+
+        if (!ObjectId.isValid(applicationId)) {
+            return res.status(400).send({ message: "Invalid application ID format" });
+        }
+
+        if (!text || typeof text !== "string" || text.trim().length === 0) {
+            return res.status(400).send({ message: "Message text is required" });
+        }
+
+        const application = await db.collection("applications").findOne({
+            _id: new ObjectId(applicationId)
+        });
+
+        if (!application) {
+            return res.status(404).send({ message: "Application not found" });
+        }
+
+        const isSeeker = application.seeker?.email === req.user.email;
+        const isOwner = application.owner?.email === req.user.email;
+
+        if (!isSeeker && !isOwner && req.user.role !== "admin") {
+            return res.status(403).send({
+                message: "You don't have permission to send messages on this application"
+            });
+        }
+
+        const senderRole = isSeeker ? "seeker" : isOwner ? "owner" : "admin";
+
+        const messageEntry = {
+            _id: new ObjectId(),
+            sender: senderRole,
+            senderEmail: req.user.email,
+            senderName: req.user.name,
+            text: text.trim(),
+            actionType: "manual_message",
+            linkedPrice: application.proposedPrice || application.originalListingPrice || null,
+            timestamp: new Date()
+        };
+
+        const result = await db.collection("applications").updateOne(
+            { _id: new ObjectId(applicationId) },
+            {
+                $set: {
+                    updatedAt: new Date(),
+                    lastActionAt: new Date(),
+                    lastActionBy: senderRole,
+                    lastActionByEmail: req.user.email
+                },
+                $push: {
+                    messages: messageEntry,
+                    negotiationHistory: {
+                        action: "message_sent",
+                        actor: senderRole,
+                        actorEmail: req.user.email,
+                        status: application.status,
+                        message: text.trim(),
+                        timestamp: new Date()
+                    }
+                }
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send({ message: "Application not found" });
+        }
+
+        res.send({
+            success: true,
+            message: "Message sent successfully",
+            data: messageEntry
+        });
+
+    } catch (error) {
+        console.error("POST /application/:id/message error:", error);
+        res.status(500).send({ message: "Server error" });
+    }
+};
+
 // Revise offer (seeker action - counter back to owner)
 export const reviseApplication = async (req, res) => {
     try {
@@ -609,7 +727,21 @@ export const reviseApplication = async (req, res) => {
                 changedByEmail: req.user.email,
                 timestamp: new Date(),
                 note: "Seeker revised offer - waiting for owner response"
-            }
+            },
+            ...(message !== undefined && message !== ""
+                ? {
+                    messages: {
+                        _id: new ObjectId(),
+                        sender: "seeker",
+                        senderEmail: req.user.email,
+                        senderName: req.user.name,
+                        text: message,
+                        actionType: "offer_revised",
+                        linkedPrice: Number(proposedPrice),
+                        timestamp: new Date()
+                    }
+                }
+                : {})
         };
 
         // Build update operation (same structure as owner's counter)

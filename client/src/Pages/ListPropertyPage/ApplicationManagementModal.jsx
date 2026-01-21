@@ -6,6 +6,7 @@ import useAxios from '../../Hooks/useAxios';
 import useAuth from '../../Hooks/useAuth';
 import { showToast } from '../../Utilities/ToastMessage';
 import { getApplicationStatusDisplay, getApplicationStatusColor, isActiveApplicationStatus } from '../../Utilities/StatusDisplay';
+import OwnerCounterOfferModal from './OwnerCounterOfferModal';
 
 const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
     // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
@@ -13,6 +14,8 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
     const axios = useAxios();
     const queryClient = useQueryClient();
     const [processingId, setProcessingId] = useState(null);
+    const [counterModalOpen, setCounterModalOpen] = useState(false);
+    const [selectedApplicationForCounter, setSelectedApplicationForCounter] = useState(null);
 
     // Fetch applications for this property
     const { data: applications = [], isLoading, error } = useQuery({
@@ -190,50 +193,15 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         }
     };
 
-    const handleCounter = async (application) => {
-        const { value: proposedPrice } = await Swal.fire({
-            title: 'Counter Offer',
-            html: `
-                <p class="text-left mb-4">Enter your counter offer price:</p>
-                <p class="text-left text-sm text-gray-600 mb-2">Current Listed Price: ৳${property.price?.toLocaleString()}</p>
-                <p class="text-left text-sm text-gray-600 mb-4">Applicant's Offer: ${application.proposedPrice ? `৳${application.proposedPrice.toLocaleString()}` : 'Listed Price'}</p>
-            `,
-            input: 'number',
-            inputLabel: 'Proposed Price',
-            inputPlaceholder: `Enter price (${property.listingType === 'rent' ? 'per month' : 'total'})`,
-            inputValue: application.proposedPrice || property.price,
-            showCancelButton: true,
-            confirmButtonColor: '#3b82f6',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Send Counter Offer',
-            cancelButtonText: 'Cancel',
-            inputValidator: (value) => {
-                if (!value || value <= 0) {
-                    return 'Please enter a valid price';
-                }
-                return null;
-            }
-        });
+    const handleCounter = (application) => {
+        setSelectedApplicationForCounter(application);
+        setCounterModalOpen(true);
+    };
 
-        if (proposedPrice) {
-            try {
-                setProcessingId(application._id);
-                const token = await user.getIdToken();
-                await axios.patch(`/application/${application._id}`, {
-                    status: 'counter',
-                    proposedPrice: Number(proposedPrice)
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                showToast('Counter offer sent successfully!', 'success');
-                queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
-            } catch (error) {
-                showToast(error.response?.data?.message || 'Failed to send counter offer', 'error');
-            } finally {
-                setProcessingId(null);
-            }
-        }
+    const handleCounterModalSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: ['property-applications', property._id] });
+        setCounterModalOpen(false);
+        setSelectedApplicationForCounter(null);
     };
 
     // Now handle conditional rendering AFTER all hooks are called
@@ -354,11 +322,36 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                             </div>
                                                         )}
 
-                                                        {application.message && (
-                                                            <div className="flex items-start gap-2 mb-3">
-                                                                <MessageSquare size={16} className="text-gray-400 mt-0.5" />
-                                                                <p className="text-sm text-gray-600">{application.message}</p>
+                                                        {/* Message Thread */}
+                                                        {Array.isArray(application.messages) && application.messages.length > 0 ? (
+                                                            <div className="mb-3 space-y-1.5">
+                                                                {application.messages.map((msg) => (
+                                                                    <div key={msg._id} className="flex items-start gap-2">
+                                                                        <MessageSquare size={14} className="text-gray-300 mt-0.5" />
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                                <span className="font-semibold text-gray-600">{msg.sender === 'owner' ? 'You (Owner)' : msg.sender === 'seeker' ? application.seeker.name : msg.sender}</span>
+                                                                                <span>•</span>
+                                                                                <span>{new Date(msg.timestamp).toLocaleString()}</span>
+                                                                                {msg.linkedPrice && (
+                                                                                    <>
+                                                                                        <span>•</span>
+                                                                                        <span>৳{msg.linkedPrice.toLocaleString()}</span>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-sm text-gray-700">{msg.text}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
+                                                        ) : (
+                                                            application.message && (
+                                                                <div className="flex items-start gap-2 mb-3">
+                                                                    <MessageSquare size={16} className="text-gray-400 mt-0.5" />
+                                                                    <p className="text-sm text-gray-600">{application.message}</p>
+                                                                </div>
+                                                            )
                                                         )}
 
                                                         <p className="text-xs text-gray-500">
@@ -614,6 +607,18 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                     )}
                 </div>
             </div>
+
+            {/* Owner Counter Offer Modal */}
+            <OwnerCounterOfferModal
+                isOpen={counterModalOpen}
+                onClose={() => {
+                    setCounterModalOpen(false);
+                    setSelectedApplicationForCounter(null);
+                }}
+                application={selectedApplicationForCounter}
+                property={property}
+                onSuccess={handleCounterModalSuccess}
+            />
         </div>
     );
 };
