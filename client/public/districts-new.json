@@ -58,8 +58,8 @@
     {"id": "57", "division_id": "8", "name": "Dinajpur", "bn_name": "দিনাজপুর", "lat": "25.627", "lon": "88.641", "url": "www.dinajpur.gov.bd"},
     {"id": "58", "division_id": "8", "name": "Rangpur", "bn_name": "রংপুর", "lat": "25.744", "lon": "89.275", "url": "www.rangpur.gov.bd"},
     {"id": "59", "division_id": "8", "name": "Panchagarh", "bn_name": "পঞ্চগড়", "lat": "26.346", "lon": "88.555", "url": "www.panchagarh.gov.bd"},
-    {"id": "60", "division_id": "1", "name": "Faridpur", "bn_name": "ফরিদপুর", "lat": "23.605", "lon": "89.846", "url": "www.faridpur.gov.bd"},
-    {"id": "61", "division_id": "1", "name": "Rajbari", "bn_name": "রাজবাড়ী", "lat": "23.747", "lon": "89.640", "url": "www.rajbari.gov.bd"},
+    {"id": "60", "division_id": "3", "name": "Faridpur", "bn_name": "ফরিদপুর", "lat": "23.605", "lon": "89.846", "url": "www.faridpur.gov.bd"},
+    {"id": "61", "division_id": "3", "name": "Rajbari", "bn_name": "রাজবাড়ী", "lat": "23.747", "lon": "89.640", "url": "www.rajbari.gov.bd"},
     {"id": "62", "division_id": "4", "name": "Gopalgonj", "bn_name": "গোপালগঞ্জ", "lat": "23.011", "lon": "90.667", "url": "www.gopalgonj.gov.bd"},
     {"id": "63", "division_id": "4", "name": "Madaripur", "bn_name": "মাদারীপুর", "lat": "23.164", "lon": "90.195", "url": "www.madaripur.gov.bd"},
     {"id": "64", "division_id": "4", "name": "Shariatpur", "bn_name": "শরীয়তপুর", "lat": "23.245", "lon": "90.427", "url": "www.shariatpur.gov.bd"}

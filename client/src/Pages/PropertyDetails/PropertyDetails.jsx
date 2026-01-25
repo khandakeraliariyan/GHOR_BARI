@@ -290,12 +290,26 @@ out center;
     useEffect(() => {
         const fetchGeoData = async () => {
             try {
-                const [divR, disR, upzR] = await Promise.all([fetch('/divisions.json'), fetch('/districts.json'), fetch('/upzillas.json')]);
-                const [div, dis, upz] = await Promise.all([divR.json(), disR.json(), upzR.json()]);
+                const [divR, disR, upzR, thaR] = await Promise.all([
+                    fetch('/divisions.json'), 
+                    fetch('/districts.json'), 
+                    fetch('/upzillas.json'),
+                    fetch('/thanas.json')
+                ]);
+                const [div, dis, upz, tha] = await Promise.all([
+                    divR.json(), 
+                    disR.json(), 
+                    upzR.json(),
+                    thaR.json()
+                ]);
                 setGeoMaps({
                     divisionMap: new Map(div.map(d => [String(d.id), d.name])),
                     districtMap: new Map(dis.map(d => [String(d.id), d.name])),
-                    upazilaMap: new Map(upz.map(u => [String(u.id), u.name]))
+                    // Combine upazilas and thanas
+                    upazilaMap: new Map([
+                        ...upz.map(u => [String(u.id), u.name]),
+                        ...tha.map(t => [String(t.id), t.name])
+                    ])
                 });
             } catch (err) { console.error("Geo data error", err); }
         };

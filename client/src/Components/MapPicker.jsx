@@ -107,20 +107,23 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
     const [divisions, setDivisions] = useState([]);
     const [districts, setDistricts] = useState([]);
     const [upazilas, setUpazilas] = useState([]);
+    const [thanas, setThanas] = useState([]);
     const searchRef = useRef(null);
 
     // Load data on mount
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [divs, dists, upz] = await Promise.all([
+                const [divs, dists, upz, tha] = await Promise.all([
                     fetch("/divisions.json").then(r => r.json()),
                     fetch("/districts.json").then(r => r.json()),
-                    fetch("/upzillas.json").then(r => r.json())
+                    fetch("/upzillas.json").then(r => r.json()),
+                    fetch("/thanas.json").then(r => r.json())
                 ]);
                 setDivisions(divs);
                 setDistricts(dists);
                 setUpazilas(upz);
+                setThanas(tha);
             } catch (err) {
                 console.error("Error loading location data:", err);
             }
@@ -189,6 +192,22 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
             }
         });
 
+        // Search thanas (neighborhoods, police station areas)
+        thanas.forEach(tha => {
+            if (tha.name.toLowerCase().includes(query) || tha.bn_name.includes(value)) {
+                results.push({
+                    type: "thana",
+                    name: tha.name,
+                    bn_name: tha.bn_name,
+                    lat: parseFloat(tha.lat),
+                    lon: parseFloat(tha.lon),
+                    zoom: 14,
+                    id: tha.id,
+                    data: tha
+                });
+            }
+        });
+
         setSuggestions(results.slice(0, 8)); // Limit suggestions
         setShowSuggestions(true);
     };
@@ -253,12 +272,14 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
                             const typeColors = {
                                 division: "bg-blue-50 border-l-4 border-blue-400",
                                 district: "bg-green-50 border-l-4 border-green-400",
-                                upazila: "bg-orange-50 border-l-4 border-orange-400"
+                                upazila: "bg-orange-50 border-l-4 border-orange-400",
+                                thana: "bg-purple-50 border-l-4 border-purple-400"
                             };
                             const typeLabels = {
                                 division: "Division",
                                 district: "District",
-                                upazila: "Upazila"
+                                upazila: "Upazila",
+                                thana: "Area/Thana"
                             };
 
                             return (
