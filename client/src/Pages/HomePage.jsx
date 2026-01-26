@@ -25,8 +25,8 @@ const HomePage = () => {
     return (
         <div className='min-h-screen'>
             <Banner></Banner>
-            <FeaturedProperties></FeaturedProperties>
             <HomePageStats></HomePageStats>
+            <FeaturedProperties></FeaturedProperties>
             <WhyChooseUs></WhyChooseUs>
             <BeginYourPropertyJourney></BeginYourPropertyJourney>
         </div>
