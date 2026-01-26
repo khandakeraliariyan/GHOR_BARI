@@ -498,3 +498,33 @@ export const reopenListing = async (req, res) => {
     }
 
 };
+
+// Get featured properties for homepage (public endpoint - no authentication required)
+export const getFeaturedProperties = async (req, res) => {
+
+    try {
+
+        const db = getDatabase();
+
+        const limit = parseInt(req.query.limit) || 8; // Default to 8, can be customized
+
+        // Get latest active properties (not pending, rejected, hidden, sold, rented, removed)
+        const result = await db.collection("properties")
+            .find({ 
+                status: "active"  // Only active properties are shown
+            })
+            .sort({ createdAt: -1 })          // newest first
+            .limit(limit)
+            .toArray();
+
+        return res.json(result);
+
+    } catch (error) {
+
+        console.error("GET /featured-properties error:", error);
+
+        res.status(500).json({ message: "Server error" });
+
+    }
+    
+};

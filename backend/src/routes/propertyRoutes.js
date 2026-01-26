@@ -36,4 +36,7 @@ router.patch("/property/:id/visibility", verifyToken, verifyPropertyOwner, prope
 // Reopen listing for rented properties
 router.patch("/property/:id/reopen", verifyToken, verifyPropertyOwner, propertyController.reopenListing);
 
+// Get featured properties for homepage (public endpoint - no authentication required)
+router.get("/featured-properties", propertyController.getFeaturedProperties);
+
 export default router;
