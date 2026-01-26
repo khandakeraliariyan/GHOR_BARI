@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, MapPin } from "lucide-react";
+import { Sparkles, ArrowRight, MapPin, ChevronDown } from "lucide-react";
 import { Typewriter } from "react-simple-typewriter";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -191,21 +191,38 @@ const SearchCard = () => {
     );
 
     // Location select component
-    const LocationSelect = ({ value, onChange, options, placeholder, disabled = false, hasIcon = false }) => (
+    const LocationSelect = ({ value, onChange, options, placeholder, disabled = false, hasMapIcon = false }) => (
         <div className="relative">
-            {hasIcon && (
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+            {hasMapIcon ? (
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={16} />
+            ) : (
+                <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={16} />
             )}
             <select
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
-                className={`${selectStyle} ${hasIcon ? 'pl-10' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`${selectStyle} pl-10 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
                 <option value="">{placeholder}</option>
                 {options.map(opt => (
                     <option key={opt.id} value={opt.id}>{opt.name}</option>
                 ))}
+            </select>
+        </div>
+    );
+
+    // Regular select component with dropdown icon
+    const SelectWithIcon = ({ value, onChange, children, disabled = false }) => (
+        <div className="relative">
+            <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={16} />
+            <select
+                value={value}
+                onChange={onChange}
+                disabled={disabled}
+                className={`${selectStyle} pl-10 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+                {children}
             </select>
         </div>
     );
@@ -224,7 +241,7 @@ const SearchCard = () => {
                             onChange={(e) => setSelectedDivision(e.target.value)}
                             options={divisions}
                             placeholder="Any Division"
-                            hasIcon={true}
+                            hasMapIcon={true}
                         />
                     </FilterField>
 
@@ -249,27 +266,25 @@ const SearchCard = () => {
                     </FilterField>
 
                     <FilterField label="Listing Type">
-                        <select
+                        <SelectWithIcon
                             value={listingType}
                             onChange={(e) => setListingType(e.target.value)}
-                            className={selectStyle}
                         >
                             <option value="all">All</option>
                             <option value="sale">For Sale</option>
                             <option value="rent">For Rent</option>
-                        </select>
+                        </SelectWithIcon>
                     </FilterField>
 
                     <FilterField label="Property Type">
-                        <select
+                        <SelectWithIcon
                             value={propertyType}
                             onChange={(e) => setPropertyType(e.target.value)}
-                            className={selectStyle}
                         >
                             <option value="all">All Types</option>
                             <option value="flat">Residential Apartment/Flat</option>
                             <option value="building">Building</option>
-                        </select>
+                        </SelectWithIcon>
                     </FilterField>
                 </div>
 
@@ -336,7 +351,7 @@ const SearchCard = () => {
                             onChange={(e) => setSelectedDivision(e.target.value)}
                             options={divisions}
                             placeholder="Any Division"
-                            hasIcon={true}
+                            hasMapIcon={true}
                         />
                     </FilterField>
 
@@ -361,27 +376,25 @@ const SearchCard = () => {
                     </FilterField>
 
                     <FilterField label="Listing Type">
-                        <select
+                        <SelectWithIcon
                             value={listingType}
                             onChange={(e) => setListingType(e.target.value)}
-                            className={selectStyle}
                         >
                             <option value="all">All</option>
                             <option value="sale">For Sale</option>
                             <option value="rent">For Rent</option>
-                        </select>
+                        </SelectWithIcon>
                     </FilterField>
 
                     <FilterField label="Property Type">
-                        <select
+                        <SelectWithIcon
                             value={propertyType}
                             onChange={(e) => setPropertyType(e.target.value)}
-                            className={selectStyle}
                         >
                             <option value="all">All Types</option>
                             <option value="flat">Residential Apartment/Flat</option>
                             <option value="building">Building</option>
-                        </select>
+                        </SelectWithIcon>
                     </FilterField>
 
                     <FilterField label="Min Price (৳)">

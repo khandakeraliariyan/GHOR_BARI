@@ -139,7 +139,10 @@ const FeaturedProperties = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
                     <div>
                         <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                            Featured Properties
+                            Featured{" "}
+                            <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">
+                                Properties
+                            </span>
                         </h2>
                         <p className="text-gray-600 text-lg">
                             Discover our latest property listings
