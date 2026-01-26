@@ -101,7 +101,7 @@ const Navbar = () => {
                                 }`
                             }
                         >
-                            💬 Chat
+                            Chat
                         </NavLink>
                     )}
 
@@ -267,7 +267,7 @@ const Navbar = () => {
                                         }`
                                     }
                                 >
-                                    💬 Chat
+                                    Chat
                                 </NavLink>
                             )}
 
