@@ -20,13 +20,13 @@ const AMENITIES = [
 
 const DIVISION_COORDS = {
     dhaka: [23.8103, 90.4125],
-    chattagram: [22.3569, 91.7832], 
-    barisal: [22.7010, 90.3535],   
-    rajshahi: [24.3636, 88.6241],
+    chattagram: [22.3569, 91.7832],
     khulna: [22.8456, 89.5403],
+    barisal: [22.7010, 90.3535],
     sylhet: [24.8949, 91.8687],
+    mymensingh: [24.7465, 90.4081],
+    rajshahi: [24.3745, 88.6042],
     rangpur: [25.7439, 89.2752],
-    mymensingh: [24.7471, 90.4203],
 };
 
 const AddProperty = () => {
@@ -41,6 +41,7 @@ const AddProperty = () => {
     const { data: divisions = [] } = useQuery({ queryKey: ["divs"], queryFn: () => fetch("/divisions.json").then(res => res.json()) });
     const { data: districts = [] } = useQuery({ queryKey: ["dists"], queryFn: () => fetch("/districts.json").then(res => res.json()) });
     const { data: upazilas = [] } = useQuery({ queryKey: ["upzs"], queryFn: () => fetch("/upzillas.json").then(res => res.json()) });
+    const { data: thanas = [] } = useQuery({ queryKey: ["thanas"], queryFn: () => fetch("/thanas.json").then(res => res.json()) });
 
     const listingType = watch("listingType");
     const propertyType = watch("propertyType");
@@ -73,13 +74,18 @@ const AddProperty = () => {
 
     useEffect(() => {
         if (watchUpazila && lastUpdateRef.current.upazila !== watchUpazila) {
-            const upz = upazilas.find(u => String(u.id) === String(watchUpazila));
-            if (upz?.lat && upz.lon) {
-                setMapView({ center: [parseFloat(upz.lat), parseFloat(upz.lon)], zoom: 13 });
+            // Check upazilas first
+            let location = upazilas.find(u => String(u.id) === String(watchUpazila));
+            // If not found, check thanas
+            if (!location) {
+                location = thanas.find(t => String(t.id) === String(watchUpazila));
+            }
+            if (location?.lat && location.lon) {
+                setMapView({ center: [parseFloat(location.lat), parseFloat(location.lon)], zoom: 13 });
                 lastUpdateRef.current.upazila = watchUpazila;
             }
         }
-    }, [watchUpazila, upazilas]);
+    }, [watchUpazila, upazilas, thanas]);
 
     const handleFilesChange = (e) => {
         const files = Array.from(e.target.files);
@@ -232,11 +238,14 @@ const AddProperty = () => {
                                     <ErrorMsg name="district_id" />
                                 </div>
                                 <div>
-                                    <label className={labelStyle}>Upazila/Area</label>
+                                    <label className={labelStyle}>Upazila/Thana</label>
                                     <select {...register("upazila_id", { required: "Required" })} className={inputStyle("upazila_id")} disabled={!watchDist}>
                                         <option value="">Select</option>
                                         {upazilas.filter(u => String(u.district_id) === String(watchDist)).map(u => (
                                             <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                        {thanas.filter(t => String(t.district_id) === String(watchDist)).map(t => (
+                                            <option key={`thana-${t.id}`} value={t.id}>{t.name} (Thana)</option>
                                         ))}
                                     </select>
                                     <ErrorMsg name="upazila_id" />

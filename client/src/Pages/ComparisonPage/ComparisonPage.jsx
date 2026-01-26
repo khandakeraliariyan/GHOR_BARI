@@ -21,19 +21,25 @@ const ComparisonPage = () => {
 
     // Fetch geo files for address mapping
     const fetchGeoFiles = useCallback(async () => {
-        const [divisionsRes, districtsRes, upzillasRes] = await Promise.all([
+        const [divisionsRes, districtsRes, upzillasRes, thanasRes] = await Promise.all([
             fetch("/divisions.json"),
             fetch("/districts.json"),
             fetch("/upzillas.json"),
+            fetch("/thanas.json"),
         ]);
-        const [divisions, districts, upzillas] = await Promise.all([
+        const [divisions, districts, upzillas, thanas] = await Promise.all([
             divisionsRes.json(),
             districtsRes.json(),
             upzillasRes.json(),
+            thanasRes.json(),
         ]);
         const divisionMap = new Map(divisions.map((d) => [d.id, d.name]));
         const districtMap = new Map(districts.map((d) => [d.id, d.name]));
-        const upzilaMap = new Map(upzillas.map((u) => [u.id, u.name]));
+        // Combine upazilas and thanas
+        const upzilaMap = new Map([
+            ...upzillas.map((u) => [u.id, u.name]),
+            ...thanas.map((t) => [t.id, t.name])
+        ]);
         return { divisionMap, districtMap, upzilaMap };
     }, []);
 
