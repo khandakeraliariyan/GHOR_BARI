@@ -61,7 +61,12 @@ const FeaturedProperties = () => {
                     const divisionName = divisionMap.get(addressObj.division_id) || "";
                     const addressString = [addressObj.street, upazilaName, districtName, divisionName].filter(Boolean).join(", ");
 
-                    const isVerified = !!prop.isOwnerVerified;
+                    // Get owner verification info from enriched property data
+                    const ownerEmail = prop.owner?.email;
+                    const ownerNidVerified = !!prop.owner?.nidVerified;
+                    const ownerRating = prop.owner?.rating?.average ?? prop.owner?.rating ?? 0;
+                    const isOwnerVerified = !!prop.isOwnerVerified;
+                    const isVerified = isOwnerVerified || ownerNidVerified;
                     const isPremium = (listingType === "rent" && Number(prop.price) > 50000) || (listingType === "sale" && Number(prop.price) > 100000);
 
                     return {
@@ -74,8 +79,8 @@ const FeaturedProperties = () => {
                         listingType,
                         propertyType,
                         addressString,
-                        ownerRating: 0,
-                        ownerNidVerified: false,
+                        ownerRating,
+                        ownerNidVerified,
                         isVerified,
                         isPremium,
                     };
@@ -134,7 +139,10 @@ const FeaturedProperties = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-10">
                     <div>
                         <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                            Featured Properties
+                            Featured{" "}
+                            <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">
+                                Properties
+                            </span>
                         </h2>
                         <p className="text-gray-600 text-lg">
                             Discover our latest property listings

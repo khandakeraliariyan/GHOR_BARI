@@ -1,9 +1,7 @@
 import React from "react";
-import { Bed, Bath, Square, MapPin, Star, Heart, CheckCircle, Tag, Layers, XCircle, Scale } from "lucide-react";
-import useComparison from "../../Hooks/useComparison";
+import { Bed, Bath, Square, MapPin, Star, Heart, CheckCircle, Tag, Layers, XCircle } from "lucide-react";
 
 const PropertyCard = ({ property }) => {
-    const comparison = useComparison();
 
     const {
         title,
@@ -43,10 +41,9 @@ const PropertyCard = ({ property }) => {
 
     const verifiedFlag = Boolean(ownerNidVerified ?? isOwnerVerified ?? property.isOwnerVerified ?? property.isVerified ?? verified);
     const ownerName = owner?.name || owner?.email || "Unknown";
-    const isSelected = comparison.isPropertySelected(property._id);
 
     return (
-        <div className={`max-w-sm rounded-lg overflow-hidden shadow-lg bg-white group cursor-pointer transition-all duration-300 hover:shadow-2xl border ${isSelected ? 'border-blue-500 border-2' : 'border-gray-100'} mx-auto w-full flex flex-col h-[420px]`}>
+        <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white group cursor-pointer transition-all duration-300 hover:shadow-2xl border border-gray-100 mx-auto w-full flex flex-col h-[420px]">
             <div className="relative h-64 overflow-hidden">
                 <img src={imageUrl} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
 
@@ -72,27 +69,6 @@ const PropertyCard = ({ property }) => {
 
                 <button className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-md text-gray-600 hover:text-red-500 hover:bg-white transition-colors shadow-md z-20">
                     <Heart size={20} />
-                </button>
-
-                {/* Compare Button Overlay */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (isSelected) {
-                            comparison.removeProperty(property._id);
-                        } else {
-                            comparison.addProperty(property);
-                        }
-                    }}
-                    className={`absolute bottom-4 right-4 p-2 rounded-md transition-all z-20 opacity-0 group-hover:opacity-100 flex items-center gap-1 ${
-                        isSelected
-                            ? 'bg-blue-500 text-white shadow-lg'
-                            : 'bg-white/80 text-gray-700 hover:bg-white shadow-md'
-                    }`}
-                    title={isSelected ? 'Remove from comparison' : 'Add to comparison'}
-                >
-                    <Scale size={16} />
-                    <span className="text-xs font-bold">{isSelected ? 'Added' : 'Compare'}</span>
                 </button>
 
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">

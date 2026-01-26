@@ -509,13 +509,49 @@ export const getFeaturedProperties = async (req, res) => {
         const limit = parseInt(req.query.limit) || 8; // Default to 8, can be customized
 
         // Get latest active properties (not pending, rejected, hidden, sold, rented, removed)
-        const result = await db.collection("properties")
+        const properties = await db.collection("properties")
             .find({ 
                 status: "active"  // Only active properties are shown
             })
             .sort({ createdAt: -1 })          // newest first
             .limit(limit)
             .toArray();
+
+        // Get unique owner emails
+        const ownerEmails = Array.from(new Set(
+            properties.map(p => p.owner?.email).filter(Boolean)
+        ));
+
+        // Fetch owner information for verification status
+        let ownerInfoMap = new Map();
+        if (ownerEmails.length > 0) {
+            const owners = await db.collection("users")
+                .find(
+                    { email: { $in: ownerEmails } },
+                    { projection: { email: 1, name: 1, nidVerified: 1, rating: 1 } }
+                )
+                .toArray();
+            
+            owners.forEach(owner => {
+                ownerInfoMap.set(owner.email, owner);
+            });
+        }
+
+        // Enrich properties with owner verification info
+        const result = properties.map(prop => {
+            const ownerEmail = prop.owner?.email;
+            const ownerInfo = ownerInfoMap.get(ownerEmail) || {};
+            
+            return {
+                ...prop,
+                owner: {
+                    ...prop.owner,
+                    name: ownerInfo.name || prop.owner?.name || ownerEmail || "Unknown",
+                    nidVerified: !!ownerInfo.nidVerified,
+                    rating: ownerInfo.rating || { average: 0 }
+                }
+            };
+        });
 
         return res.json(result);
 

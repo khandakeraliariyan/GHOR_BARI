@@ -35,13 +35,16 @@ const BuyOrRentPage = () => {
     const [sortBy, setSortBy] = useState("newest");
 
     const initialFilterState = {
-        minPrice: "",
-        maxPrice: "",
-        propertyType: "all",
-        minArea: "",
-        maxArea: "",
+        minPrice: searchParams.get("minPrice") || "",
+        maxPrice: searchParams.get("maxPrice") || "",
+        propertyType: searchParams.get("propertyType") || "all",
+        minArea: searchParams.get("minArea") || "",
+        maxArea: searchParams.get("maxArea") || "",
         onlyVerified: false,
-        listingType: "all"
+        listingType: searchParams.get("listingType") || "all",
+        division_id: searchParams.get("division_id") || "",
+        district_id: searchParams.get("district_id") || "",
+        upazila_id: searchParams.get("upazila_id") || ""
     };
 
     const [tempFilters, setTempFilters] = useState(initialFilterState);
@@ -136,6 +139,10 @@ const BuyOrRentPage = () => {
 
                 return {
                     ...prop,
+                    owner: {
+                        ...prop.owner,
+                        name: ownerInfo.name || prop.owner?.name || ownerEmail || "Unknown"
+                    },
                     image: imageUrl,
                     beds, baths, area, rating, listingType, propertyType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
                 };
@@ -158,10 +165,28 @@ const BuyOrRentPage = () => {
         }
     }, [authLoading, fetchProperties]);
 
-    // Update search query when URL params change
+    // Update filters when URL params change
     useEffect(() => {
         const searchParam = searchParams.get("search");
         setSearchQuery(searchParam || "");
+
+        // Update filters from URL params
+        const newFilters = {
+            minPrice: searchParams.get("minPrice") || "",
+            maxPrice: searchParams.get("maxPrice") || "",
+            propertyType: searchParams.get("propertyType") || "all",
+            minArea: searchParams.get("minArea") || "",
+            maxArea: searchParams.get("maxArea") || "",
+            onlyVerified: false,
+            listingType: searchParams.get("listingType") || "all",
+            division_id: searchParams.get("division_id") || "",
+            district_id: searchParams.get("district_id") || "",
+            upazila_id: searchParams.get("upazila_id") || ""
+        };
+
+        setAppliedFilters(newFilters);
+        setTempFilters(newFilters);
+        setCurrentPage(1);
     }, [searchParams]);
 
     const filteredProperties = useMemo(() => {
@@ -170,6 +195,19 @@ const BuyOrRentPage = () => {
             const q = searchQuery.toLowerCase();
             result = result.filter(p => p.title?.toLowerCase().includes(q) || p.addressString?.toLowerCase().includes(q));
         }
+        
+        // Location filters
+        if (appliedFilters.division_id) {
+            result = result.filter(p => String(p.address?.division_id) === String(appliedFilters.division_id));
+        }
+        if (appliedFilters.district_id) {
+            result = result.filter(p => String(p.address?.district_id) === String(appliedFilters.district_id));
+        }
+        if (appliedFilters.upazila_id) {
+            result = result.filter(p => String(p.address?.upazila_id) === String(appliedFilters.upazila_id));
+        }
+        
+        // Other filters
         if (appliedFilters.minPrice) result = result.filter(p => Number(p.price) >= Number(appliedFilters.minPrice));
         if (appliedFilters.maxPrice) result = result.filter(p => Number(p.price) <= Number(appliedFilters.maxPrice));
         if (appliedFilters.minArea) result = result.filter(p => Number(p.area) >= Number(appliedFilters.minArea));
@@ -288,7 +326,7 @@ const BuyOrRentPage = () => {
                                 <label className="text-sm font-bold text-slate-700">Property Type</label>
                                 <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.propertyType} onChange={(e) => setTempFilters({ ...tempFilters, propertyType: e.target.value })}>
                                     <option value="all">All Types</option>
-                                    <option value="flat">Flat</option>
+                                    <option value="flat">Residential Apartment/Flat</option>
                                     <option value="building">Building</option>
                                 </select>
                             </div>
