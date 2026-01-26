@@ -528,7 +528,7 @@ export const getFeaturedProperties = async (req, res) => {
             const owners = await db.collection("users")
                 .find(
                     { email: { $in: ownerEmails } },
-                    { projection: { email: 1, nidVerified: 1, rating: 1 } }
+                    { projection: { email: 1, name: 1, nidVerified: 1, rating: 1 } }
                 )
                 .toArray();
             
@@ -546,6 +546,7 @@ export const getFeaturedProperties = async (req, res) => {
                 ...prop,
                 owner: {
                     ...prop.owner,
+                    name: ownerInfo.name || prop.owner?.name || ownerEmail || "Unknown",
                     nidVerified: !!ownerInfo.nidVerified,
                     rating: ownerInfo.rating || { average: 0 }
                 }

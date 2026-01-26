@@ -133,6 +133,10 @@ const BuyOrRentPage = () => {
 
                 return {
                     ...prop,
+                    owner: {
+                        ...prop.owner,
+                        name: ownerInfo.name || prop.owner?.name || ownerEmail || "Unknown"
+                    },
                     image: imageUrl,
                     beds, baths, area, rating, listingType, propertyType, addressString, ownerRating, ownerNidVerified, isVerified, isPremium,
                 };
