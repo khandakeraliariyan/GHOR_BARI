@@ -9,12 +9,12 @@ import Loading from '../Components/Loading.jsx';
 const HomePage = () => {
     const [initialLoading, setInitialLoading] = useState(true);
 
-    // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
+    // LAND AT TOP & FORCED INITIAL LOADING (0.5s)
     useEffect(() => {
         window.scrollTo(0, 0);
         const timer = setTimeout(() => {
             setInitialLoading(false);
-        }, 250);
+        }, 500);
         return () => clearTimeout(timer);
     }, []);
 

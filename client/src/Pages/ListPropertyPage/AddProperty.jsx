@@ -20,8 +20,8 @@ const AMENITIES = [
 
 const DIVISION_COORDS = {
     dhaka: [23.8103, 90.4125],
-    chattagram: [22.3569, 91.7832], 
-    barisal: [22.7010, 90.3535],   
+    chattagram: [22.3569, 91.7832],
+    barisal: [22.7010, 90.3535],
     rajshahi: [24.3636, 88.6241],
     khulna: [22.8456, 89.5403],
     sylhet: [24.8949, 91.8687],
@@ -164,7 +164,7 @@ const AddProperty = () => {
                 {/* Header Section */}
                 <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-center md:text-left">
-                        
+
                         <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">
                             Add New <span className="bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">Property</span>
                         </h1>
@@ -179,198 +179,200 @@ const AddProperty = () => {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* LEFT COLUMN */}
-                    <div className="lg:col-span-7 space-y-8">
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><Home className="text-orange-500" size={20} /> Property Essentials</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <label className={labelStyle}>Property Title</label>
-                                    <input {...register("title", { required: "Title is required", minLength: { value: 10, message: "Min 10 characters required" } })} className={inputStyle("title")} placeholder="e.g. Modern 3-Bedroom Apartment" />
-                                    <ErrorMsg name="title" />
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Listing Type</label>
-                                    <select {...register("listingType", { required: "Select a listing type" })} className={inputStyle("listingType")}>
-                                        <option value="">Select Purpose</option>
-                                        <option value="rent">Rent Out</option>
-                                        <option value="sale">Sell</option>
-                                    </select>
-                                    <ErrorMsg name="listingType" />
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Property Type</label>
-                                    <select {...register("propertyType", { required: "Select a property type" })} className={inputStyle("propertyType")}>
-                                        <option value="">Select Category</option>
-                                        <option value="flat">Residential Flat</option>
-                                        <option value="building">Commercial/Full Building</option>
-                                    </select>
-                                    <ErrorMsg name="propertyType" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><MapPin className="text-orange-500" size={20} /> Location Details</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div>
-                                    <label className={labelStyle}>Division</label>
-                                    <select {...register("division_id", { required: "Required" })} className={inputStyle("division_id")}>
-                                        <option value="">Select</option>
-                                        {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                    </select>
-                                    <ErrorMsg name="division_id" />
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>District</label>
-                                    <select {...register("district_id", { required: "Required" })} className={inputStyle("district_id")} disabled={!watchDiv}>
-                                        <option value="">Select</option>
-                                        {districts.filter(d => String(d.division_id) === String(watchDiv)).map(d => (
-                                            <option key={d.id} value={d.id}>{d.name}</option>
-                                        ))}
-                                    </select>
-                                    <ErrorMsg name="district_id" />
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Upazila/Area</label>
-                                    <select {...register("upazila_id", { required: "Required" })} className={inputStyle("upazila_id")} disabled={!watchDist}>
-                                        <option value="">Select</option>
-                                        {upazilas.filter(u => String(u.district_id) === String(watchDist)).map(u => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
-                                        ))}
-                                    </select>
-                                    <ErrorMsg name="upazila_id" />
-                                </div>
-                            </div>
-                            <div className="mb-6">
-                                <label className={labelStyle}>Street Address/Area</label>
-                                <input {...register("address", { required: "Street address is required" })} className={inputStyle("address")} placeholder="House, Road, Area..." />
-                                <ErrorMsg name="address" />
-                            </div>
-                            <div className={`rounded-lg overflow-hidden border ${!watchCoords && errors.submitCount > 0 ? 'border-red-300' : 'border-gray-100'} h-[400px] shadow-inner relative`}>
-                                <MapPicker setValue={setValue} flyTo={mapView} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT COLUMN */}
-                    <div className="lg:col-span-5 space-y-8">
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><Layers className="text-orange-500" size={20} /> Specifications</h3>
-                            <div className="space-y-6">
-                                <div className="bg-orange-50/50 p-6 rounded-md border border-orange-100">
-                                    <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 block">
-                                        {listingType === "rent" ? "Monthly Rent" : "Asking Price"} (BDT)
-                                    </label>
-                                    <input type="number" {...register("price", { required: "Price is required", min: { value: 1, message: "Must be positive" } })} className="w-full bg-transparent border-none text-3xl font-black text-gray-900 outline-none placeholder:text-orange-200" placeholder="000,000" />
-                                    <ErrorMsg name="price" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {propertyType === "flat" ? (
-                                        <>
-                                            <div>
-                                                <label className={labelStyle}>Rooms</label>
-                                                <input type="number" {...register("roomCount", { required: "Required", min: 1 })} className={inputStyle("roomCount")} placeholder="Count" />
-                                                <ErrorMsg name="roomCount" />
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Baths</label>
-                                                <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
-                                                <ErrorMsg name="bathrooms" />
-                                            </div>
-                                        </>
-                                    ) : propertyType === "building" ? (
-                                        <>
-                                            <div>
-                                                <label className={labelStyle}>Floors</label>
-                                                <input type="number" {...register("floorCount", { required: "Required", min: 1 })} className={inputStyle("floorCount")} placeholder="Count" />
-                                                <ErrorMsg name="floorCount" />
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Total Units</label>
-                                                <input type="number" {...register("totalUnits", { required: "Required", min: 1 })} className={inputStyle("totalUnits")} placeholder="Count" />
-                                                <ErrorMsg name="totalUnits" />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="col-span-2 text-sm text-gray-500">Please select a property type first</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className={labelStyle}>Area (Sq Ft)</label>
-                                    <input type="number" {...register("areaSqFt", { required: "Area is required", min: 1 })} className={inputStyle("areaSqFt")} placeholder="e.g. 1500" />
-                                    <ErrorMsg name="areaSqFt" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><ImageIcon className="text-orange-500" size={20} /> Property Media</h3>
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-md cursor-pointer hover:bg-orange-50 transition-colors group">
-                                <Upload className="text-gray-300 group-hover:text-orange-400 transition-colors mb-2" size={32} />
-                                <span className="text-xs font-bold text-gray-400 group-hover:text-orange-500 uppercase tracking-tighter">Click to upload images</span>
-                                <input type="file" multiple accept="image/*" className="hidden" onChange={handleFilesChange} />
-                            </label>
-                            {selectedFiles.length === 0 && <span className="block text-[10px] font-bold text-gray-400 mt-2 text-center uppercase">At least 1 image is required</span>}
-
-                            {selectedFiles.length > 0 && (
-                                <div className="mt-6">
-                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                                        {selectedFiles.map((file, idx) => (
-                                            <div key={idx} className="relative flex-shrink-0">
-                                                <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-md border border-gray-100" />
-                                                <button type="button" onClick={() => removeFile(idx)} className="absolute -top-1 -right-1 bg-white shadow text-red-500 rounded-full p-1 border border-gray-100">
-                                                    <X size={10} />
-                                                </button>
-                                            </div>
-                                        ))}
+                    <fieldset disabled={isSubmitting} className="contents">
+                        {/* LEFT COLUMN */}
+                        <div className="lg:col-span-7 space-y-8">
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><Home className="text-orange-500" size={20} /> Property Essentials</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className={labelStyle}>Property Title</label>
+                                        <input {...register("title", { required: "Title is required", minLength: { value: 10, message: "Min 10 characters required" } })} className={inputStyle("title")} placeholder="e.g. Modern 3-Bedroom Apartment" />
+                                        <ErrorMsg name="title" />
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Listing Type</label>
+                                        <select {...register("listingType", { required: "Select a listing type" })} className={inputStyle("listingType")}>
+                                            <option value="">Select Purpose</option>
+                                            <option value="rent">Rent Out</option>
+                                            <option value="sale">Sell</option>
+                                        </select>
+                                        <ErrorMsg name="listingType" />
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Property Type</label>
+                                        <select {...register("propertyType", { required: "Select a property type" })} className={inputStyle("propertyType")}>
+                                            <option value="">Select Category</option>
+                                            <option value="flat">Residential Flat</option>
+                                            <option value="building">Commercial/Full Building</option>
+                                        </select>
+                                        <ErrorMsg name="propertyType" />
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><CheckCircle className="text-orange-500" size={20} /> Amenities</h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                {AMENITIES.map(item => (
-                                    <label key={item} className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" value={item} {...register("amenities")} className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500/20 transition-all" />
-                                        <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">{item}</span>
-                                    </label>
-                                ))}
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><MapPin className="text-orange-500" size={20} /> Location Details</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div>
+                                        <label className={labelStyle}>Division</label>
+                                        <select {...register("division_id", { required: "Required" })} className={inputStyle("division_id")}>
+                                            <option value="">Select</option>
+                                            {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                        <ErrorMsg name="division_id" />
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>District</label>
+                                        <select {...register("district_id", { required: "Required" })} className={inputStyle("district_id")} disabled={!watchDiv}>
+                                            <option value="">Select</option>
+                                            {districts.filter(d => String(d.division_id) === String(watchDiv)).map(d => (
+                                                <option key={d.id} value={d.id}>{d.name}</option>
+                                            ))}
+                                        </select>
+                                        <ErrorMsg name="district_id" />
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Upazila/Area</label>
+                                        <select {...register("upazila_id", { required: "Required" })} className={inputStyle("upazila_id")} disabled={!watchDist}>
+                                            <option value="">Select</option>
+                                            {upazilas.filter(u => String(u.district_id) === String(watchDist)).map(u => (
+                                                <option key={u.id} value={u.id}>{u.name}</option>
+                                            ))}
+                                        </select>
+                                        <ErrorMsg name="upazila_id" />
+                                    </div>
+                                </div>
+                                <div className="mb-6">
+                                    <label className={labelStyle}>Street Address/Area</label>
+                                    <input {...register("address", { required: "Street address is required" })} className={inputStyle("address")} placeholder="House, Road, Area..." />
+                                    <ErrorMsg name="address" />
+                                </div>
+                                <div className={`rounded-lg overflow-hidden border ${!watchCoords && errors.submitCount > 0 ? 'border-red-300' : 'border-gray-100'} h-[400px] shadow-inner relative`}>
+                                    <MapPicker setValue={setValue} flyTo={mapView} />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* OVERVIEW */}
-                    <div className="lg:col-span-12">
-                        <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-                            <h3 className={sectionTitle}><Info className="text-orange-500" size={20} /> Detailed Overview</h3>
-                            <textarea {...register("overview", { required: "Detailed description is required", minLength: { value: 20, message: "Please describe in at least 20 characters" } })} className={`${inputStyle("overview")} min-h-[150px] py-4 resize-none`} placeholder="Describe your property's best features..." />
-                            <ErrorMsg name="overview" />
+                        {/* RIGHT COLUMN */}
+                        <div className="lg:col-span-5 space-y-8">
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><Layers className="text-orange-500" size={20} /> Specifications</h3>
+                                <div className="space-y-6">
+                                    <div className="bg-orange-50/50 p-6 rounded-md border border-orange-100">
+                                        <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 block">
+                                            {listingType === "rent" ? "Monthly Rent" : "Asking Price"} (BDT)
+                                        </label>
+                                        <input type="number" {...register("price", { required: "Price is required", min: { value: 1, message: "Must be positive" } })} className="w-full bg-transparent border-none text-3xl font-black text-gray-900 outline-none placeholder:text-orange-200" placeholder="000,000" />
+                                        <ErrorMsg name="price" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {propertyType === "flat" ? (
+                                            <>
+                                                <div>
+                                                    <label className={labelStyle}>Rooms</label>
+                                                    <input type="number" {...register("roomCount", { required: "Required", min: 1 })} className={inputStyle("roomCount")} placeholder="Count" />
+                                                    <ErrorMsg name="roomCount" />
+                                                </div>
+                                                <div>
+                                                    <label className={labelStyle}>Baths</label>
+                                                    <input type="number" {...register("bathrooms", { required: "Required", min: 1 })} className={inputStyle("bathrooms")} placeholder="Count" />
+                                                    <ErrorMsg name="bathrooms" />
+                                                </div>
+                                            </>
+                                        ) : propertyType === "building" ? (
+                                            <>
+                                                <div>
+                                                    <label className={labelStyle}>Floors</label>
+                                                    <input type="number" {...register("floorCount", { required: "Required", min: 1 })} className={inputStyle("floorCount")} placeholder="Count" />
+                                                    <ErrorMsg name="floorCount" />
+                                                </div>
+                                                <div>
+                                                    <label className={labelStyle}>Total Units</label>
+                                                    <input type="number" {...register("totalUnits", { required: "Required", min: 1 })} className={inputStyle("totalUnits")} placeholder="Count" />
+                                                    <ErrorMsg name="totalUnits" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="col-span-2 text-sm text-gray-500">Please select a property type first</div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className={labelStyle}>Area (Sq Ft)</label>
+                                        <input type="number" {...register("areaSqFt", { required: "Area is required", min: 1 })} className={inputStyle("areaSqFt")} placeholder="e.g. 1500" />
+                                        <ErrorMsg name="areaSqFt" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><ImageIcon className="text-orange-500" size={20} /> Property Media</h3>
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-md cursor-pointer hover:bg-orange-50 transition-colors group">
+                                    <Upload className="text-gray-300 group-hover:text-orange-400 transition-colors mb-2" size={32} />
+                                    <span className="text-xs font-bold text-gray-400 group-hover:text-orange-500 uppercase tracking-tighter">Click to upload images</span>
+                                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleFilesChange} />
+                                </label>
+                                {selectedFiles.length === 0 && <span className="block text-[10px] font-bold text-gray-400 mt-2 text-center uppercase">At least 1 image is required</span>}
+
+                                {selectedFiles.length > 0 && (
+                                    <div className="mt-6">
+                                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                            {selectedFiles.map((file, idx) => (
+                                                <div key={idx} className="relative flex-shrink-0">
+                                                    <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-md border border-gray-100" />
+                                                    <button type="button" onClick={() => removeFile(idx)} className="absolute -top-1 -right-1 bg-white shadow text-red-500 rounded-full p-1 border border-gray-100">
+                                                        <X size={10} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><CheckCircle className="text-orange-500" size={20} /> Amenities</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {AMENITIES.map(item => (
+                                        <label key={item} className="flex items-center gap-3 cursor-pointer group">
+                                            <input type="checkbox" value={item} {...register("amenities")} className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500/20 transition-all" />
+                                            <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">{item}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* SUBMIT BUTTON */}
-                    <div className="lg:col-span-12 flex justify-center py-10">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className={`
+                        {/* OVERVIEW */}
+                        <div className="lg:col-span-12">
+                            <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                                <h3 className={sectionTitle}><Info className="text-orange-500" size={20} /> Detailed Overview</h3>
+                                <textarea {...register("overview", { required: "Detailed description is required", minLength: { value: 20, message: "Please describe in at least 20 characters" } })} className={`${inputStyle("overview")} min-h-[150px] py-4 resize-none`} placeholder="Describe your property's best features..." />
+                                <ErrorMsg name="overview" />
+                            </div>
+                        </div>
+
+                        {/* SUBMIT BUTTON */}
+                        <div className="lg:col-span-12 flex justify-center py-10">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className={`
                                 flex items-center justify-center gap-3 px-20 py-5 rounded-lg font-black text-white uppercase tracking-[0.2em] transition-all
                                 ${isSubmitting ? 'bg-orange-400 cursor-not-allowed scale-95' : 'bg-orange-600 hover:bg-orange-700 hover:shadow-2xl hover:shadow-orange-200 active:scale-95 shadow-xl'}
                             `}
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={20} />
-                                    Listing...
-                                </>
-                            ) : (
-                                "List Your Property"
-                            )}
-                        </button>
-                    </div>
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        Listing...
+                                    </>
+                                ) : (
+                                    "List Your Property"
+                                )}
+                            </button>
+                        </div>
+                    </fieldset>
                 </form>
             </div>
         </section>

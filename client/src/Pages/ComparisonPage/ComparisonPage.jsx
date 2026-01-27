@@ -515,20 +515,7 @@ const ComparisonPage = () => {
                                     >
                                         <Download size={18} /> Download Comparison
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            const tableHTML = document.querySelector('table').outerHTML;
-                                            const blob = new Blob([tableHTML], { type: 'text/html' });
-                                            const url = URL.createObjectURL(blob);
-                                            const a = document.createElement('a');
-                                            a.href = url;
-                                            a.download = 'comparison.html';
-                                            a.click();
-                                        }}
-                                        className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-lg shadow-purple-100"
-                                    >
-                                        <Share2 size={18} /> Share
-                                    </button>
+                                    
                                     <button
                                         onClick={clearAllProperties}
                                         className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg shadow-red-100 ml-auto"

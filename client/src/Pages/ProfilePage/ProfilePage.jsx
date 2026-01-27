@@ -335,11 +335,19 @@ const ProfilePage = () => {
                     <div className="mt-auto">
                         {!user?.nidVerified && !user?.nidSubmittedAt ? (
                             <button
-                                onClick={() => setIsVerifying(true)}
+                                onClick={() => {
+                                    if (!user?.phone || user.phone.trim().length < 6) {
+                                        showToast("Please add your phone number before applying for verification.", "error");
+                                        setIsEditing(true);
+                                        return;
+                                    }
+                                    setIsVerifying(true);
+                                }}
                                 className="w-full py-4 bg-orange-50 text-orange-600 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 border-dashed border-orange-200 hover:bg-orange-100 transition-all"
                             >
                                 Apply for Verification
                             </button>
+
                         ) : user?.nidSubmittedAt && !user?.nidVerified ? (
                             <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100 text-center">
                                 <p className="font-black text-[10px] uppercase tracking-widest">Review in Progress</p>

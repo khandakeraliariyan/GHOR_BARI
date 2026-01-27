@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import MyPropertyCard from './MyPropertyCard';
@@ -6,12 +6,24 @@ import MyRequestedProperties from './MyRequestedProperties';
 import useAuth from '../../Hooks/useAuth';
 import useAxios from '../../Hooks/useAxios';
 import { PlusCircle, Building2, Activity, Users, Star, Loader2, FileText, Clock, Home, FileText as FileTextIcon } from 'lucide-react';
+import Loading from '../../Components/Loading';
 
 const ListProperty = () => {
     const { user } = useAuth();
     const axios = useAxios();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('listings');
+
+    const [initialLoading, setInitialLoading] = useState(true);
+
+    // LAND AT TOP & FORCED INITIAL LOADING (0.5s)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const timer = setTimeout(() => {
+            setInitialLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Fetch User Listings
     const { data: properties = [], isLoading: propertiesLoading } = useQuery({
@@ -48,6 +60,10 @@ const ListProperty = () => {
             return res.data;
         },
     });
+
+    if(initialLoading){
+        return <Loading></Loading>
+    }
 
 
     const stats = [
@@ -133,21 +149,19 @@ const ListProperty = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setActiveTab('listings')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                activeTab === 'listings'
-                                                    ? 'bg-orange-500 text-white shadow-inner'
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'listings'
+                                                ? 'bg-orange-500 text-white shadow-inner'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
                                         >
                                             My Listings
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('requests')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                activeTab === 'requests'
-                                                    ? 'bg-orange-500 text-white shadow-inner'
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'requests'
+                                                ? 'bg-orange-500 text-white shadow-inner'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
                                         >
                                             My Requested Properties
                                         </button>
@@ -183,21 +197,19 @@ const ListProperty = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setActiveTab('listings')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                activeTab === 'listings'
-                                                    ? 'bg-orange-500 text-white shadow-inner'
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'listings'
+                                                ? 'bg-orange-500 text-white shadow-inner'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
                                         >
                                             My Listings
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('requests')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                activeTab === 'requests'
-                                                    ? 'bg-orange-500 text-white shadow-inner'
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                            }`}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'requests'
+                                                ? 'bg-orange-500 text-white shadow-inner'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                                }`}
                                         >
                                             My Requested Properties
                                         </button>
