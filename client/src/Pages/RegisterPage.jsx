@@ -25,6 +25,47 @@ const RegisterPage = () => {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const password = watch("password");
 
+    const getRegisterErrorMessage = (error) => {
+        const code = error?.code || "";
+
+        switch (code) {
+            // Email issues
+            case "auth/invalid-email":
+                return "Please enter a valid email address.";
+
+            case "auth/email-already-in-use":
+                return "An account already exists with this email.";
+
+            // Password issues
+            case "auth/weak-password":
+                return "Password should be at least 6 characters.";
+
+            // General auth
+            case "auth/operation-not-allowed":
+                return "Email/password registration is currently disabled.";
+
+            case "auth/network-request-failed":
+                return "Network error. Please check your internet connection.";
+
+            case "auth/user-disabled":
+                return "This account has been disabled.";
+
+            // Google specific
+            case "auth/popup-closed-by-user":
+                return "Google sign-in was cancelled.";
+
+            case "auth/cancelled-popup-request":
+                return "Google sign-in was interrupted. Please try again.";
+
+            case "auth/account-exists-with-different-credential":
+                return "This email is already registered using another sign-in method.";
+
+            default:
+                return "Registration failed. Please try again.";
+        }
+    };
+
+
     // Email Password Registration
     const onSubmit = async (data) => {
         try {
@@ -62,8 +103,12 @@ const RegisterPage = () => {
             showToast(`Welcome, ${data.fullName}! 🎉`, "success");
 
         } catch (error) {
-            showToast(error.response?.data?.message || error.message || "Registration failed", "error");
-        } finally {
+            const message =
+                error.response?.data?.message || getRegisterErrorMessage(error);
+
+            showToast(message, "error");
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -97,7 +142,7 @@ const RegisterPage = () => {
                 const { data: userProfile } = await axios.get(`/user-profile`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
+
                 // Update Firebase photoURL if database has profileImage
                 if (userProfile?.profileImage && userProfile.profileImage !== user.photoURL) {
                     await updateUserProfile({
@@ -117,11 +162,12 @@ const RegisterPage = () => {
             showToast(`Welcome, ${user.displayName || "User"}! 🚀`, "success");
 
         } catch (error) {
-            showToast(
-                error.response?.data?.message || error.message || "Google sign-in failed",
-                "error"
-            );
-        } finally {
+            const message =
+                error.response?.data?.message || getRegisterErrorMessage(error);
+
+            showToast(message, "error");
+        }
+        finally {
             setLoading(false);
         }
     };
