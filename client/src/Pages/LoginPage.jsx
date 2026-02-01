@@ -31,6 +31,45 @@ const LoginPage = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    const getLoginErrorMessage = (error) => {
+        const code = error?.code || "";
+
+        switch (code) {
+            case "auth/invalid-email":
+                return "Please enter a valid email address.";
+
+            case "auth/user-not-found":
+                return "No account found with this email.";
+
+            case "auth/wrong-password":
+            case "auth/invalid-credential":
+                return "Incorrect email or password.";
+
+            case "auth/user-disabled":
+                return "This account has been disabled.";
+
+            case "auth/too-many-requests":
+                return "Too many failed attempts. Please try again later.";
+
+            case "auth/network-request-failed":
+                return "Network error. Please check your internet connection.";
+
+            // Google specific
+            case "auth/popup-closed-by-user":
+                return "Google sign-in was cancelled.";
+
+            case "auth/cancelled-popup-request":
+                return "Google sign-in was interrupted. Please try again.";
+
+            case "auth/account-exists-with-different-credential":
+                return "This email is already registered with another sign-in method.";
+
+            default:
+                return "Login failed. Please try again.";
+        }
+    };
+
+
     // Email & Password Login
     const onSubmit = async (data) => {
         try {
@@ -47,7 +86,7 @@ const LoginPage = () => {
                 const isAdmin = adminCheck.data?.admin || false;
 
                 showToast(`Welcome back, ${user.displayName || "User"}! 👋`, "success");
-                
+
                 // Redirect admin to dashboard, others to intended location or home
                 if (isAdmin) {
                     navigate("/admin-dashboard");
@@ -60,8 +99,10 @@ const LoginPage = () => {
                 navigate(location?.state?.from || "/");
             }
         } catch (error) {
-            showToast(error.message || "Invalid email or password", "error");
-        } finally {
+            const message = getLoginErrorMessage(error);
+            showToast(message, "error");
+        }
+        finally {
             setActionLoading(false);
         }
     };
@@ -93,7 +134,7 @@ const LoginPage = () => {
                 const { data: userProfile } = await axios.get(`/user-profile`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
+
                 // Update Firebase photoURL if database has profileImage
                 if (userProfile?.profileImage && userProfile.profileImage !== user.photoURL) {
                     await updateUserProfile({
@@ -118,7 +159,7 @@ const LoginPage = () => {
                 const isAdmin = adminCheck.data?.admin || false;
 
                 showToast(`Welcome back, ${user.displayName || "User"}! 🚀`, "success");
-                
+
                 // Redirect admin to dashboard, others to intended location or home
                 if (isAdmin) {
                     navigate("/admin-dashboard");
@@ -132,11 +173,12 @@ const LoginPage = () => {
             }
 
         } catch (error) {
-            showToast(
-                error.response?.data?.message || error.message || "Google sign-in failed",
-                "error"
-            );
-        } finally {
+            const message =
+                error.response?.data?.message || getLoginErrorMessage(error);
+
+            showToast(message, "error");
+        }
+        finally {
             setActionLoading(false);
         }
     };
