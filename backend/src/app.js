@@ -17,7 +17,6 @@ import chatRoutes from "./routes/chatRoutes.js";
 import comparisonRoutes from "./routes/comparisonRoutes.js";
 
 import statsRoutes from "./routes/statsRoutes.js";
-import ghorAiRoutes from "./routes/ghorAiRoutes.js";
 
 dotenv.config();
 
@@ -52,6 +51,5 @@ app.use("/", chatRoutes);
 app.use("/", comparisonRoutes);
 
 app.use("/", statsRoutes);
-app.use("/", ghorAiRoutes);
 
 export default app;

@@ -4,6 +4,7 @@ import useAxios from "../../Hooks/useAxios";
 import PropertyCard from "./PropertyCard";
 import BuyOrRentMap from "./BuyOrRentMap";
 import Loading from "../../Components/Loading";
+import GhorAI from "../../Components/GhorAI";
 import {
     Search,
     SlidersHorizontal,
@@ -14,7 +15,6 @@ import {
     ChevronDown
 } from "lucide-react";
 import useAuth from "../../Hooks/useAuth";
-import GhorAIWidget from "../../Components/GhorAIWidget";
 
 const PAGE_SIZE = 12;
 
@@ -234,8 +234,10 @@ const BuyOrRentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 py-6 lg:py-10 relative">
-            <GhorAIWidget />
+        <div className="min-h-screen bg-gray-100 py-6 lg:py-10">
+            {/* Ghor AI Assistant */}
+            <GhorAI />
+            
             <div className="w-11/12 mx-auto mb-10 space-y-6">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-grow">

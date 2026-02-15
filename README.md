@@ -204,8 +204,6 @@ FIREBASE_PRIVATE_KEY=your_firebase_private_key
 FIREBASE_CLIENT_EMAIL=your_firebase_client_email
 JWT_SECRET=your_jwt_secret_key
 NODE_ENV=development
-# Optional: for Ghor AI (Gemini) on Buy/Rent page - get key at https://aistudio.google.com/app/apikey
-GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ### Frontend Environment Variables
