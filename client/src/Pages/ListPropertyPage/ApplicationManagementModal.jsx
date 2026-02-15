@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { X, User, MessageSquare, CheckCircle, XCircle, Clock, Loader2, Send, Ban } from 'lucide-react';
 import Swal from 'sweetalert2';
 import useAxios from '../../Hooks/useAxios';
@@ -12,6 +13,7 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
     // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
     const { user } = useAuth();
     const axios = useAxios();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [processingId, setProcessingId] = useState(null);
     const [counterModalOpen, setCounterModalOpen] = useState(false);
@@ -415,6 +417,13 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                     Deal in Progress
                                                                 </div>
                                                                 <button
+                                                                    onClick={() => navigate(`/chat?applicationId=${application._id}`)}
+                                                                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-bold text-xs uppercase tracking-wider hover:bg-blue-700 transition-all flex items-center justify-center gap-2 mb-2"
+                                                                >
+                                                                    <MessageSquare size={14} />
+                                                                    Chat with Buyer
+                                                                </button>
+                                                                <button
                                                                     onClick={async () => {
                                                                         const result = await Swal.fire({
                                                                             title: `Mark as ${property.listingType === 'sale' ? 'Sold' : 'Rented'}?`,
@@ -523,6 +532,13 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                     </div>
                                                     {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
                                                         <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => navigate(`/chat?applicationId=${application._id}`)}
+                                                                className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 flex items-center gap-1"
+                                                            >
+                                                                <MessageSquare size={12} />
+                                                                Chat
+                                                            </button>
                                                             <button
                                                                 onClick={async () => {
                                                                     const result = await Swal.fire({

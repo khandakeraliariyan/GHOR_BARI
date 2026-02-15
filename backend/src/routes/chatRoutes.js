@@ -7,6 +7,9 @@ const router = express.Router();
 // Create or get conversation
 router.post("/create-conversation", verifyToken, chatController.createOrGetConversation);
 
+// Create or get conversation from an accepted application (deal-in-progress only)
+router.post("/create-conversation-from-application", verifyToken, chatController.createConversationFromApplication);
+
 // Get all conversations for logged-in user
 router.get("/conversations", verifyToken, chatController.getConversations);
 

@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { getSocket } from '../../Utilities/socketClient';
 
-export default function MessageInput({ 
-    conversationId, 
+export default function MessageInput({
+    conversationId,
     onSendMessage,
-    disabled = false 
+    disabled = false,
+    isConnected = true
 }) {
     const [message, setMessage] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -99,10 +100,13 @@ export default function MessageInput({
                 </button>
             </div>
 
-            {/* Character count and tips */}
-            <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
+            {/* Character count, tips, and offline note */}
+            <div className="mt-2 flex flex-wrap justify-between items-center gap-1 text-xs text-gray-500">
                 <span>{message.length} characters</span>
                 <span>Shift+Enter to add new line</span>
+                {!isConnected && (
+                    <span className="w-full text-amber-600">Offline — messages still send and will be seen when they open the chat.</span>
+                )}
             </div>
         </form>
     );

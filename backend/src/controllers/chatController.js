@@ -1,5 +1,21 @@
+import { ObjectId } from "mongodb";
 import { ConversationModel, MessageModel } from "../models/Chat.js";
 import { getIO, getConnectedUsers } from "../config/socket.js";
+
+/** Ensure conversation is only created when there's a deal-in-progress application for this property between the two users */
+async function ensureDealInProgressForChat(db, userEmail, otherUserEmail, propertyId) {
+    if (!propertyId) return true;
+    const propId = typeof propertyId === "string" ? new ObjectId(propertyId) : propertyId;
+    const application = await db.collection("applications").findOne({
+        propertyId: propId,
+        status: "deal-in-progress",
+        $or: [
+            { "seeker.email": userEmail, "owner.email": otherUserEmail },
+            { "seeker.email": otherUserEmail, "owner.email": userEmail }
+        ]
+    });
+    return !!application;
+}
 
 export const createOrGetConversation = async (req, res) => {
     try {
@@ -13,6 +29,19 @@ export const createOrGetConversation = async (req, res) => {
 
         if (userEmail === otherUserEmail) {
             return res.status(400).json({ message: "Cannot start conversation with yourself" });
+        }
+
+        // Chat is only allowed after offer or counter offer is accepted (deal-in-progress)
+        if (!propertyId) {
+            return res.status(400).json({
+                message: "Chat is only available after a deal is accepted. Accept an offer or counter offer in property bidding to start chatting."
+            });
+        }
+        const allowed = await ensureDealInProgressForChat(db, userEmail, otherUserEmail, propertyId);
+        if (!allowed) {
+            return res.status(403).json({
+                message: "Chat is only available after a deal is accepted (deal-in-progress) for this property."
+            });
         }
 
         // Check if other user exists
@@ -30,6 +59,69 @@ export const createOrGetConversation = async (req, res) => {
 
     } catch (error) {
         console.error("POST /create-conversation error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/** Create or get conversation from an application (only when status is deal-in-progress) */
+export const createConversationFromApplication = async (req, res) => {
+    try {
+        const db = req.db;
+        const { applicationId } = req.body;
+        const userEmail = req.user.email;
+
+        if (!applicationId) {
+            return res.status(400).json({ message: "Application ID is required" });
+        }
+
+        const appId = typeof applicationId === "string" ? new ObjectId(applicationId) : applicationId;
+        const application = await db.collection("applications").findOne({ _id: appId });
+        if (!application) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        if (application.status !== "deal-in-progress" && application.status !== "accepted") {
+            return res.status(403).json({
+                message: "Chat is only available for accepted deals (deal-in-progress)."
+            });
+        }
+
+        const ownerEmail = application.owner?.email;
+        const seekerEmail = application.seeker?.email;
+        if (!ownerEmail || !seekerEmail) {
+            return res.status(400).json({ message: "Invalid application: missing owner or seeker" });
+        }
+
+        if (userEmail !== ownerEmail && userEmail !== seekerEmail) {
+            return res.status(403).json({ message: "You are not part of this application" });
+        }
+
+        const otherUserEmail = userEmail === ownerEmail ? seekerEmail : ownerEmail;
+        const propertyId = application.propertyId?.toString?.() || application.propertyId;
+
+        const conversation = await ConversationModel.findOrCreate(db, userEmail, otherUserEmail, propertyId);
+
+        const otherUser = await db.collection("users").findOne(
+            { email: otherUserEmail },
+            { projection: { name: 1, profileImage: 1, nidVerified: 1 } }
+        );
+
+        const enriched = {
+            ...conversation,
+            _id: conversation._id.toString(),
+            otherUserEmail,
+            otherUserName: otherUser?.name || "Unknown",
+            otherUserImage: otherUser?.profileImage || null,
+            otherUserVerified: otherUser?.nidVerified || false
+        };
+
+        return res.status(200).json({
+            message: "Conversation created or retrieved",
+            conversation: enriched
+        });
+
+    } catch (error) {
+        console.error("POST /create-conversation-from-application error:", error);
         res.status(500).json({ message: "Server error" });
     }
 };

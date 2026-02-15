@@ -11,36 +11,46 @@ export const useSocket = () => {
     useEffect(() => {
         if (!user?.email) return;
 
-        try {
-            const token = localStorage.getItem('authToken');
-            const socketInstance = initializeSocket(token, user.email);
+        let socketInstance = null;
 
-            socketInstance.on('connect', () => {
-                setIsConnected(true);
-                console.log('Socket connected');
-            });
+        const connect = async () => {
+            try {
+                const token = await user.getIdToken();
+                if (!token) return;
+                disconnectSocket();
+                socketInstance = initializeSocket(token, user.email);
 
-            socketInstance.on('disconnect', () => {
+                socketInstance.on('connect', () => {
+                    setIsConnected(true);
+                });
+                socketInstance.on('disconnect', () => {
+                    setIsConnected(false);
+                });
+                socketInstance.on('connect_error', () => {
+                    setIsConnected(false);
+                });
+                socketInstance.on('users:online', (users) => {
+                    setOnlineUsers(users);
+                });
+
+                setSocket(socketInstance);
+            } catch (error) {
+                console.error('Socket initialization error:', error);
                 setIsConnected(false);
-                console.log('Socket disconnected');
-            });
+            }
+        };
 
-            socketInstance.on('users:online', (users) => {
-                setOnlineUsers(users);
-            });
+        connect();
 
-            setSocket(socketInstance);
-
-            return () => {
-                // Don't disconnect on unmount to keep connection alive
+        return () => {
+            if (socketInstance) {
                 socketInstance.off('connect');
                 socketInstance.off('disconnect');
+                socketInstance.off('connect_error');
                 socketInstance.off('users:online');
-            };
-        } catch (error) {
-            console.error('Socket initialization error:', error);
-        }
-    }, [user?.email]);
+            }
+        };
+    }, [user?.email, user]);
 
     return {
         socket,

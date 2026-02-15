@@ -303,9 +303,16 @@ const MyRequestedProperties = () => {
                                             <span>History</span>
                                         </button>
 
-                                        {/* Mark Deal as Completed/Rented/Sold and Cancel Deal buttons - only for deal-in-progress status */}
+                                        {/* Mark Deal as Completed/Rented/Sold, Chat, and Cancel Deal - only for deal-in-progress */}
                                         {(application.status === 'deal-in-progress' || application.status === 'accepted') && (
                                             <>
+                                                <button
+                                                    onClick={() => navigate(`/chat?applicationId=${application._id}`)}
+                                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-all text-sm font-semibold"
+                                                >
+                                                    <MessageSquare size={16} />
+                                                    <span>Chat with Seller</span>
+                                                </button>
                                                 <button
                                                     onClick={() => handleMarkDealCompleted(application)}
                                                     className="flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-all text-sm font-semibold"

@@ -50,6 +50,32 @@ export const useChat = () => {
     [axiosSecure]
   );
 
+  // Create or get conversation from an accepted application (deal-in-progress)
+  const createConversationFromApplication = useCallback(
+    async (applicationId) => {
+      try {
+        setLoading(true);
+        const response = await axiosSecure.post("/create-conversation-from-application", {
+          applicationId,
+        });
+        const conversation = response.data.conversation;
+        setConversations((prev) => {
+          const exists = prev.some((c) => c._id === conversation._id);
+          if (exists) return prev;
+          return [conversation, ...prev];
+        });
+        return conversation;
+      } catch (err) {
+        console.error("Error creating conversation from application:", err);
+        setError(err.response?.data?.message || "Failed to open chat");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [axiosSecure]
+  );
+
   // Fetch messages
   const fetchMessages = useCallback(
     async (conversationId, skip = 0, limit = 50) => {
@@ -204,6 +230,7 @@ export const useChat = () => {
     error,
     fetchConversations,
     createConversation,
+    createConversationFromApplication,
     fetchMessages,
     sendMessage,
     sendMessageViaSocket,

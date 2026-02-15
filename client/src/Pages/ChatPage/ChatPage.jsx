@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router';
 import { useChat } from '../../Hooks/useChat';
 import { useSocket } from '../../Hooks/useSocket';
 import useAuth from '../../Hooks/useAuth';
@@ -7,12 +8,16 @@ import ConversationList from './ConversationList';
 import ChatMessages from './ChatMessages';
 import MessageInput from './MessageInput';
 import { ChatProvider } from '../../context/ChatContext';
+import { showToast } from '../../Utilities/ToastMessage';
 
 function ChatWindowContent() {
     const { user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const applicationId = searchParams.get('applicationId');
     const { socket, isConnected, onlineUsers } = useSocket();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [showConversationList, setShowConversationList] = useState(true);
+    const openedFromApplication = useRef(false);
     const {
         conversations,
         messages,
@@ -22,8 +27,26 @@ function ChatWindowContent() {
         sendMessage,
         deleteConversation,
         markMessagesAsRead,
-        listenToMessages
+        listenToMessages,
+        createConversationFromApplication
     } = useChat();
+
+    // Open conversation from applicationId (e.g. /chat?applicationId=xxx)
+    useEffect(() => {
+        if (!applicationId || !user || openedFromApplication.current) return;
+        openedFromApplication.current = true;
+        createConversationFromApplication(applicationId)
+            .then((conversation) => {
+                const conv = { ...conversation, _id: conversation._id?.toString?.() || conversation._id };
+                setSelectedConversation(conv);
+                setShowConversationList(false);
+                setSearchParams({}, { replace: true });
+            })
+            .catch(() => {})
+            .finally(() => {
+                openedFromApplication.current = false;
+            });
+    }, [applicationId, user, createConversationFromApplication, setSearchParams]);
 
     // Fetch conversations on mount
     useEffect(() => {
@@ -60,7 +83,7 @@ function ChatWindowContent() {
             // Refresh conversation list to update last message
             await fetchConversations();
         } catch (error) {
-            ToastMessage(`Failed to send message: ${error.message}`, 'error');
+            showToast(`Failed to send message: ${error.message}`, 'error');
         }
     };
 
@@ -70,10 +93,10 @@ function ChatWindowContent() {
             setSelectedConversation(null);
             setShowConversationList(true);
             await fetchConversations();
-            ToastMessage('Conversation deleted', 'success');
+            showToast('Conversation deleted', 'success');
             return true;
         } catch (error) {
-            ToastMessage(`Failed to delete conversation: ${error.message}`, 'error');
+            showToast(`Failed to delete conversation: ${error.message}`, 'error');
             return false;
         }
     };
@@ -98,7 +121,7 @@ function ChatWindowContent() {
                 <div className="p-4 border-b border-gray-200">
                     <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
                     <p className="text-xs text-gray-500 mt-1">
-                        {isConnected ? '✓ Connected' : '⚠ Offline'}
+                        {isConnected ? '✓ Connected' : '⚠ Offline'} · Chats appear after you accept an offer or counter offer
                     </p>
                 </div>
                 <ConversationList
@@ -130,14 +153,15 @@ function ChatWindowContent() {
                         <MessageInput
                             conversationId={selectedConversation._id}
                             onSendMessage={handleSendMessage}
-                            disabled={!isConnected}
+                            disabled={false}
+                            isConnected={isConnected}
                         />
                     </>
                 ) : (
                     <div className="flex-1 flex items-center justify-center bg-gray-50">
-                        <div className="text-center">
-                            <p className="text-gray-500 text-lg mb-2">No conversation selected</p>
-                            <p className="text-gray-400 text-sm">Select a conversation from the list to start chatting</p>
+                        <div className="text-center max-w-sm px-4">
+                            <p className="text-gray-500 text-lg mb-2">Select a chat</p>
+                            <p className="text-gray-400 text-sm">Choose a conversation from the list to see all your sent and received messages</p>
                         </div>
                     </div>
                 )}

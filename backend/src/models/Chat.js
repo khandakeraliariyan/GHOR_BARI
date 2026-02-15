@@ -31,6 +31,17 @@ export class ConversationModel {
         });
     }
 
+    static async findByParticipantsAndProperty(db, email1, email2, propertyId) {
+        if (!propertyId) return this.findByParticipants(db, email1, email2);
+        const propId = typeof propertyId === 'string' ? new ObjectId(propertyId) : propertyId;
+        return await db.collection("conversations").findOne({
+            $or: [
+                { participant1Email: email1, participant2Email: email2, propertyId: propId },
+                { participant1Email: email2, participant2Email: email1, propertyId: propId }
+            ]
+        });
+    }
+
     static async findByUserEmail(db, userEmail) {
         return await db.collection("conversations")
             .find({
@@ -66,25 +77,30 @@ export class ConversationModel {
     }
 
     static async findOrCreate(db, email1, email2, propertyId = null) {
-        let conversation = await this.findByParticipants(db, email1, email2);
-        
+        const finder = propertyId
+            ? () => this.findByParticipantsAndProperty(db, email1, email2, propertyId)
+            : () => this.findByParticipants(db, email1, email2);
+        let conversation = await finder();
+
         if (!conversation) {
             const convId = await this.create(db, {
                 participant1Email: email1,
                 participant2Email: email2,
-                propertyId
+                propertyId: propertyId ? (typeof propertyId === 'string' ? new ObjectId(propertyId) : propertyId) : null
             });
             conversation = await this.findById(db, convId);
         }
-        
+
         return conversation;
     }
 }
 
 export class MessageModel {
     static async create(db, messageData) {
+        const convId = messageData.conversationId;
+        const conversationIdStored = typeof convId === 'string' ? new ObjectId(convId) : convId;
         const result = await db.collection("messages").insertOne({
-            conversationId: messageData.conversationId,
+            conversationId: conversationIdStored,
             senderEmail: messageData.senderEmail,
             senderName: messageData.senderName,
             senderImage: messageData.senderImage || null,
@@ -100,22 +116,22 @@ export class MessageModel {
 
     static async findByConversationId(db, conversationId, limit = 50, skip = 0) {
         if (!ObjectId.isValid(conversationId)) return [];
-        
+        const oid = new ObjectId(conversationId);
         return await db.collection("messages")
-            .find({ conversationId: new ObjectId(conversationId) })
+            .find({ $or: [{ conversationId: oid }, { conversationId: conversationId }] })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .toArray()
-            .then(messages => messages.reverse()); // Reverse to show oldest first
+            .then(messages => messages.reverse());
     }
 
     static async markAsRead(db, conversationId, readerEmail) {
         if (!ObjectId.isValid(conversationId)) return null;
-        
+        const oid = new ObjectId(conversationId);
         return await db.collection("messages").updateMany(
             {
-                conversationId: new ObjectId(conversationId),
+                $or: [{ conversationId: oid }, { conversationId: conversationId }],
                 senderEmail: { $ne: readerEmail },
                 isRead: false
             },

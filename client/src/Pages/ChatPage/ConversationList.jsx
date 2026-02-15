@@ -25,10 +25,15 @@ export default function ConversationList({
 
     if (conversations.length === 0) {
         return (
-            <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-4">
-                <div className="text-center">
-                    <p className="text-gray-500 text-lg mb-4">No conversations yet</p>
-                    <p className="text-gray-400 text-sm">Start a conversation to begin chatting</p>
+            <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-6">
+                <div className="text-center max-w-sm">
+                    <p className="text-gray-700 font-semibold text-lg mb-2">No chats yet</p>
+                    <p className="text-gray-500 text-sm mb-4">
+                        Chat is only available after you <strong>accept an offer</strong> or <strong>accept a counter offer</strong> in property bidding.
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                        Go to <strong>My Properties</strong> (as owner) or <strong>My Requested Properties</strong> (as buyer), accept a deal, then come back here to see your chat.
+                    </p>
                 </div>
             </div>
         );
@@ -94,7 +99,7 @@ export default function ConversationList({
                         </div>
 
                         {/* Last Message Preview */}
-                        <p className="text-xs text-gray-600 truncate pl-13">
+                        <p className="text-xs text-gray-600 truncate pl-12">
                             {getLastMessagePreview(
                                 conversation.lastMessage,
                                 conversation.lastMessageSender,
