@@ -314,10 +314,11 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
 
 const MapPicker = ({ setValue, flyTo }) => {
     const [position, setPosition] = useState(null);
+    const [internalFlyTo, setInternalFlyTo] = useState(null);
+    const activeFlyTo = flyTo ?? internalFlyTo;
 
     const handleLocationSelect = (location) => {
-        // This callback can be used for additional processing
-        console.log("Location selected:", location);
+        setInternalFlyTo({ center: [location.lat, location.lon], zoom: location.zoom });
     };
 
     return (
@@ -329,7 +330,7 @@ const MapPicker = ({ setValue, flyTo }) => {
                 scrollWheelZoom={false}
             >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <MapController flyTo={flyTo} />
+                <MapController flyTo={activeFlyTo} />
 
                 {/* PASS position + setter */}
                 <LocationMarker position={position} setPosition={setPosition} setValue={setValue} />
