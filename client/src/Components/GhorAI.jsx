@@ -58,9 +58,19 @@ const GhorAI = () => {
             setMessages((prev) => [...prev, botMessage]);
         } catch (error) {
             console.error("GhorAI Error:", error);
+            
+            let errorText = "Sorry, I encountered an error. Please try again later.";
+            
+            // Check for specific error types
+            if (error.message.includes("quota") || error.message.includes("429")) {
+                errorText = "I'm currently experiencing high demand and have reached my daily limit. Please try again in a few minutes or contact support for assistance. 🙏";
+            } else if (error.message.includes("API key")) {
+                errorText = "There's an issue with my configuration. Please contact support for assistance.";
+            }
+            
             const errorMessage = {
                 id: Date.now() + 1,
-                text: `Sorry, I encountered an error: ${error.message}. Please check the console for details.`,
+                text: errorText,
                 isBot: true,
                 timestamp: new Date(),
             };
