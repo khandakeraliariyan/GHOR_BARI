@@ -145,14 +145,14 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
         const results = [];
 
         // Search divisions
-        divisions.forEach(div => {
+        divisions.forEach((div) => {
             if (div.name.toLowerCase().includes(query) || div.bn_name.includes(value)) {
                 results.push({
                     type: "division",
                     name: div.name,
                     bn_name: div.bn_name,
                     lat: 23.6850,
-                    lon: 90.3563,
+                    lng: 90.3563,
                     zoom: 8,
                     id: div.id,
                     data: div
@@ -161,14 +161,14 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
         });
 
         // Search districts
-        districts.forEach(dist => {
+        districts.forEach((dist) => {
             if (dist.name.toLowerCase().includes(query) || dist.bn_name.includes(value)) {
                 results.push({
                     type: "district",
                     name: dist.name,
                     bn_name: dist.bn_name,
                     lat: parseFloat(dist.lat),
-                    lon: parseFloat(dist.lon),
+                    lng: parseFloat(dist.lon),
                     zoom: 11,
                     id: dist.id,
                     data: dist
@@ -177,14 +177,14 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
         });
 
         // Search upazilas
-        upazilas.forEach(upz => {
+        upazilas.forEach((upz) => {
             if (upz.name.toLowerCase().includes(query) || upz.bn_name.includes(value)) {
                 results.push({
                     type: "upazila",
                     name: upz.name,
                     bn_name: upz.bn_name,
                     lat: parseFloat(upz.lat),
-                    lon: parseFloat(upz.lon),
+                    lng: parseFloat(upz.lon),
                     zoom: 13,
                     id: upz.id,
                     data: upz
@@ -193,14 +193,14 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
         });
 
         // Search thanas (neighborhoods, police station areas)
-        thanas.forEach(tha => {
+        thanas.forEach((tha) => {
             if (tha.name.toLowerCase().includes(query) || tha.bn_name.includes(value)) {
                 results.push({
                     type: "thana",
                     name: tha.name,
                     bn_name: tha.bn_name,
                     lat: parseFloat(tha.lat),
-                    lon: parseFloat(tha.lon),
+                    lng: parseFloat(tha.lon),
                     zoom: 14,
                     id: tha.id,
                     data: tha
@@ -216,13 +216,20 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
     const handleSelectLocation = (location) => {
         setSearchQuery(location.name);
         setShowSuggestions(false);
-        
+
+        const lat = Number(location.lat);
+        const lng = Number(location.lng ?? location.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            console.warn("Invalid coordinates for location:", location);
+            return;
+        }
+
         // Set marker at location
-        setPosition({ lat: location.lat, lng: location.lon });
-        setValue("coordinates", { lat: location.lat, lng: location.lon });
+        setPosition({ lat, lng });
+        setValue("coordinates", { lat, lng });
         
         // Notify parent about selection
-        onLocationSelect(location);
+        onLocationSelect({ ...location, lat, lng });
     };
 
     // Close suggestions when clicking outside
@@ -318,7 +325,7 @@ const MapPicker = ({ setValue, flyTo }) => {
     const activeFlyTo = flyTo ?? internalFlyTo;
 
     const handleLocationSelect = (location) => {
-        setInternalFlyTo({ center: [location.lat, location.lon], zoom: location.zoom });
+        setInternalFlyTo({ center: [location.lat, location.lng], zoom: location.zoom });
     };
 
     return (
