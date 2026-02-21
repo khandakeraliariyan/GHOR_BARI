@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+dist
+build
+coverage
+**/*.min.js
+**/*.min.css
+client/public
+backend/ghor-bari-firebase-admin-sdk.json
