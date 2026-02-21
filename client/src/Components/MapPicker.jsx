@@ -24,6 +24,8 @@ const MapController = ({ flyTo }) => {
             const [lat, lng] = flyTo.center;
             const newZoom = flyTo.zoom || map.getZoom();
 
+            map.invalidateSize();
+
             const lastTargetCenter = lastTarget.current.center;
             const isNewTarget = !lastTargetCenter ||
                 Math.abs(lastTargetCenter.lat - lat) > 0.0001 ||
@@ -56,6 +58,25 @@ const MapController = ({ flyTo }) => {
             }
         };
     }, [flyTo, map]);
+    return null;
+};
+
+const MapSizeFixer = () => {
+    const map = useMap();
+
+    useEffect(() => {
+        const handleResize = () => {
+            map.invalidateSize();
+        };
+
+        handleResize();
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, [map]);
+
     return null;
 };
 
@@ -322,7 +343,7 @@ const SearchBar = ({ onLocationSelect, setValue, setPosition }) => {
 const MapPicker = ({ setValue, flyTo }) => {
     const [position, setPosition] = useState(null);
     const [internalFlyTo, setInternalFlyTo] = useState(null);
-    const activeFlyTo = flyTo ?? internalFlyTo;
+    const activeFlyTo = internalFlyTo ?? flyTo;
 
     const handleLocationSelect = (location) => {
         setInternalFlyTo({ center: [location.lat, location.lng], zoom: location.zoom });
@@ -337,6 +358,7 @@ const MapPicker = ({ setValue, flyTo }) => {
                 scrollWheelZoom={false}
             >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <MapSizeFixer />
                 <MapController flyTo={activeFlyTo} />
 
                 {/* PASS position + setter */}
