@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { sendMessageToGemini } from "../Utilities/geminiService";
+import useAxiosSecure from "../Hooks/useAxiosSecure";
 
 const GhorAI = () => {
+    const axiosSecure = useAxiosSecure();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         {
@@ -46,7 +48,7 @@ const GhorAI = () => {
         setIsLoading(true);
 
         try {
-            const response = await sendMessageToGemini(inputMessage, messages);
+            const response = await sendMessageToGemini(inputMessage, messages, axiosSecure);
             
             const botMessage = {
                 id: Date.now() + 1,
@@ -61,11 +63,25 @@ const GhorAI = () => {
             
             let errorText = "Sorry, I encountered an error. Please try again later.";
             
-            // Check for specific error types
-            if (error.message.includes("quota") || error.message.includes("429")) {
-                errorText = "I'm currently experiencing high demand and have reached my daily limit. Please try again in a few minutes or contact support for assistance. 🙏";
-            } else if (error.message.includes("API key")) {
-                errorText = "There's an issue with my configuration. Please contact support for assistance.";
+            // Check for specific error types from the error message
+            const errorMsg = error.message || error.toString();
+            
+            if (errorMsg.includes("quota")) {
+                errorText = "I'm currently experiencing high demand. Please try again in a few moments. 🙏";
+            } else if (errorMsg.includes("auth")) {
+                errorText = "Please log in to use Ghor AI features. Your session may have expired.";
+            } else if (errorMsg.includes("service-unavailable")) {
+                errorText = "Our AI service is temporarily unavailable. Please try again later.";
+            } else if (errorMsg.includes("connection-error")) {
+                errorText = "Connection error. Please check your internet connection and try again.";
+            } else if (errorMsg.includes("server-error")) {
+                errorText = "Server error. Please try again in a few moments.";
+            } else if (errorMsg.includes("configured")) {
+                errorText = "There's an issue with my configuration. Please contact support.";
+            } else if (error.response?.status === 404) {
+                errorText = "Backend service not found. Please ensure the server is running.";
+            } else if (!navigator.onLine) {
+                errorText = "You appear to be offline. Please check your internet connection.";
             }
             
             const errorMessage = {

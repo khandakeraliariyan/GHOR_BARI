@@ -18,6 +18,8 @@ import comparisonRoutes from "./routes/comparisonRoutes.js";
 
 import statsRoutes from "./routes/statsRoutes.js";
 
+import aiRoutes from "./routes/aiRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -51,5 +53,7 @@ app.use("/", chatRoutes);
 app.use("/", comparisonRoutes);
 
 app.use("/", statsRoutes);
+
+app.use("/", aiRoutes);
 
 export default app;

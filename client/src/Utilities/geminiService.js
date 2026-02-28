@@ -1,61 +1,99 @@
-const GEMINI_API_KEY = "AIzaSyDRHpKR2bpPGDq1prbmTQpDFAUFFaHwB4A";
+import axios from "axios";
 
-// Try multiple model names in order of preference
-const MODELS_TO_TRY = [
-    "gemini-1.5-pro",
-    "gemini-1.5-flash-8b", 
-    "gemini-2.0-flash-exp",
-    "gemini-exp-1206"
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export const sendMessageToGemini = async (message, conversationHistory = []) => {
-    let lastError = null;
-    
-    // Try each model until one works
-    for (const modelName of MODELS_TO_TRY) {
-        try {
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `You are Ghor AI, a helpful real estate assistant for a property rental and sales platform called "GHOR BARI" (which means "home" in Bengali). You help users find properties, answer questions about real estate, provide advice on renting or buying properties in Bangladesh, and assist with any property-related queries. Be friendly, professional, and helpful. Keep responses concise and informative.
+/**
+ * Send a message to the Ghor AI backend for processing with Gemini API
+ * @param {string} message - The user's message
+ * @param {array} conversationHistory - Previous messages (currently unused, for future enhancement)
+ * @param {object} axiosInstance - Axios instance with authorization headers (optional)
+ * @returns {Promise<string>} The AI response text
+ */
+export const sendMessageToGemini = async (message, conversationHistory = [], axiosInstance = null) => {
+    try {
+        if (!message || !message.trim()) {
+            throw new Error("Message cannot be empty");
+        }
 
-User's question: ${message}`
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 1024,
-                        }
-                    })
+        // Use provided axios instance for authenticated requests
+        if (axiosInstance) {
+            try {
+                const response = await axiosInstance.post("/api/ai/send-message", {
+                    message: message.trim(),
+                    conversationHistory: conversationHistory
+                });
+
+                if (response.data?.success && response.data?.response) {
+                    console.log("✅ AI response received successfully");
+                    return response.data.response;
                 }
-            );
+
+                throw new Error(response.data?.error || "Invalid response from AI service");
+            } catch (axiosError) {
+                // Handle axios errors specifically
+                if (axiosError.response) {
+                    // Server responded with error status
+                    const status = axiosError.response.status;
+                    const errorData = axiosError.response.data;
+                    
+                    console.error(`❌ Server error (${status}):`, errorData);
+                    
+                    if (status === 429) {
+                        throw new Error("quota-limit: I'm currently experiencing high demand. Please try again in a few moments.");
+                    } else if (status === 401 || status === 403) {
+                        throw new Error("auth: Please log in to use Ghor AI.");
+                    } else if (status === 500) {
+                        throw new Error("server-error: " + (errorData?.error || "Server error. Please try again later."));
+                    } else {
+                        throw new Error(errorData?.error || `API Error: ${status}`);
+                    }
+                } else if (axiosError.request) {
+                    // Request made but no response
+                    console.error("❌ No response from server:", axiosError.request);
+                    throw new Error("connection-error: Unable to reach the server. Please check your connection.");
+                } else {
+                    // Error in setting up request
+                    console.error("❌ Request setup error:", axiosError.message);
+                    throw axiosError;
+                }
+            }
+        } else {
+            // Fallback: make unauthenticated request (will fail with 401)
+            const response = await fetch(`${API_BASE_URL}/api/ai/send-message`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: message.trim(),
+                    conversationHistory: conversationHistory
+                })
+            });
 
             if (response.ok) {
                 const data = await response.json();
-                
-                if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    console.log(`Successfully used model: ${modelName}`);
-                    return data.candidates[0].content.parts[0].text;
+                if (data.success && data.response) {
+                    return data.response;
                 }
-            } else {
-                const errorData = await response.json();
-                lastError = new Error(errorData.error?.message || `${modelName} not available`);
-                console.log(`Model ${modelName} failed, trying next...`);
+                throw new Error(data.error || "Invalid response from AI service");
             }
-        } catch (error) {
-            lastError = error;
-            console.log(`Model ${modelName} failed:`, error.message);
+
+            const errorData = await response.json().catch(() => ({}));
+            const statusCode = response.status;
+
+            if (statusCode === 429) {
+                throw new Error("quota-limit: I'm currently experiencing high demand. Please try again in a few moments.");
+            } else if (statusCode === 401 || statusCode === 403) {
+                throw new Error("auth: Please log in to use Ghor AI.");
+            } else if (statusCode === 503) {
+                throw new Error("service-unavailable: " + (errorData.error || "Our AI service is temporarily unavailable. Please try again later."));
+            }
+
+            throw new Error(errorData.error || `AI Service Error (${statusCode})`);
         }
+    } catch (error) {
+        console.error("❌ Ghor AI Error:", error);
+        // Re-throw with more specific error handling in the component
+        throw error;
     }
-    
-    // If all models failed
-    console.error("All Gemini models failed. Last error:", lastError);
-    throw new Error(`Unable to connect to Gemini. Please check your API key permissions. Error: ${lastError?.message}`);
 };
