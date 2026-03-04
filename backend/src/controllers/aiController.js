@@ -1,13 +1,10 @@
 import axios from "axios";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Available Gemini models
-const MODELS_TO_TRY = [
-    "gemini-2.0-flash",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash",
-];
+// Groq model (free tier - using Llama 3.1 8B instant)
+const GROQ_MODEL = "llama-3.1-8b-instant";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export const sendMessageToAI = async (req, res) => {
     try {
@@ -18,92 +15,117 @@ export const sendMessageToAI = async (req, res) => {
 
         if (!message || !message.trim()) {
             console.warn("❌ Message is empty");
-            return res.status(400).json({ error: "Message is required" });
+            return res.status(400).json({ 
+                success: false,
+                error: "Message is required" 
+            });
         }
 
-        if (!GEMINI_API_KEY) {
-            console.error("❌ GEMINI_API_KEY is not set in environment variables");
-            return res.status(500).json({ error: "AI service is not configured" });
+        if (!GROQ_API_KEY) {
+            console.error("❌ GROQ_API_KEY is not set in environment variables");
+            return res.status(500).json({ 
+                success: false,
+                error: "AI service is not configured" 
+            });
         }
 
-        let lastError = null;
-        console.log(`🤖 Attempting to reach Gemini API with ${MODELS_TO_TRY.length} models...`);
+        try {
+            console.log(`🤖 Sending request to Groq (${GROQ_MODEL})...`);
+            
+            const systemPrompt = `You are Ghor AI, a helpful real estate assistant for a property rental and sales platform called "GHOR BARI" (which means "home" in Bengali). You help users find properties, answer questions about real estate, provide advice on renting or buying properties in Bangladesh, and assist with any property-related queries.
 
-        // Try each model until one works
-        for (const modelName of MODELS_TO_TRY) {
-            try {
-                console.log(`⏳ Trying model: ${modelName}`);
-                
-                const response = await axios.post(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
-                    {
-                        contents: [{
-                            parts: [{
-                                text: `You are Ghor AI, a helpful real estate assistant for a property rental and sales platform called "GHOR BARI" (which means "home" in Bengali). You help users find properties, answer questions about real estate, provide advice on renting or buying properties in Bangladesh, and assist with any property-related queries. 
+Be friendly, professional, and helpful. Keep responses concise and informative.`;
 
-Be friendly, professional, and helpful. Keep responses concise and informative. Format your response in a clear, readable way.
-
-User's question: ${message}`
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 1024,
-                            topP: 0.95,
-                            topK: 64,
+            const response = await axios.post(
+                GROQ_API_URL,
+                {
+                    model: GROQ_MODEL,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemPrompt
+                        },
+                        {
+                            role: "user",
+                            content: message
                         }
-                    },
-                    {
-                        timeout: 30000,
-                        headers: {
-                            "Content-Type": "application/json",
-                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 512,
+                    top_p: 0.95,
+                },
+                {
+                    timeout: 30000,
+                    headers: {
+                        "Authorization": `Bearer ${GROQ_API_KEY}`,
+                        "Content-Type": "application/json",
                     }
-                );
+                }
+            );
 
-                if (response.status === 200 && response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    const aiResponse = response.data.candidates[0].content.parts[0].text;
-                    console.log(`✅ Successfully used model: ${modelName} for user: ${userEmail}`);
+            // Groq returns OpenAI-compatible format
+            if (response.status === 200 && response.data?.choices?.[0]?.message?.content) {
+                const aiResponse = response.data.choices[0].message.content;
+                
+                if (aiResponse) {
+                    console.log(`✅ Successfully received response from Groq for user: ${userEmail}`);
                     return res.status(200).json({
                         success: true,
-                        response: aiResponse,
-                        model: modelName
-                    });
-                }
-            } catch (error) {
-                lastError = error;
-                const statusCode = error.response?.status;
-                const errorMessage = error.response?.data?.error?.message || error.message;
-                
-                console.log(`⚠️ Model ${modelName} failed (${statusCode}): ${errorMessage}`);
-
-                // If it's a 404 or 403, the model doesn't exist, try next
-                if (statusCode === 404 || statusCode === 403) {
-                    console.log(`   → Model not available, trying next...`);
-                    continue;
-                }
-
-                // If it's a quota error or rate limit, stop trying other models
-                if (statusCode === 429 || (statusCode === 400 && errorMessage.includes("quota"))) {
-                    console.error(`   → Rate limit reached`);
-                    return res.status(429).json({
-                        error: "AI service is experiencing high demand. Please try again in a few moments.",
-                        details: "Rate limit reached"
+                        response: aiResponse.trim(),
+                        model: GROQ_MODEL
                     });
                 }
             }
-        }
 
-        // If all models failed
-        console.error("❌ All Gemini models failed. Last error:", lastError?.message);
-        return res.status(503).json({
-            error: "Unable to process your request. Our AI service is temporarily unavailable. Please try again later.",
-            details: lastError?.message
-        });
+            console.error("❌ Invalid response structure from Groq");
+            return res.status(503).json({
+                success: false,
+                error: "Unable to process your request. AI service returned invalid response.",
+                details: "Response parsing failed"
+            });
+            
+        } catch (error) {
+            const statusCode = error.response?.status;
+            const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || error.message;
+            
+            console.error(`❌ Groq API error (${statusCode}):`, errorMessage);
+
+            // Handle specific errors
+            if (statusCode === 401 || statusCode === 403) {
+                return res.status(401).json({
+                    success: false,
+                    error: "AI service authentication failed. Please check your API key.",
+                    details: "Invalid or expired API key"
+                });
+            }
+
+            if (statusCode === 429) {
+                return res.status(429).json({
+                    success: false,
+                    error: "AI service is experiencing high demand. Please try again in a few moments.",
+                    details: "Rate limit reached"
+                });
+            }
+
+            if (statusCode === 503 || statusCode === 500) {
+                return res.status(503).json({
+                    success: false,
+                    error: "AI service is temporarily unavailable. Please try again later.",
+                    details: errorMessage
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                error: "An error occurred while processing your request.",
+                details: errorMessage
+            });
+        }
 
     } catch (error) {
         console.error("❌ Unexpected error in sendMessageToAI:", error);
         return res.status(500).json({
+            success: false,
             error: "An unexpected error occurred. Please try again later.",
             details: error.message
         });
