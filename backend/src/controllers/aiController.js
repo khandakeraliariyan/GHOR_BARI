@@ -2,8 +2,8 @@ import axios from "axios";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Groq model (free tier - using Llama 3.1)
-const GROQ_MODEL = "llama-3.1-70b-versatile";
+// Groq model (free tier - using Llama 3.1 8B instant)
+const GROQ_MODEL = "llama-3.1-8b-instant";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export const sendMessageToAI = async (req, res) => {
@@ -15,12 +15,18 @@ export const sendMessageToAI = async (req, res) => {
 
         if (!message || !message.trim()) {
             console.warn("❌ Message is empty");
-            return res.status(400).json({ error: "Message is required" });
+            return res.status(400).json({ 
+                success: false,
+                error: "Message is required" 
+            });
         }
 
         if (!GROQ_API_KEY) {
             console.error("❌ GROQ_API_KEY is not set in environment variables");
-            return res.status(500).json({ error: "AI service is not configured" });
+            return res.status(500).json({ 
+                success: false,
+                error: "AI service is not configured" 
+            });
         }
 
         try {
@@ -73,6 +79,7 @@ Be friendly, professional, and helpful. Keep responses concise and informative.`
 
             console.error("❌ Invalid response structure from Groq");
             return res.status(503).json({
+                success: false,
                 error: "Unable to process your request. AI service returned invalid response.",
                 details: "Response parsing failed"
             });
@@ -86,6 +93,7 @@ Be friendly, professional, and helpful. Keep responses concise and informative.`
             // Handle specific errors
             if (statusCode === 401 || statusCode === 403) {
                 return res.status(401).json({
+                    success: false,
                     error: "AI service authentication failed. Please check your API key.",
                     details: "Invalid or expired API key"
                 });
@@ -93,6 +101,7 @@ Be friendly, professional, and helpful. Keep responses concise and informative.`
 
             if (statusCode === 429) {
                 return res.status(429).json({
+                    success: false,
                     error: "AI service is experiencing high demand. Please try again in a few moments.",
                     details: "Rate limit reached"
                 });
@@ -100,12 +109,14 @@ Be friendly, professional, and helpful. Keep responses concise and informative.`
 
             if (statusCode === 503 || statusCode === 500) {
                 return res.status(503).json({
+                    success: false,
                     error: "AI service is temporarily unavailable. Please try again later.",
                     details: errorMessage
                 });
             }
 
             return res.status(500).json({
+                success: false,
                 error: "An error occurred while processing your request.",
                 details: errorMessage
             });
@@ -114,6 +125,7 @@ Be friendly, professional, and helpful. Keep responses concise and informative.`
     } catch (error) {
         console.error("❌ Unexpected error in sendMessageToAI:", error);
         return res.status(500).json({
+            success: false,
             error: "An unexpected error occurred. Please try again later.",
             details: error.message
         });
