@@ -347,8 +347,8 @@ const BuyOrRentPage = () => {
                 </div>
 
                 {showFilters && (
-                    <div className="bg-white p-8 rounded-lg shadow-2xl border border-gray-100 space-y-8 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="bg-white p-6 rounded-lg shadow-2xl border border-gray-100 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700">Division</label>
                                 <select
@@ -421,7 +421,7 @@ const BuyOrRentPage = () => {
                                     <option value="building">Building</option>
                                 </select>
                             </div>
-                            <div className="space-y-3">
+                            <div className="space-y-3 lg:col-span-2">
                                 <label className="text-sm font-bold text-slate-700">Listing Status</label>
                                 <select className="w-full p-3 bg-slate-50 border border-gray-200 rounded-md text-sm outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all" value={tempFilters.listingType} onChange={(e) => setTempFilters({ ...tempFilters, listingType: e.target.value })}>
                                     <option value="all">Sale & Rent</option>
@@ -431,7 +431,7 @@ const BuyOrRentPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-gray-100 gap-4">
+                        <div className="flex flex-col md:flex-row items-center justify-between pt-4 border-t border-gray-100 gap-4">
                             <label className="flex items-center gap-3 cursor-pointer group">
                                 <div className="relative flex items-center">
                                     <input type="checkbox" checked={tempFilters.onlyVerified} onChange={(e) => setTempFilters({ ...tempFilters, onlyVerified: e.target.checked })} className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-orange-500 checked:border-orange-500 transition-all" />
