@@ -125,6 +125,10 @@ const SearchCard = () => {
         queryKey: ["upazilas"],
         queryFn: () => fetch("/upzillas.json").then(res => res.json())
     });
+    const { data: thanas = [] } = useQuery({
+        queryKey: ["thanas"],
+        queryFn: () => fetch("/thanas.json").then(res => res.json())
+    });
 
     // Filter states
     const [selectedDivision, setSelectedDivision] = useState("");
@@ -155,9 +159,10 @@ const SearchCard = () => {
     const filteredDistricts = districts.filter(
         d => String(d.division_id) === String(selectedDivision)
     );
-    const filteredUpazilas = upazilas.filter(
-        u => String(u.district_id) === String(selectedDistrict)
-    );
+    const filteredUpazilas = [
+        ...upazilas.filter(u => String(u.district_id) === String(selectedDistrict)),
+        ...thanas.filter(t => String(t.district_id) === String(selectedDistrict))
+    ];
 
     // Build URL and navigate
     const handleSearch = () => {
