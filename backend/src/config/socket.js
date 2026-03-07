@@ -7,6 +7,23 @@ let io;
 // Track connected users: email -> socketId
 let connectedUsers = new Map();
 
+const DEFAULT_CLIENT_ORIGINS = ["http://localhost:5173", "http://localhost:5174"];
+
+const normalizeOrigin = (origin) => origin?.trim().replace(/\/+$/, "");
+
+const getAllowedOrigins = () => {
+    const configuredOrigins = process.env.CLIENT_URL
+        ?.split(",")
+        .map(normalizeOrigin)
+        .filter(Boolean);
+
+    if (configuredOrigins?.length) {
+        return configuredOrigins;
+    }
+
+    return DEFAULT_CLIENT_ORIGINS;
+};
+
 
 /**
  * Initialize Socket.io server
@@ -15,10 +32,12 @@ let connectedUsers = new Map();
  */
 export const initializeSocket = (httpServer) => {
 
+    const allowedOrigins = getAllowedOrigins();
+
     // Create Socket.io server with CORS configuration
     io = new Server(httpServer, {
         cors: {
-            origin: process.env.CLIENT_URL || ["http://localhost:5173", "http://localhost:5174"],
+            origin: allowedOrigins,
             credentials: true,
             methods: ["GET", "POST"]
         }
