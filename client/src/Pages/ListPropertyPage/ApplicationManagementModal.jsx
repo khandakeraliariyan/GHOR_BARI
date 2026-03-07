@@ -220,6 +220,11 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
         setBiddingHistoryModalOpen(true);
     };
 
+    const handleViewSeekerProfile = (email) => {
+        if (!email) return;
+        navigate(`/owner-profile/${encodeURIComponent(email)}`);
+    };
+
     // Now handle conditional rendering AFTER all hooks are called
     if (!isOpen) return null;
     
@@ -319,9 +324,15 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                                     <User size={20} className="text-orange-500" />
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1">
+                                                                <div className="flex-1">
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <h4 className="font-bold text-gray-900">{application.seeker.name}</h4>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleViewSeekerProfile(application.seeker.email)}
+                                                                        className="cursor-pointer font-bold text-gray-900 hover:text-orange-600 transition-colors"
+                                                                    >
+                                                                        {application.seeker.name}
+                                                                    </button>
                                                                     <div className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getApplicationStatusColor(application.status)}`}>
                                                                         {getApplicationStatusDisplay(application.status, property)}
                                                                     </div>
@@ -580,7 +591,13 @@ const ApplicationManagementModal = ({ isOpen, onClose, property }) => {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-sm text-gray-900">{application.seeker.name}</p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleViewSeekerProfile(application.seeker.email)}
+                                                            className="cursor-pointer font-bold text-sm text-gray-900 hover:text-orange-600 transition-colors"
+                                                        >
+                                                            {application.seeker.name}
+                                                        </button>
                                                         <p className="text-xs text-gray-500">{new Date(application.createdAt).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
