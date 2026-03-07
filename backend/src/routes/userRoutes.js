@@ -1,48 +1,76 @@
 import express from "express";
-
 import { verifyToken } from "../middleware/verifyToken.js";
-
 import * as userController from "../controllers/userController.js";
 
 
 const router = express.Router();
 
 
-// Register User
+// ========== PUBLIC ROUTES ==========
 
+/**
+ * POST /api/register-user
+ * Register a new user
+ */
 router.post("/register-user", userController.registerUser);
 
-// Batch fetch users by emails
 
-router.get("/users-by-emails", verifyToken, userController.getUsersByEmails);
-
-// Check user existence
-
+/**
+ * GET /api/check-user-exist?email=user@example.com
+ * Check if user exists by email
+ */
 router.get("/check-user-exist", userController.checkUserExist);
 
-// Get user role
 
+/**
+ * GET /api/get-user-role?email=user@example.com
+ * Get user's role
+ */
 router.get("/get-user-role", userController.getUserRole);
 
-// Update user profile
 
+// ========== PROTECTED ROUTES ==========
+
+/**
+ * GET /api/users-by-emails?emails=email1,email2
+ * Batch fetch users by email addresses
+ */
+router.get("/users-by-emails", verifyToken, userController.getUsersByEmails);
+
+
+/**
+ * PATCH /api/update-profile
+ * Update current user's profile
+ */
 router.patch("/update-profile", verifyToken, userController.updateProfile);
 
-// Submit NID for verification
 
+/**
+ * POST /api/submit-nid
+ * Submit NID for verification
+ */
 router.post("/submit-nid", verifyToken, userController.submitNid);
 
-// Get current user data
 
+/**
+ * GET /api/user-profile
+ * Get current user's full profile
+ */
 router.get("/user-profile", verifyToken, userController.getUserProfile);
 
-// Check if user is admin
 
+/**
+ * GET /api/users/admin/:email
+ * Check if user is admin
+ */
 router.get("/users/admin/:email", verifyToken, userController.checkIsAdmin);
 
-// Get secure public profile
 
+/**
+ * GET /api/public-profile/:email
+ * Get sanitized public profile of user
+ */
 router.get("/public-profile/:email", verifyToken, userController.getPublicProfile);
 
-export default router;
 
+export default router;
