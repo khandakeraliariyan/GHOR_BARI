@@ -2,35 +2,146 @@ import express from "express";
 import { verifyToken } from "../middleware/verifyToken.js";
 import * as applicationController from "../controllers/applicationController.js";
 
+
 const router = express.Router();
 
-// Create a new application/proposal
-router.post("/application", verifyToken, applicationController.createApplication);
 
-// Get all applications for a user (as seeker)
-router.get("/my-applications", verifyToken, applicationController.getMyApplications);
+// ========== APPLICATION CREATION ==========
 
-// Get all applications for a property (as owner)
-// Ownership verification is done in the controller
-router.get("/property/:propertyId/applications", verifyToken, applicationController.getPropertyApplications);
+/**
+ * POST /api/application
+ * Property seeker creates application to rent/buy property
+ * @auth Required (verifyToken)
+ * @body {string} propertyId - Target property MongoDB ObjectId
+ * @body {number} offerAmount - Proposed offer amount
+ * @body {string} message - Optional message to property owner
+ */
+router.post(
+    "/application", 
+    verifyToken, 
+    applicationController.createApplication
+);
 
-// Update application status (owner actions: accept, reject, counter)
-// Ownership verification is done in the controller
-router.patch("/application/:id", verifyToken, applicationController.updateApplicationStatus);
 
-// Withdraw application (seeker action)
-router.patch("/application/:id/withdraw", verifyToken, applicationController.withdrawApplication);
+// ========== APPLICATION RETRIEVAL ==========
 
-// Revise offer (seeker action - counter back to owner)
-router.patch("/application/:id/revise", verifyToken, applicationController.reviseApplication);
+/**
+ * GET /api/my-applications
+ * Get all applications sent by authenticated user (seeker view)
+ * Shows applications and their current status
+ * @auth Required (verifyToken)
+ */
+router.get(
+    "/my-applications", 
+    verifyToken, 
+    applicationController.getMyApplications
+);
 
-// Accept counter offer (seeker action - accept owner's counter)
-router.patch("/application/:id/accept-counter", verifyToken, applicationController.acceptCounterOffer);
 
-// Send a standalone application message (owner or seeker)
-router.post("/application/:id/message", verifyToken, applicationController.sendApplicationMessage);
+/**
+ * GET /api/property/:propertyId/applications
+ * Get all applications received for a property (owner view)
+ * Returns applications from seekers for the property
+ * @auth Required (verifyToken)
+ * @param {string} propertyId - Property MongoDB ObjectId
+ */
+router.get(
+    "/property/:propertyId/applications", 
+    verifyToken, 
+    applicationController.getPropertyApplications
+);
 
-// Complete or cancel deal (owner/admin actions)
-router.patch("/property/:propertyId/deal", verifyToken, applicationController.updateDealStatus);
+
+// ========== APPLICATION STATUS MANAGEMENT ==========
+
+/**
+ * PATCH /api/application/:id
+ * Update application status (owner actions: accept/reject/counter)
+ * @auth Required (verifyToken)
+ * @param {string} id - Application MongoDB ObjectId
+ * @body {string} status - New status (accepted/rejected/counter)
+ * @body {number} counterAmount - Counter offer amount (if status is counter)
+ */
+router.patch(
+    "/application/:id", 
+    verifyToken, 
+    applicationController.updateApplicationStatus
+);
+
+
+/**
+ * PATCH /api/application/:id/withdraw
+ * Seeker withdraws their application
+ * @auth Required (verifyToken)
+ * @param {string} id - Application MongoDB ObjectId
+ */
+router.patch(
+    "/application/:id/withdraw", 
+    verifyToken, 
+    applicationController.withdrawApplication
+);
+
+
+/**
+ * PATCH /api/application/:id/revise
+ * Seeker revises offer in response to owner's counter
+ * @auth Required (verifyToken)
+ * @param {string} id - Application MongoDB ObjectId
+ * @body {number} offerAmount - Revised offer amount
+ */
+router.patch(
+    "/application/:id/revise", 
+    verifyToken, 
+    applicationController.reviseApplication
+);
+
+
+/**
+ * PATCH /api/application/:id/accept-counter
+ * Seeker accepts owner's counter offer
+ * Moves application to accepted status
+ * @auth Required (verifyToken)
+ * @param {string} id - Application MongoDB ObjectId
+ */
+router.patch(
+    "/application/:id/accept-counter", 
+    verifyToken, 
+    applicationController.acceptCounterOffer
+);
+
+
+// ========== NEGOTIATION & COMMUNICATION ==========
+
+/**
+ * POST /api/application/:id/message
+ * Send message within application negotiation
+ * Used for owner-seeker communication
+ * @auth Required (verifyToken)
+ * @param {string} id - Application MongoDB ObjectId
+ * @body {string} message - Message content
+ */
+router.post(
+    "/application/:id/message", 
+    verifyToken, 
+    applicationController.sendApplicationMessage
+);
+
+
+// ========== DEAL FINALIZATION ==========
+
+/**
+ * PATCH /api/property/:propertyId/deal
+ * Complete or cancel deal on property
+ * Admin and owner actions to finalize transaction
+ * @auth Required (verifyToken)
+ * @param {string} propertyId - Property MongoDB ObjectId
+ * @body {string} dealStatus - Deal status (completed/cancelled)
+ */
+router.patch(
+    "/property/:propertyId/deal", 
+    verifyToken, 
+    applicationController.updateDealStatus
+);
+
 
 export default router;

@@ -13,6 +13,70 @@ import {
     queueOfferRevisedEmail
 } from "../services/emailNotificationService.js";
 
+
+// ========== APPLICATION/PROPOSAL CONTROLLER ==========
+
+/**
+ * Deal Negotiation and Transaction Management
+ * 
+ * Manages complete application/proposal workflow:
+ * - Property seekers apply to properties (with initial offer)
+ * - Property owners review and respond with accept/reject/counter
+ * - Seekers can respond with revised offers or accept counter offers
+ * - Deal state transitions tracked with full history
+ * - User profiles enriched with ratings, verification status, contact info
+ * 
+ * Application Status Flow:
+ * 1. pending: Seeker's initial offer awaiting owner response
+ * 2. counter: Owner countered with different price
+ * 3. deal-in-progress: Agreed upon (after accept or counter acceptance)
+ * 4. completed: Deal finalized (property marked sold/rented)
+ * 5. withdrawn: Seeker cancelled before acceptance
+ * 6. rejected: Owner declined offer
+ * 7. cancelled: Deal fell through after in-progress state
+ * 
+ * Key Features:
+ * - Complete audit trail (negotiationHistory, priceHistory, statusHistory)
+ * - Embedded messages for communication
+ * - Property snapshots at time of application
+ * - Price tracking through negotiation
+ * - Deal protection: prevents deletion/modification of active deals
+ * - Email notifications at each status change
+ */
+
+
+// ========== HELPER FUNCTIONS ==========
+
+/**
+ * Get user profile identity from database
+ * 
+ * Enriches user information with profile details and ratings
+ * Includes: name, photo, phone, verification status, rating, join date
+ * Falls back to provided fallback object if user not found
+ * 
+ * @param {Database} db - MongoDB database reference
+ * @param {string} email - User email to look up
+ * @param {Object} fallback - Default values if user not found (default: {})
+ * 
+ * @returns {Object} User identity:
+ * @returns {.name} User display name
+ * @returns {.photoURL} Profile image URL
+ * @returns {.phone} Phone number (if available)
+ * @returns {.role} User role (owner, seeker, admin)
+ * @returns {.nidVerified} Verification status (unverified, pending, verified, rejected)
+ * @returns {.rating} User rating object {totalRatings, ratingCount, average}
+ * @returns {.createdAt} Account creation date
+ * 
+ * @example
+ * const identity = await getProfileIdentity(db, "user@example.com");
+ * // Returns: {
+ * //   name: "John Doe",
+ * //   photoURL: "https://...",
+ * //   phone: "+88012345678",
+ * //   nidVerified: "verified",
+ * //   rating: { totalRatings: 4.5, ratingCount: 12, average: 4.5 }
+ * // }
+ */
 async function getProfileIdentity(db, email, fallback = {}) {
     if (!email) {
         return fallback;
@@ -44,6 +108,26 @@ async function getProfileIdentity(db, email, fallback = {}) {
     };
 }
 
+
+/**
+ * Enrich application with complete participant profiles
+ * 
+ * Fetches and merges complete user profiles for both owner and seeker
+ * Replaces basic email-based identities with full profile information
+ * Called before returning application data to client
+ * 
+ * @param {Database} db - MongoDB database reference
+ * @param {Object} application - Application document to enrich
+ * 
+ * @returns {Object} Application with enriched owner and seeker objects
+ * @returns {.owner} Complete owner profile with all details
+ * @returns {.seeker} Complete seeker profile with all details
+ * 
+ * @example
+ * const enriched = await enrichApplicationParticipants(db, application);
+ * // application.owner now has: name, photo, phone, rating, nidVerified, etc.
+ * // application.seeker now has: name, photo, phone, rating, nidVerified, etc.
+ */
 async function enrichApplicationParticipants(db, application) {
     if (!application) {
         return application;
@@ -67,7 +151,70 @@ async function enrichApplicationParticipants(db, application) {
     };
 }
 
-// Create a new application/proposal
+
+// ========== APPLICATION CREATION ==========
+
+/**
+ * Submit new application to property
+ * 
+ * POST /api/applications/create
+ * 
+ * Seeker applies to property with initial offer
+ * Creates comprehensive application record with full participant profiles
+ * Stores property snapshot, price history, negotiation history
+ * Triggers email notification to property owner
+ * 
+ * @param {Object} req.body
+ * @param {ObjectId|string} req.body.propertyId - Target property (required)
+ * @param {number} req.body.proposedPrice - Seeker's initial offer (required, > 0)
+ * @param {string} req.body.message - Optional message with application
+ * 
+ * @returns {201} Application created successfully
+ * @returns {201.success} true
+ * @returns {201.id} New application MongoDB ObjectId
+ * @returns {201.message} "Application submitted successfully"
+ * 
+ * @returns {400} Missing/invalid fields, duplicate active application, self-application
+ * @returns {404} Property not found
+ * @returns {500} Database/email service error
+ * 
+ * @auth Required (authenticated seeker)
+ * 
+ * Validations:
+ * - propertyId must be provided and valid ObjectId
+ * - Property must exist
+ * - Property must be active (only active properties can receive applications)
+ * - Seeker cannot apply to own property
+ * - Seeker cannot have another active application (pending, counter, deal-in-progress, completed)
+ * - proposedPrice must be positive number
+ * 
+ * Application Structure:
+ * - propertySnapshot: Full property details at time of application
+ * - owner: Complete owner profile
+ * - seeker: Complete seeker profile
+ * - messages: Array of conversation messages (starts with initial message if provided)
+ * - negotiationHistory: Audit trail of all changes
+ * - priceHistory: Track all price changes
+ * - statusHistory: Track all status transitions
+ * - createdAt/updatedAt/lastActionAt: Timestamps
+ * 
+ * @example
+ * POST /api/applications/create
+ * {
+ *   "propertyId": "507f1f77bcf86cd799439011",
+ *   "proposedPrice": 2500000,
+ *   "message": "Great property, willing to negotiate"
+ * }
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "id": "507f1f77bcf86cd799439012",
+ *   "message": "Application submitted successfully"
+ * }
+ * 
+ * Email Notification: Owner receives application_submitted email with offer details
+ */
 export const createApplication = async (req, res) => {
     try {
         const db = getDatabase();
