@@ -1,7 +1,7 @@
 import { getDatabase } from "../config/db.js";
 
 import { ObjectId } from "mongodb";
-import { findByNidNumber } from "../services/nidRegistryService.js";
+import { verifyPendingUserByNid } from "../services/nidVerificationService.js";
 
 
 // ========== ADMIN CONTROLLER ==========
@@ -1213,8 +1213,8 @@ export const verifyUserByNidFromRegistry = async (req, res) => {
         );
 
         res.send({
-            matched: true,
-            nidVerified: "verified"
+            matched: result.matched,
+            nidVerified: result.nidVerified
         });
 
     } catch (error) {
@@ -1342,7 +1342,33 @@ export const getAllProperties = async (req, res) => {
             .sort({ createdAt: -1 })
             .toArray();
 
-        res.send(properties);
+        const ownerEmails = [...new Set(properties.map((property) => property.owner?.email).filter(Boolean))];
+        const owners = ownerEmails.length > 0
+            ? await db.collection("users")
+                .find({ email: { $in: ownerEmails } })
+                .project({ name: 1, email: 1, phone: 1, mobile: 1, photoURL: 1, image: 1 })
+                .toArray()
+            : [];
+
+        const ownerMap = new Map(owners.map((owner) => [owner.email, owner]));
+
+        const enrichedProperties = properties.map((property) => {
+            const ownerEmail = property.owner?.email;
+            const ownerProfile = ownerEmail ? ownerMap.get(ownerEmail) : null;
+
+            return {
+                ...property,
+                owner: {
+                    ...property.owner,
+                    name: ownerProfile?.name || property.owner?.name || "Owner",
+                    email: ownerProfile?.email || property.owner?.email || "",
+                    phone: ownerProfile?.phone || ownerProfile?.mobile || property.owner?.phone || property.owner?.mobile || "",
+                    photoURL: ownerProfile?.photoURL || ownerProfile?.image || property.owner?.photoURL || property.owner?.image || ""
+                }
+            };
+        });
+
+        res.send(enrichedProperties);
 
     } catch (error) {
 
