@@ -31,9 +31,7 @@ async function startServer() {
             startEmailJobCron();
         }
 
-        if (process.env.ENABLE_NID_VERIFICATION_CRON !== "false") {
-            startNidVerificationCron();
-        }
+        startNidVerificationCron();
 
         httpServer.listen(PORT, () => {
 
