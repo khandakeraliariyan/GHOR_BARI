@@ -53,8 +53,8 @@ const OwnerCounterOfferModal = ({ isOpen, onClose, application, property, onSucc
     };
 
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-[3px] z-[60] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl w-full max-w-4xl mx-auto shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-[3px] z-[60] flex items-start sm:items-center justify-center px-4 pt-20 sm:p-4">
+            <div className="bg-white rounded-xl w-full max-w-4xl mx-auto max-h-[92vh] sm:max-h-none overflow-y-auto shadow-2xl border border-gray-200">
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-xl">
                     <div>
@@ -165,7 +165,7 @@ const OwnerCounterOfferModal = ({ isOpen, onClose, application, property, onSucc
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold uppercase text-xs tracking-wider hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 flex items-center justify-center gap-2 px-5 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold uppercase text-xs tracking-wider hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? (
                                 <>

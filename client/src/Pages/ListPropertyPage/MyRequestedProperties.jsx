@@ -237,16 +237,15 @@ const MyRequestedProperties = () => {
                                             </div>
 
                                             {/* Price and Last Offer */}
-                                            <div className="flex items-baseline justify-between gap-4">
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-xl font-black text-gray-700">
+                                            <div className="space-y-2">
+                                                <div className="flex items-baseline gap-1 min-w-0">
+                                                    <span className="text-lg sm:text-xl font-black text-gray-700">
                                                         ৳{property.price?.toLocaleString()}
                                                     </span>
-                                                    <span className="text-sm font-medium text-gray-500">
+                                                    <span className="text-xs sm:text-sm font-medium text-gray-500">
                                                         /{property.listingType === 'rent' ? 'month' : 'total'}
                                                     </span>
                                                 </div>
-                                                {/* Show last offer if available - on the right */}
                                                 {(() => {
                                                     if (!application.priceHistory || !Array.isArray(application.priceHistory)) {
                                                         return null;
@@ -256,9 +255,9 @@ const MyRequestedProperties = () => {
                                                         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                                                     const lastOffer = seekerPrices.length > 0 ? seekerPrices[seekerPrices.length - 1].price : null;
                                                     return lastOffer ? (
-                                                        <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">My Offer</span>
-                                                            <span className="text-xl font-black text-blue-600">
+                                                        <div className="flex items-baseline gap-2 min-w-0">
+                                                            <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide">My Offer</span>
+                                                            <span className="text-lg sm:text-xl font-black text-blue-600">
                                                                 ৳{lastOffer.toLocaleString()}
                                                             </span>
                                                         </div>
@@ -274,7 +273,7 @@ const MyRequestedProperties = () => {
                                                     setSelectedApplicationForCounter(application);
                                                     setCounterModalOpen(true);
                                                 }}
-                                                className="w-fit flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-sm transition-all bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
+                                                className="w-full md:w-fit mt-2 flex items-center justify-center gap-1.5 px-4 py-[6.5px] rounded-md font-semibold text-sm transition-all bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
                                             >
                                                 <MessageSquare size={16} />
                                                 <span>View Counter Offer</span>

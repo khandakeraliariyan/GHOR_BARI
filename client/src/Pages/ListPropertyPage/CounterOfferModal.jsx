@@ -110,8 +110,8 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
 
     return (
         <>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg w-11/12 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center px-4 pt-20 sm:p-4">
+                <div className="bg-white rounded-lg w-11/12 max-w-2xl mx-auto max-h-[calc(100vh-5.5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
                     {/* Header */}
                     <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex items-center justify-between rounded-t-[2.5rem]">
                         <div>
@@ -139,30 +139,30 @@ const CounterOfferModal = ({ isOpen, onClose, application }) => {
 
                         {/* Price Comparison Card */}
                         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200 space-y-4">
-                            <div className="flex items-center justify-between pb-3 border-b border-gray-300">
+                            <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-300">
                                 <span className="text-sm font-bold text-gray-600 uppercase">Original Listing Price</span>
-                                <span className="text-2xl font-black text-gray-900">
+                                <span className="text-lg sm:text-2xl font-black text-gray-900 text-right">
                                     ৳{originalListingPrice?.toLocaleString()}
-                                    <span className="text-sm font-medium text-gray-500 ml-1">
+                                    <span className="text-xs sm:text-sm font-medium text-gray-500 ml-1">
                                         /{property.listingType === 'rent' ? 'month' : 'total'}
                                     </span>
                                 </span>
                             </div>
 
                             {userPreviousOffer && (
-                                <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center justify-between gap-3 pt-2">
                                     <span className="text-sm font-bold text-gray-600 uppercase">Your Previous Offer</span>
-                                    <span className="text-xl font-bold text-blue-600">
+                                    <span className="text-lg sm:text-xl font-bold text-blue-600 text-right">
                                         ৳{userPreviousOffer.toLocaleString()}
                                     </span>
                                 </div>
                             )}
 
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-300">
+                            <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-300">
                                 <span className="text-sm font-bold text-orange-600 uppercase">Owner's Counter Offer</span>
-                                <span className="text-3xl font-black text-orange-600">
+                                <span className="text-2xl sm:text-3xl font-black text-orange-600 text-right">
                                     ৳{ownerCounterOffer?.toLocaleString()}
-                                    <span className="text-sm font-medium text-orange-500 ml-1">
+                                    <span className="text-xs sm:text-sm font-medium text-orange-500 ml-1">
                                         /{property.listingType === 'rent' ? 'month' : 'total'}
                                     </span>
                                 </span>
