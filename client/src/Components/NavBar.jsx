@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X, User } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import useAuth from "../Hooks/useAuth";
@@ -35,6 +35,14 @@ const Navbar = () => {
         }
     };
 
+    useEffect(() => {
+        document.body.style.overflow = menuOpen ? "hidden" : "";
+
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [menuOpen]);
+
 
 
     return (
@@ -49,7 +57,7 @@ const Navbar = () => {
                 </Link>
 
                 {/* NAV LINKS - DESKTOP */}
-                <div className="hidden md:flex items-center gap-2 ml-auto mr-4">
+                <div className="hidden lg:flex items-center gap-2 ml-auto mr-4">
                     <NavLink
                         to="/properties"
                         className={({ isActive }) =>
@@ -146,7 +154,7 @@ const Navbar = () => {
 
 
                 {/* AUTH BUTTONS / USER AVATAR - DESKTOP */}
-                <div className="hidden md:flex items-center gap-4">
+                <div className="hidden lg:flex items-center gap-4">
                     {!user ? (
                         <>
                             <Link
@@ -200,7 +208,24 @@ const Navbar = () => {
                 </div>
 
                 {/* MOBILE MENU BUTTON */}
-                <div className="md:hidden flex items-center gap-3">
+                <div className="lg:hidden ml-auto flex items-center gap-2">
+                    {user && (
+                        <button
+                            onClick={handleAvatarClick}
+                            aria-label={isAdmin ? "Go to admin dashboard" : "Go to profile"}
+                            className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-100 hover:ring-2 hover:ring-orange-400 transition"
+                        >
+                            {user.photoURL ? (
+                                <img
+                                    src={user.photoURL}
+                                    alt={user.displayName || "User Avatar"}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <User size={20} className="text-gray-400" />
+                            )}
+                        </button>
+                    )}
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         className="p-2 rounded-md hover:bg-gray-100 transition"
@@ -214,13 +239,47 @@ const Navbar = () => {
             {/* MOBILE MENU */}
             {
                 menuOpen && (
-                    <div className="md:hidden bg-white/70 backdrop-blur-md shadow-inner border-t border-white/20">
-                        <div className="w-11/12 mx-auto flex flex-col py-3 gap-2">
+                    <>
+                        <div
+                            className="lg:hidden fixed inset-0 top-16 bg-slate-900/20 backdrop-blur-[2px]"
+                            onClick={() => setMenuOpen(false)}
+                        />
+                        <div className="lg:hidden relative bg-white/90 backdrop-blur-md shadow-inner border-t border-white/20">
+                            <div className="w-11/12 mx-auto flex flex-col py-3 gap-2">
+                                {user && (
+                                    <button
+                                        onClick={() => {
+                                            handleAvatarClick();
+                                            setMenuOpen(false);
+                                        }}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg bg-orange-50 border border-orange-100 text-left"
+                                    >
+                                        <div className="w-11 h-11 rounded-full overflow-hidden border border-orange-200 flex items-center justify-center bg-white">
+                                            {user.photoURL ? (
+                                                <img
+                                                    src={user.photoURL}
+                                                    alt={user.displayName || "User Avatar"}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <User size={20} className="text-gray-400" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                                {user.displayName || "User"}
+                                            </p>
+                                            <p className="text-xs text-orange-600 font-medium">
+                                                {isAdmin ? "Open admin dashboard" : "Open profile"}
+                                            </p>
+                                        </div>
+                                    </button>
+                                )}
                             <NavLink
                                 to="/properties"
                                 onClick={() => setMenuOpen(false)}
                                 className={({ isActive }) =>
-                                    `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                                    `px-4 py-3 rounded-md text-sm font-medium transition-all duration-200
                 ${isActive
                                         ? "bg-orange-500 text-white"
                                         : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
@@ -235,7 +294,7 @@ const Navbar = () => {
                                     to="/list-property"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
-                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                                        `px-4 py-3 rounded-md text-sm font-medium transition-all duration-200
                 ${isActive
                                             ? "bg-orange-500 text-white"
                                             : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
@@ -251,7 +310,7 @@ const Navbar = () => {
                                     to="/chat"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
-                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                                        `px-4 py-3 rounded-md text-sm font-medium transition-all duration-200
                     ${isActive
                                             ? "bg-orange-500 text-white"
                                             : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
@@ -267,7 +326,7 @@ const Navbar = () => {
                                     to="/compare"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
-                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1
+                                        `px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1
                     ${isActive
                                             ? "bg-orange-500 text-white"
                                             : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
@@ -281,7 +340,7 @@ const Navbar = () => {
                                     to="/wishlist"
                                     onClick={() => setMenuOpen(false)}
                                     className={({ isActive }) =>
-                                        `px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+                                        `px-4 py-3 rounded-md text-sm font-medium transition-all duration-200
                     ${isActive
                                             ? "bg-orange-500 text-white"
                                             : "text-gray-700 hover:bg-orange-400/20 hover:text-orange-600"
@@ -296,7 +355,7 @@ const Navbar = () => {
                                     <Link
                                         to="/login"
                                         onClick={() => setMenuOpen(false)}
-                                        className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition"
+                                        className="w-full text-center px-4 py-3 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition"
                                     >
                                         Login
                                     </Link>
@@ -304,7 +363,7 @@ const Navbar = () => {
                                     <Link
                                         to="/register"
                                         onClick={() => setMenuOpen(false)}
-                                        className="w-full text-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-md hover:brightness-110 transition"
+                                        className="w-full text-center px-4 py-3 text-sm font-medium bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-md hover:brightness-110 transition"
                                     >
                                         Register
                                     </Link>
@@ -312,16 +371,17 @@ const Navbar = () => {
                             ) : (
                                 <button
                                     onClick={() => {
-                                        logoutUser();
+                                        handleLogout();
                                         setMenuOpen(false);
                                     }}
-                                    className="w-full text-center px-4 py-2 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition flex items-center justify-center gap-2"
+                                    className="w-full text-center px-4 py-3 text-sm font-medium border border-orange-400 text-orange-500 rounded-md hover:bg-orange-400/10 transition flex items-center justify-center gap-2"
                                 >
                                     <User size={18} /> Logout
                                 </button>
                             )}
                         </div>
                     </div>
+                    </>
                 )
             }
         </header >

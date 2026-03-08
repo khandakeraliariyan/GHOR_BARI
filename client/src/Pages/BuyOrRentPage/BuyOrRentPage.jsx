@@ -314,7 +314,7 @@ const BuyOrRentPage = () => {
             <GhorAI />
             
             <div className="w-11/12 mx-auto mb-10 space-y-6">
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col lg:flex-row gap-4">
                     <div className="relative flex-grow">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
@@ -431,7 +431,7 @@ const BuyOrRentPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center justify-between pt-4 border-t border-gray-100 gap-4">
+                        <div className="flex flex-col lg:flex-row items-center justify-between pt-4 border-t border-gray-100 gap-4">
                             <label className="flex items-center gap-3 cursor-pointer group">
                                 <div className="relative flex items-center">
                                     <input type="checkbox" checked={tempFilters.onlyVerified} onChange={(e) => setTempFilters({ ...tempFilters, onlyVerified: e.target.checked })} className="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-orange-500 checked:border-orange-500 transition-all" />
@@ -440,11 +440,11 @@ const BuyOrRentPage = () => {
                                 <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Show only verified owners</span>
                             </label>
 
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button onClick={handleResetFilters} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
+                            <div className="flex items-center gap-3 w-full lg:w-auto">
+                                <button onClick={handleResetFilters} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
                                     <RotateCcw size={16} /> Reset
                                 </button>
-                                <button onClick={handleApplyFilters} className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
+                                <button onClick={handleApplyFilters} className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95">
                                     Apply Filters
                                 </button>
                             </div>
@@ -452,7 +452,7 @@ const BuyOrRentPage = () => {
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
                             {totalItems} Properties Found
@@ -487,7 +487,7 @@ const BuyOrRentPage = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="w-11/12 mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-6">
+                            <div className="w-11/12 mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 pb-6">
                                 {pageItems.map((property) => (
                                     <div key={property._id} onClick={() => navigate(`/property-details/${property._id}`)}>
                                         <PropertyCard property={property} />

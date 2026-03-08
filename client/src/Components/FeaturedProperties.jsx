@@ -149,7 +149,7 @@ const FeaturedProperties = () => {
                     </div>
                     <button
                         onClick={handleShowAll}
-                        className="mt-4 md:mt-0 flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95"
+                        className="hidden md:flex mt-4 md:mt-0 items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95"
                     >
                         Show All
                         <ArrowRight size={20} />
@@ -167,6 +167,16 @@ const FeaturedProperties = () => {
                             <PropertyCard property={property} />
                         </div>
                     ))}
+                </div>
+
+                <div className="mt-8 flex md:hidden justify-center">
+                    <button
+                        onClick={handleShowAll}
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-md font-bold shadow-lg shadow-orange-200 transition-all active:scale-95"
+                    >
+                        Show All
+                        <ArrowRight size={20} />
+                    </button>
                 </div>
             </div>
         </div>
