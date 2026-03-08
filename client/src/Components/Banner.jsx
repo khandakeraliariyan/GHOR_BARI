@@ -35,7 +35,7 @@ const Banner = () => {
     return (
         <section className="w-full flex flex-col bg-gray-100">
             {/* Image Slider */}
-            <div className="relative w-full h-[30vh] md:h-[50vh] lg:h-[90vh]">
+            <div className="relative w-full h-[42vh] md:h-[56vh] lg:h-[90vh]">
                 <Swiper
                     modules={[Autoplay, EffectFade]}
                     effect="fade"
@@ -59,17 +59,17 @@ const Banner = () => {
                 </Swiper>
 
                 {/* Text Content */}
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-5 sm:px-6 md:px-10">
                     {/* Capsule */}
                     <div className="flex items-center gap-2 px-3 py-1 lg:px-4 lg:py-2 rounded-md 
               bg-orange-500/20 backdrop-blur-md border border-orange-400/30 
-              text-orange-300 text-[10px] md:text-xs lg:text-sm font-semibold mb-3 lg:mb-6">
+              text-orange-300 text-[11px] md:text-sm lg:text-sm font-semibold mb-4 md:mb-5 lg:mb-6">
                         <Sparkles size={14} className="lg:w-[18px]" />
                         <span className="uppercase tracking-widest">Premium Real Estate</span>
                     </div>
 
                     {/* Title*/}
-                    <h1 className="text-xl md:text-4xl lg:text-7xl font-extrabold text-white max-w-5xl leading-tight">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white max-w-[19rem] sm:max-w-2xl md:max-w-4xl lg:max-w-5xl leading-tight">
                         <Typewriter
                             words={["Discover Extraordinary Properties"]}
                             loop={1}
@@ -80,7 +80,7 @@ const Banner = () => {
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="mt-2 md:mt-4 lg:mt-6 text-gray-200 text-[10px] md:text-base lg:text-xl max-w-2xl font-light">
+                    <p className="mt-3 md:mt-4 lg:mt-6 text-gray-200 text-sm sm:text-base md:text-lg lg:text-xl max-w-xs sm:max-w-xl md:max-w-2xl font-light leading-relaxed">
                         <Typewriter
                             words={[
                                 "Luxury living with verified properties in prestigious locations across Bangladesh",
@@ -99,7 +99,7 @@ const Banner = () => {
             </div>
 
             {/* Search Card - Mobile & Tablet (stacked under slider) */}
-            <div className="lg:hidden w-full px-4 py-8 bg-gray-100 z-30">
+            <div className="lg:hidden w-full px-4 py-6 md:py-8 bg-gray-100 z-30">
                 <SearchCard />
             </div>
 
@@ -233,7 +233,7 @@ const SearchCard = () => {
     );
 
     return (
-        <div className="bg-white rounded-lg shadow-2xl p-6 lg:p-8 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-2xl p-5 sm:p-6 lg:p-8 border border-gray-100">
             {/* Desktop Layout - Two Rows */}
             <div className="hidden lg:block space-y-4">
                 {/* Row 1: Location & Type Filters */}
@@ -400,7 +400,7 @@ const SearchCard = () => {
                         </SelectWithIcon>
                     </FilterField>
 
-                    <FilterField label="Min Price (?)">
+                    <FilterField label="Min Price (BDT)">
                         <input
                             type="number"
                             placeholder="Min Price"
@@ -410,7 +410,7 @@ const SearchCard = () => {
                         />
                     </FilterField>
 
-                    <FilterField label="Max Price (?)">
+                    <FilterField label="Max Price (BDT)">
                         <input
                             type="number"
                             placeholder="Max Price"
