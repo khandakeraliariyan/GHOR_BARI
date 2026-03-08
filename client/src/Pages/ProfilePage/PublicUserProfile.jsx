@@ -105,7 +105,7 @@ const PublicUserProfile = () => {
     return (
         <div className="w-11/12 mx-auto my-10 max-w-7xl">
             <div className="grid grid-cols-1 xl:grid-cols-[0.92fr_1.08fr] gap-8 items-start">
-                <aside className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 lg:p-7 sticky top-24">
+                <aside className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 lg:p-7 xl:sticky xl:top-24">
                     <div className="flex items-start gap-5">
                         <img
                             src={profile.profileImage || fallbackProfileImage}

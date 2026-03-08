@@ -273,7 +273,7 @@ const MyRequestedProperties = () => {
                                                     setSelectedApplicationForCounter(application);
                                                     setCounterModalOpen(true);
                                                 }}
-                                                className="w-fit flex items-center justify-center gap-1.5 px-4 py-2 rounded-md font-semibold text-sm transition-all bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
+                                                className="w-full md:w-fit mt-2 flex items-center justify-center gap-1.5 px-4 py-[6.5px] rounded-md font-semibold text-sm transition-all bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
                                             >
                                                 <MessageSquare size={16} />
                                                 <span>View Counter Offer</span>
