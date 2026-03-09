@@ -74,6 +74,7 @@ export const initializeSocket = (httpServer) => {
  * Get Socket.io instance
  * @returns {Object} Socket.io instance
  */
+export const getIO = () => {
 if (!io) {
     throw new Error("Socket.io not initialized");
 }

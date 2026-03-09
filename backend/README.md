@@ -294,14 +294,936 @@ pm2 startup
 
 ### Available Scripts
 
+````bash
+### Available Scripts
+
 ```bash
 npm start           # Production start
 npm run dev        # Development with watch mode
 npm run lint       # Check code quality
-npm run lint:fix   # Auto-fix issues
+npm run lint:fix   # Auto-fix lint errors
 npm run format     # Check formatting
 npm run format:write # Auto-format code
+npm test           # Run tests
+npm run test:coverage # Coverage report
+````
+
+---
+
+## 📡 API Reference
+
+### Authentication Endpoints
+
+#### Register User
+
+```http
+POST /api/users/register-user
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "hashed_from_firebase",
+  "name": "John Doe",
+  "phone": "01712345678",
+  "role": "property_seeker"  // or "property_owner"
+}
+
+Response 201:
+{
+  "success": true,
+  "user": {
+    "uid": "firebase_uid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "property_seeker"
+  }
+}
 ```
+
+#### Login
+
+```http
+POST /api/users/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password"
+}
+
+Response 200:
+{
+  "success": true,
+  "token": "firebase_id_token",
+  "user": { ... }
+}
+```
+
+#### Get User Profile
+
+```http
+GET /api/users/user-profile
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "user": {
+    "_id": "mongo_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "rating": 4.5,
+    "reviewCount": 12,
+    "nidVerified": true
+  }
+}
+```
+
+### Property Endpoints
+
+#### List Properties
+
+```http
+GET /api/properties?page=1&limit=10&type=flat&listingType=rent&priceMin=10000&priceMax=50000&district=Dhaka
+
+Query Parameters:
+- page: Page number (default: 1)
+- limit: Results per page (default: 10)
+- type: Property type (flat/building)
+- listingType: rent/sale
+- priceMin/priceMax: Price range
+- district/upazila: Location filters
+- sortBy: newest/price/area/rating
+
+Response 200:
+{
+  "success": true,
+  "total": 150,
+  "page": 1,
+  "limit": 10,
+  "properties": [...]
+}
+```
+
+#### Get Property Details
+
+```http
+GET /api/properties/:propertyId
+
+Response 200:
+{
+  "success": true,
+  "property": {
+    "_id": "property_id",
+    "title": "Beautiful Flat",
+    "description": "AI-generated description...",
+    "price": 25000,
+    "areaSqFt": 1200,
+    "images": ["url1", "url2"],
+    "owner": { ... },
+    "rating": 4.2,
+    "reviews": [...]
+  }
+}
+```
+
+#### Create Property
+
+```http
+POST /api/properties
+Authorization: Bearer <firebase_token>
+Content-Type: application/json
+
+{
+  "title": "Beautiful Flat",
+  "propertyType": "flat",
+  "listingType": "rent",
+  "price": 25000,
+  "areaSqFt": 1200,
+  "bedrooms": 2,
+  "bathrooms": 1,
+  "description": "", // Will be auto-generated if empty
+  "address": {
+    "street": "123 Main St",
+    "division": "Dhaka",
+    "district": "Dhaka",
+    "upazila": "Banani"
+  },
+  "location": {
+    "latitude": 23.8185,
+    "longitude": 90.4010
+  },
+  "images": ["url1", "url2"],
+  "amenities": ["wifi", "parking", "gym"]
+}
+
+Response 201:
+{
+  "success": true,
+  "property": { ... }
+}
+```
+
+#### Update Property
+
+```http
+PUT /api/properties/:propertyId
+Authorization: Bearer <firebase_token>
+
+{
+  "title": "Updated Title",
+  "price": 26000,
+  ...
+}
+
+Response 200:
+{
+  "success": true,
+  "property": { ... }
+}
+```
+
+#### Delete Property
+
+```http
+DELETE /api/properties/:propertyId
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "message": "Property deleted"
+}
+```
+
+### Chat Endpoints
+
+#### Get Conversations
+
+```http
+GET /api/chat/conversations
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "conversations": [
+    {
+      "_id": "conversation_id",
+      "participants": ["user1_id", "user2_id"],
+      "lastMessage": "Interested in the property",
+      "lastMessageTime": "2024-03-09T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### Get Messages
+
+```http
+GET /api/chat/:conversationId/messages
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "messages": [
+    {
+      "_id": "message_id",
+      "sender": "user_id",
+      "senderName": "John Doe",
+      "text": "I'm interested",
+      "read": true,
+      "createdAt": "2024-03-09T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### Send Message
+
+```http
+POST /api/chat/:conversationId/messages
+Authorization: Bearer <firebase_token>
+Content-Type: application/json
+
+{
+  "text": "I'm interested in this property",
+  "attachments": []  // Optional image URLs
+}
+
+Response 201:
+{
+  "success": true,
+  "message": { ... }
+}
+```
+
+### Admin Endpoints
+
+#### Get Properties for Moderation
+
+```http
+GET /api/admin/properties?status=pending
+Authorization: Bearer <admin_token>
+
+Response 200:
+{
+  "success": true,
+  "properties": [...]
+}
+```
+
+#### Approve Property
+
+```http
+PUT /api/admin/properties/:propertyId/approve
+Authorization: Bearer <admin_token>
+
+Response 200:
+{
+  "success": true,
+  "message": "Property approved"
+}
+```
+
+#### Reject Property
+
+```http
+PUT /api/admin/properties/:propertyId/reject
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "reason": "Contains inappropriate content"
+}
+
+Response 200:
+{
+  "success": true,
+  "message": "Property rejected"
+}
+```
+
+#### Get All Users
+
+```http
+GET /api/admin/users?role=property_owner&verified=true
+Authorization: Bearer <admin_token>
+
+Response 200:
+{
+  "success": true,
+  "users": [...]
+}
+```
+
+#### Verify User
+
+```http
+PUT /api/admin/users/:userId/verify
+Authorization: Bearer <admin_token>
+
+Response 200:
+{
+  "success": true,
+  "user": { ... }
+}
+```
+
+### Rating Endpoints
+
+#### Create Rating
+
+```http
+POST /api/ratings
+Authorization: Bearer <firebase_token>
+
+{
+  "rateeId": "owner_id",
+  "propertyId": "property_id",
+  "rating": 5,
+  "review": "Excellent property and owner",
+  "category": "professionalism"  // communication, professionalism, etc
+}
+
+Response 201:
+{
+  "success": true,
+  "rating": { ... }
+}
+```
+
+#### Get User Ratings
+
+```http
+GET /api/ratings/user/:userId/average
+
+Response 200:
+{
+  "success": true,
+  "averageRating": 4.5,
+  "totalReviews": 12,
+  "ratings": [...]
+}
+```
+
+### Wishlist Endpoints
+
+#### Add to Wishlist
+
+```http
+POST /api/wishlist
+Authorization: Bearer <firebase_token>
+
+{
+  "propertyId": "property_id",
+  "notes": "Check this later"
+}
+
+Response 201:
+{
+  "success": true,
+  "wishlistItem": { ... }
+}
+```
+
+#### Get Wishlist
+
+```http
+GET /api/wishlist
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "wishlist": [...]
+}
+```
+
+#### Remove from Wishlist
+
+```http
+DELETE /api/wishlist/:itemId
+Authorization: Bearer <firebase_token>
+
+Response 200:
+{
+  "success": true,
+  "message": "Removed from wishlist"
+}
+```
+
+---
+
+## 🔧 Services Architecture
+
+### Email Service Stack
+
+#### Email Service (`emailService.js`)
+
+```javascript
+// Core email sending
+const sendEmail = async (to, subject, html) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject,
+    html,
+  });
+};
+```
+
+#### Email Job Service (`emailJobService.js`)
+
+```javascript
+// Queue email jobs for processing
+const queueEmail = async (to, subject, html) => {
+  const emailJob = new EmailJob({
+    to,
+    subject,
+    htmlContent: html,
+    status: "pending",
+    retryCount: 0,
+  });
+
+  await emailJob.save();
+  return emailJob;
+};
+```
+
+#### Email Processor (`emailJobCron.js`)
+
+```javascript
+// Process queued emails every 5 minutes
+cron.schedule("*/5 * * * *", async () => {
+  const pendingJobs = await EmailJob.find({
+    status: "pending",
+    retryCount: { $lt: 3 },
+  });
+
+  for (const job of pendingJobs) {
+    try {
+      await sendEmail(job.to, job.subject, job.htmlContent);
+      job.status = "sent";
+      job.sentAt = new Date();
+    } catch (error) {
+      job.retryCount += 1;
+      job.error = error.message;
+      if (job.retryCount >= 3) {
+        job.status = "failed";
+      }
+    }
+    await job.save();
+  }
+});
+```
+
+### AI Service (`groqService.js`)
+
+```javascript
+// Generate property descriptions using Groq AI
+const generateDescription = async (propertyData) => {
+  const prompt = buildPrompt(propertyData);
+
+  const response = await groq.chat.completions.create({
+    model: "mixtral-8x7b-32768",
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.7,
+    max_tokens: 1024,
+  });
+
+  return response.choices[0].message.content;
+};
+
+const buildPrompt = (property) => {
+  return `Generate a compelling property description for:
+    - Type: ${property.propertyType}
+    - Bedrooms: ${property.bedrooms}
+    - Area: ${property.areaSqFt} sqft
+    - Location: ${property.location}
+    - Amenities: ${property.amenities.join(", ")}
+    
+    Keep it concise, professional, and persuasive. Under 150 words.`;
+};
+```
+
+### Property Appraisal Service
+
+```javascript
+// Estimate property value
+const calculateAppraisal = (property) => {
+  let basePrice = property.price;
+
+  // Adjust based on amenities
+  const amenityMultipliers = {
+    wifi: 1.05,
+    parking: 1.08,
+    gym: 1.1,
+    furnished: 1.15,
+  };
+
+  for (const amenity of property.amenities) {
+    basePrice *= amenityMultipliers[amenity] || 1.0;
+  }
+
+  // Adjust based on area
+  const pricePerSqft = basePrice / property.areaSqFt;
+  const adjustedPrice = pricePerSqft * property.areaSqFt * 1.05;
+
+  return Math.round(adjustedPrice);
+};
+```
+
+---
+
+## 🔐 Middleware Pipeline
+
+### Request Flow
+
+```
+Incoming Request
+    ↓
+Express Middleware (logging, parsing)
+    ↓
+CORS Middleware
+    ↓
+Rate Limiting
+    ↓
+Token Verification (verifyToken)
+    ↓
+Role Verification (verifyAdmin/verifyOwner)
+    ↓
+Route Handler (Controller)
+    ↓
+Business Logic (Services)
+    ↓
+Database Operation
+    ↓
+Response Formatting
+    ↓
+Error Handling
+    ↓
+Response Sent
+```
+
+### Token Verification Middleware
+
+```javascript
+// src/middleware/verifyToken.js
+const verifyToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    res.status(403).json({ error: "Invalid token" });
+  }
+};
+```
+
+### Admin Verification Middleware
+
+```javascript
+// src/middleware/verifyAdmin.js
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ uid: req.user.uid });
+
+    if (user?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    next();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+---
+
+## 💾 Database Optimization
+
+### Indexes for Performance
+
+```javascript
+// Create indexes in MongoDB
+db.properties.createIndex({ "owner.userId": 1 });
+db.properties.createIndex({ "address.district": 1 });
+db.properties.createIndex({ price: 1 });
+db.properties.createIndex({ status: 1 });
+db.properties.createIndex({ createdAt: -1 });
+
+db.users.createIndex({ email: 1 }, { unique: true });
+db.users.createIndex({ role: 1 });
+
+db.chat.createIndex({ participants: 1 });
+db.chat.createIndex({ lastMessageTime: -1 });
+
+db.ratings.createIndex({ rateeId: 1 });
+db.ratings.createIndex({ propertyId: 1 });
+```
+
+### Query Optimization
+
+```javascript
+// Inefficient query
+const properties = await Property.find({ status: "approved" });
+
+// Optimized with projection and lean
+const properties = await Property.find({ status: "approved" })
+  .select("title price image -_id") // Only needed fields
+  .lean() // Don't create full Mongoose objects
+  .limit(20)
+  .skip((page - 1) * 20);
+```
+
+### Aggregation Pipeline
+
+```javascript
+// Complex query using aggregation
+const stats = await Property.aggregate([
+  { $match: { status: "approved" } },
+  {
+    $group: {
+      _id: "$address.district",
+      avgPrice: { $avg: "$price" },
+      count: { $sum: 1 },
+      maxPrice: { $max: "$price" },
+      minPrice: { $min: "$price" },
+    },
+  },
+  { $sort: { count: -1 } },
+]);
+```
+
+---
+
+## 🔄 Real-Time Chat with Socket.io
+
+### Events Emitted
+
+```javascript
+// src/events/chatEvents.js
+const initializeSocket = (io) => {
+  io.on("connection", (socket) => {
+    // User joins conversation
+    socket.on("join_conversation", (data) => {
+      socket.join(data.conversationId);
+      socket.to(data.conversationId).emit("user_joined", {
+        userId: data.userId,
+        userName: data.userName,
+      });
+    });
+
+    // Send message
+    socket.on("send_message", async (data) => {
+      const message = await Message.create({
+        conversationId: data.conversationId,
+        sender: data.senderId,
+        text: data.text,
+        createdAt: new Date(),
+      });
+
+      io.to(data.conversationId).emit("receive_message", message);
+    });
+
+    // Typing indicator
+    socket.on("typing", (data) => {
+      socket.to(data.conversationId).emit("user_typing", {
+        userId: data.userId,
+        userName: data.userName,
+      });
+    });
+
+    // Stop typing
+    socket.on("stop_typing", (data) => {
+      socket.to(data.conversationId).emit("user_stopped_typing", {
+        userId: data.userId,
+      });
+    });
+
+    // Mark messages as read
+    socket.on("mark_read", async (data) => {
+      await Message.updateMany({ conversationId: data.conversationId }, { read: true });
+
+      io.to(data.conversationId).emit("messages_read");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+  });
+};
+```
+
+---
+
+## ❌ Error Handling
+
+### Custom Error Classes
+
+```javascript
+// src/utils/errorHandler.js
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+class ValidationError extends AppError {
+  constructor(message) {
+    super(message, 400);
+  }
+}
+
+class NotFoundError extends AppError {
+  constructor(message = "Resource not found") {
+    super(message, 404);
+  }
+}
+
+class UnauthorizedError extends AppError {
+  constructor(message = "Unauthorized") {
+    super(message, 403);
+  }
+}
+
+module.exports = { AppError, ValidationError, NotFoundError, UnauthorizedError };
+```
+
+### Async Error Wrapper
+
+```javascript
+// src/utils/asyncHandler.js
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Usage in controller
+exports.getProperty = asyncHandler(async (req, res) => {
+  const property = await Property.findById(req.params.id);
+  if (!property) throw new NotFoundError("Property not found");
+  res.json(property);
+});
+```
+
+### Global Error Handler
+
+```javascript
+// In server.js
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  if (process.env.NODE_ENV === "development") {
+    console.error(err);
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+```
+
+---
+
+## 📊 Logging System
+
+```javascript
+// src/utils/logger.js
+const logEvent = (level, message, meta = {}) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    level,
+    message,
+    ...meta,
+  };
+
+  console.log(JSON.stringify(logEntry));
+
+  // Optional: Send to external logging service
+  if (level === "error") {
+    logToExternalService(logEntry);
+  }
+};
+
+// Usage
+logEvent("info", "Property created", {
+  propertyId: property._id,
+  ownerId: req.user.uid,
+});
+
+logEvent("error", "Email sending failed", {
+  to: email,
+  error: error.message,
+});
+```
+
+---
+
+## 🚀 Response Formatting
+
+```javascript
+// src/utils/responseHandler.js
+const sendSuccess = (res, data, statusCode = 200) => {
+  res.status(statusCode).json({
+    success: true,
+    data,
+  });
+};
+
+const sendError = (res, message, statusCode = 500) => {
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+  });
+};
+
+// Controller usage
+exports.getProperty = asyncHandler(async (req, res) => {
+  const property = await Property.findById(req.params.id);
+  if (!property) {
+    return sendError(res, "Property not found", 404);
+  }
+  sendSuccess(res, property);
+});
+```
+
+---
+
+## 🔗 Related Documentation
+
+- See [main README](/../../README.md) for project overview
+- See [Frontend README](/../../client/README.md) for UI details
+- See [BACKEND_VERCEL_DEPLOYMENT_GUIDE.md](/../../BACKEND_VERCEL_DEPLOYMENT_GUIDE.md) for deployment
+
+---
+
+## 🏆 Best Practices
+
+### API Design
+
+- Consistent response format
+- Proper HTTP status codes
+- Pagination for list endpoints
+- Filtering and sorting support
+
+### Database
+
+- Index frequently queried fields
+- Use lean() for read-only queries
+- Implement connection pooling
+- Monitor slow queries
+
+### Security
+
+- Validate all inputs
+- Sanitize database queries
+- Use HTTPS in production
+- Implement rate limiting
+
+### Performance
+
+- Cache frequently accessed data
+- Use async operations
+- Implement pagination
+- Leverage database indexes
+
+---
+
+**Last Updated**: March 2026  
+**Maintained by**: Khandaker Ali Ariyan
+npm run lint:fix # Auto-fix issues
+npm run format # Check formatting
+npm run format:write # Auto-format code
+
+````
 
 ### Verify Server is Running
 
@@ -310,7 +1232,7 @@ npm run format:write # Auto-format code
 curl http://localhost:5000/health
 
 # Response: { "success": true, "status": "online" }
-```
+````
 
 ---
 
