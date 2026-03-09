@@ -938,13 +938,6 @@ curl -X GET http://localhost:5000/api/users/user-profile \
 
 ### Code Quality
 
-```bash
-npm run lint       # Check code
-npm run lint:fix   # Auto-fix
-npm run format     # Check formatting
-npm run format:write # Auto-format
-```
-
 ---
 
 ## 📖 Additional Resources

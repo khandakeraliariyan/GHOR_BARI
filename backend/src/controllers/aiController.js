@@ -146,7 +146,7 @@ function formatLocation(property) {
 }
 
 function formatLocalPropertyMatches(properties) {
-    const lines = ["Here are the best matches from GHOR BARI database:"];
+    const lines = [];
 
     properties.slice(0, 5).forEach((property, index) => {
         const base = `${index + 1}. ${property.title || "Untitled property"} (ID: ${property.id})`;
@@ -288,29 +288,11 @@ export const sendMessageToAI = async (req, res) => {
     Be friendly, professional, and helpful. Keep responses concise and informative.
     Always respond in plain text. Do not use markdown formatting, headings, bullets, asterisks, or hash symbols.
 
-    Use local database listings first whenever available.
-    If no local listing matches, provide online guidance from web snippets and mention source URLs in plain text.
-    Do not invent local listings.`;
+    Keep response natural, concise, and practical.
+    Mention web source URLs only when they are useful.
+    Do not use markdown symbols.`;
 
-        if (propertyContext.total > 0) {
-            const localHeader = strategy === "relaxed"
-                ? "I could not find exact matches, but I found close options from your database."
-                : "I found matching properties in your database.";
-
-            const localSummary = formatLocalPropertyMatches(propertyContext.properties);
-
-            const followUp = "Tell me your preferred area, max budget, and bedrooms, and I will narrow this to the best 2 options.";
-            const combined = `${localHeader}\n\n${localSummary}\n\n${followUp}`;
-
-            return res.status(200).json({
-                success: true,
-                response: normalizeAiChatResponse(combined),
-                model: GROQ_MODEL,
-                source: "database-first"
-            });
-        }
-
-        const userPrompt = `User message: ${message}\n\nNo relevant local database listing found. Use the online web snippets below and provide a helpful answer.\n\nOnline web snippets (JSON):\n${JSON.stringify(webContext)}`;
+        const userPrompt = `User message: ${message}\n\nLocal database filters used:\n${JSON.stringify(propertyContext.filters)}\n\nOnline web snippets (JSON):\n${JSON.stringify(webContext)}`;
 
         try {
             const aiResponse = await generateGroqText({
@@ -321,13 +303,41 @@ export const sendMessageToAI = async (req, res) => {
                 topP: 0.95
             });
 
+            const localSectionHeader = "In the GhorAi, the following match with property is:";
+            const localSectionBody = propertyContext.total > 0
+                ? formatLocalPropertyMatches(propertyContext.properties)
+                : "No relevant property found in your website database for this exact request.";
+
+            const sourceNote = strategy === "relaxed"
+                ? "(Closest matches from your website)"
+                : "(Property available on my website)";
+
+            const combinedResponse = `${localSectionHeader}\n${sourceNote}\n${localSectionBody}\n\nFrom other source:\n${aiResponse}`;
+
             return res.status(200).json({
                 success: true,
-                response: normalizeAiChatResponse(aiResponse),
+                response: normalizeAiChatResponse(combinedResponse),
                 model: GROQ_MODEL,
-                source: "web-fallback"
+                source: propertyContext.total > 0 ? "hybrid-db-and-web" : "web-with-db-check"
             });
         } catch (error) {
+            const localSectionHeader = "In the GhorAi, the following match with property is:";
+            const localSectionBody = propertyContext.total > 0
+                ? formatLocalPropertyMatches(propertyContext.properties)
+                : "No relevant property found in your website database for this exact request.";
+
+            const combinedFallback = `${localSectionHeader}\n(Property available on my website)\n${localSectionBody}\n\nFrom other source:\nOnline response is temporarily unavailable. Please try again in a moment.`;
+
+            const statusCode = error.response?.status || error.statusCode;
+            if (propertyContext.total > 0 && (statusCode === 429 || statusCode === 503 || statusCode === 500)) {
+                return res.status(200).json({
+                    success: true,
+                    response: normalizeAiChatResponse(combinedFallback),
+                    model: GROQ_MODEL,
+                    source: "database-only-fallback"
+                });
+            }
+
             return handleAiControllerError(res, error, "AI service is temporarily unavailable. Please try again later.");
         }
     } catch (error) {
