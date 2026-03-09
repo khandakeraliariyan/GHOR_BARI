@@ -331,7 +331,7 @@ const ProfilePage = () => {
                                         +88
                                     </div>
                                     <input
-                                        className="flex-1 px-5 py-3 rounded-xl bg-gray-50 border-2 border-orange-100 focus:border-orange-500 outline-none font-bold transition-all"
+                                        className="flex-1 w-full px-5 py-3 rounded-xl bg-gray-50 border-2 border-orange-100 focus:border-orange-500 outline-none font-bold transition-all"
                                         value={formData.phone}
                                         maxLength={11}
                                         onChange={(e) => {
