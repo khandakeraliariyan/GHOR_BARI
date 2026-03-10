@@ -4,6 +4,8 @@
 
 A comprehensive full-stack web application for buying, renting, and managing property listings in Bangladesh with real-time chat functionality, AI-powered property descriptions, and advanced admin dashboard.
 
+**Live Website:** https://ghor-bari-2c93a.web.app/
+
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
@@ -48,7 +50,9 @@ A comprehensive full-stack web application for buying, renting, and managing pro
 - 🌐 **Geo-Location Based Search**: Find properties by Division, District, and Upazila
 - 💬 **Real-Time Chat**: Instant messaging powered by Socket.io
 - 🤖 **AI Integration**: Groq API for intelligent property descriptions
+- 🧠 **Ghor Bari AI Assistant**: Hybrid property matching from platform listings with advisory responses
 - ✅ **Verification System**: NID-based user verification for trust
+- 📧 **Queued Email Notifications**: Background delivery for deal and application lifecycle updates
 - 📊 **Advanced Analytics**: Dashboard with detailed insights
 - 🔒 **Enterprise Security**: Secure authentication and data protection
 - 📱 **Mobile Responsive**: Fully optimized for all devices
@@ -97,6 +101,7 @@ A comprehensive full-stack web application for buying, renting, and managing pro
 
 - Professional property photos with gallery
 - AI-generated property descriptions
+- AI chat-assisted property discovery with direct property navigation
 - Interactive maps showing location
 - Comprehensive property specifications
 - User reviews and ratings
@@ -134,7 +139,14 @@ A comprehensive full-stack web application for buying, renting, and managing pro
 
 - View and manage buyer/renter applications
 - Application status tracking
+- Counter offers, revised offers, and deal completion/cancellation workflow
 - Direct communication with applicants
+
+#### 📧 **Notification Delivery**
+
+- Queued email jobs for application and deal events
+- Retry handling for failed deliveries
+- Background processing through cron or secured internal endpoint
 
 ### 🛠️ Admin Features
 
@@ -316,7 +328,11 @@ GROQ_API_KEY=your-groq-key
 
 ENABLE_EMAIL_JOB_CRON=true
 ENABLE_SOCKET_IO=true
+INTERNAL_CRON_SECRET=your-internal-secret
+EMAIL_JOB_BATCH_SIZE=10
 ```
+
+Note: the current backend code reads `MONGO_URI` for the database connection. Keep `MONGO_URI` and `MONGODB_URI` aligned if both are present in your local setup.
 
 ### Frontend .env
 
@@ -329,7 +345,10 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 VITE_FIREBASE_APP_ID=your-app-id
 
 VITE_SERVER_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5000
 ```
+
+Note: the current AI/chat client uses `VITE_API_URL` as the primary API base URL.
 
 ---
 
@@ -422,6 +441,12 @@ Authorization: Bearer <firebase_token>
 GET /api/properties?page=1&limit=10&type=flat&listingType=rent
 ```
 
+**Featured Properties**
+
+```http
+GET /featured-properties
+```
+
 **Create Property**
 
 ```http
@@ -440,6 +465,36 @@ Content-Type: application/json
   "images": [...],
   "amenities": [...]
 }
+```
+
+### AI Endpoints
+
+**Send Message To Ghor Bari AI**
+
+```http
+POST /api/ai/send-message
+Authorization: Bearer <firebase_token>
+Content-Type: application/json
+
+{
+  "message": "Find me a flat in Gazipur under 30000"
+}
+```
+
+Response includes normalized text plus optional `matchedProperties` used by the chat UI to render clickable property cards.
+
+**Generate Property Description**
+
+```http
+POST /api/ai/generate-property-description
+Authorization: Bearer <firebase_token>
+```
+
+**Estimate Property Price**
+
+```http
+POST /api/ai/estimate-property-price
+Authorization: Bearer <firebase_token>
 ```
 
 ### Chat Endpoints
@@ -476,6 +531,21 @@ Authorization: Bearer <admin_token>
 ```http
 PUT /api/admin/properties/:id/approve
 Authorization: Bearer <admin_token>
+```
+
+### Public/Internal Utility Endpoints
+
+**Public Stats**
+
+```http
+GET /public/stats
+```
+
+**Process Queued Email Jobs**
+
+```http
+POST /internal/process-email-jobs
+x-internal-cron-secret: <INTERNAL_CRON_SECRET>
 ```
 
 ---
@@ -535,6 +605,7 @@ Frontend
 - HTML content
 - Status (pending, sent, failed)
 - Retry information
+- Dedupe key and notification read state
 
 ---
 
@@ -544,17 +615,26 @@ Frontend
 
 **Client → Server:**
 
-- `send_message`: Send chat message
-- `typing`: User typing indicator
-- `join_conversation`: Enter chat
-- `mark_read`: Mark message as read
+- `chat:join`: Join a conversation room
+- `chat:leave`: Leave a conversation room
+- `message:send`: Send a message
+- `typing:start`: Start typing indicator
+- `typing:stop`: Stop typing indicator
+- `message:markRead`: Mark conversation messages as read
+- `users:getOnline`: Request online users list
 
 **Server → Client:**
 
-- `receive_message`: New message arrived
-- `user_typing`: Someone typing
-- `message_confirmed`: Message sent
-- `notification`: System notification
+- `chat:joined`: Room join acknowledgement
+- `message:received`: New message broadcast
+- `typing:active`: Typing state updates
+- `message:read`: Read receipt update
+- `users:online`: Connected users list
+
+### Background Jobs
+
+- `emailJobCron`: Processes queued notification emails on a schedule
+- `nidVerificationCron`: Runs pending NID verification processing
 
 ---
 

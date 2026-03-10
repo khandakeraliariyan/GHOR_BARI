@@ -126,7 +126,7 @@ const GhorAI = () => {
 
         if (contentLines.length === 0) {
             return (
-                <p className="text-xs leading-6 text-gray-800 break-words">
+                <p className="text-sm leading-7 text-gray-800 break-words">
                     {heading}
                 </p>
             );
@@ -147,7 +147,7 @@ const GhorAI = () => {
                         return (
                         <p
                             key={`${heading}-${index}`}
-                            className={`text-xs leading-6 text-gray-800 break-words ${spacingClass}`}
+                            className={`text-sm leading-7 text-gray-800 break-words ${spacingClass}`}
                         >
                             {line}
                         </p>
