@@ -36,12 +36,6 @@ const LoginPage = () => {
 
     const { register, handleSubmit, setValue, clearErrors, formState: { errors } } = useForm();
 
-    const handleQuickLogin = ({ email, password }) => {
-        setValue("email", email, { shouldDirty: true, shouldValidate: true });
-        setValue("password", password, { shouldDirty: true, shouldValidate: true });
-        clearErrors(["email", "password"]);
-    };
-
     // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -84,6 +78,13 @@ const LoginPage = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleQuickLogin = async ({ email, password }) => {
+        setValue("email", email, { shouldDirty: true, shouldValidate: true });
+        setValue("password", password, { shouldDirty: true, shouldValidate: true });
+        clearErrors(["email", "password"]);
+        await onSubmit({ email, password });
     };
 
     // Google Sign-In
@@ -167,8 +168,8 @@ const LoginPage = () => {
             <div className="w-full lg:w-[30%] flex items-center justify-center bg-gray-50 px-6 py-12 overflow-y-auto">
                 <div className="w-full max-w-md lg:max-w-sm">
                     {/* QUICK LOGIN */}
-                    <div className="mb-7 rounded-xl border-2 border-dashed border-green-500 bg-green-50/70 p-4">
-                        <p className="mb-4 text-center text-sm font-extrabold uppercase tracking-widest text-green-800">
+                    <div className="mb-7 rounded-xl border-2 border-dashed border-green-500 bg-green-50/70 p-3.5">
+                        <p className="mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-green-800">
                             Quick Login
                         </p>
                         <div className="grid grid-cols-2 gap-3">
@@ -181,11 +182,11 @@ const LoginPage = () => {
                                     type="button"
                                     onClick={() => handleQuickLogin(account)}
                                     disabled={actionLoading}
-                                    className={`flex items-center justify-center gap-2 rounded-md px-3 py-3 text-sm font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                                         isAdmin ? "bg-gray-900" : "bg-green-700"
                                     }`}
                                 >
-                                    {isAdmin ? <ShieldCheck size={19} /> : <UserRound size={19} />}
+                                    {isAdmin ? <ShieldCheck size={16} /> : <UserRound size={16} />}
                                     {account.role} Account
                                 </button>
                                 );
