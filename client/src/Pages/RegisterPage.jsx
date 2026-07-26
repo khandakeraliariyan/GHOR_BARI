@@ -7,6 +7,7 @@ import Loading from "../Components/Loading";
 import registerImg from "../assets/registerImage.jpg";
 import { uploadImageToImgBB } from "../Utilities/UploadImage";
 import { showToast } from "../Utilities/ToastMessage";
+import { getFirebaseAuthErrorMessage } from "../Utilities/firebaseAuthErrorMessage";
 import useAuth from "../Hooks/useAuth";
 import useAxios from "../Hooks/useAxios";
 
@@ -31,8 +32,7 @@ const RegisterPage = () => {
             setLoading(true);
 
             // 1️⃣ Firebase email/password registration
-            const userCredential = await registerUserWithEmailPassword(data.email, data.password);
-            const user = userCredential.user;
+            await registerUserWithEmailPassword(data.email, data.password);
 
             // Upload avatar to ImgBB
             let imageUrl = "";
