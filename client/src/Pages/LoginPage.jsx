@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, UserRound } from "lucide-react";
 import { useNavigate, Link, useLocation } from "react-router";
 
 import loginImg from "../assets/loginImage.jpg";
@@ -10,6 +10,19 @@ import { getFirebaseAuthErrorMessage } from "../Utilities/firebaseAuthErrorMessa
 import useAuth from "../Hooks/useAuth";
 import useAxios from "../Hooks/useAxios";
 import useAdmin from "../Hooks/useAdmin";
+
+const quickLoginAccounts = [
+    {
+        role: "Admin",
+        email: "ghorbari416567@gmail.com",
+        password: "GhorBari123",
+    },
+    {
+        role: "User",
+        email: "torr@gmail.com",
+        password: "Torr123",
+    },
+];
 
 const LoginPage = () => {
     const { loginUserWithEmailPassword, loginWithGoogle, updateUserProfile } = useAuth();
@@ -21,7 +34,7 @@ const LoginPage = () => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { register, handleSubmit, setValue, clearErrors, formState: { errors } } = useForm();
 
     // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
     useEffect(() => {
@@ -65,6 +78,13 @@ const LoginPage = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleQuickLogin = async ({ email, password }) => {
+        setValue("email", email, { shouldDirty: true, shouldValidate: true });
+        setValue("password", password, { shouldDirty: true, shouldValidate: true });
+        clearErrors(["email", "password"]);
+        await onSubmit({ email, password });
     };
 
     // Google Sign-In
@@ -147,6 +167,33 @@ const LoginPage = () => {
             {/* LEFT – FORM (30% on Desktop, 100% on Tablet/Mobile) */}
             <div className="w-full lg:w-[30%] flex items-center justify-center bg-gray-50 px-6 py-12 overflow-y-auto">
                 <div className="w-full max-w-md lg:max-w-sm">
+                    {/* QUICK LOGIN */}
+                    <div className="mb-7 rounded-xl border-2 border-dashed border-green-500 bg-green-50/70 p-3.5">
+                        <p className="mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-green-800">
+                            Quick Login
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            {quickLoginAccounts.map((account) => {
+                                const isAdmin = account.role === "Admin";
+
+                                return (
+                                <button
+                                    key={account.role}
+                                    type="button"
+                                    onClick={() => handleQuickLogin(account)}
+                                    disabled={actionLoading}
+                                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                        isAdmin ? "bg-gray-900" : "bg-green-700"
+                                    }`}
+                                >
+                                    {isAdmin ? <ShieldCheck size={16} /> : <UserRound size={16} />}
+                                    {account.role} Account
+                                </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* HEADER */}
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h2>
