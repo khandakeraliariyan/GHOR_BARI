@@ -120,7 +120,7 @@ const ProfilePage = () => {
             const url = await uploadImageToImgBB(file);
             setFormData(prev => ({ ...prev, profileImage: url }));
             showToast("Photo uploaded! Save to apply changes.", "success");
-        } catch (err) {
+        } catch {
             showToast("Image upload failed", "error");
         } finally {
             setUploading(false);
@@ -171,14 +171,6 @@ const ProfilePage = () => {
         }
     };
 
-    if (error) return (
-        <div className="h-[70vh] flex flex-col items-center justify-center text-center p-6">
-            <XCircle className="text-red-500 mb-4" size={50} />
-            <h2 className="text-2xl font-black text-gray-800">Authorization Failed</h2>
-            <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">Retry</button>
-        </div>
-    );
-
     // LAND AT TOP & FORCED INITIAL LOADING (0.25s)
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -187,6 +179,14 @@ const ProfilePage = () => {
         }, 250);
         return () => clearTimeout(timer);
     }, []);
+
+    if (error) return (
+        <div className="h-[70vh] flex flex-col items-center justify-center text-center p-6">
+            <XCircle className="text-red-500 mb-4" size={50} />
+            <h2 className="text-2xl font-black text-gray-800">Authorization Failed</h2>
+            <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-orange-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">Retry</button>
+        </div>
+    );
 
     if (isLoading || !user || initialLoading) return (
         <Loading></Loading>

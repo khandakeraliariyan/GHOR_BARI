@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
     "backfill:property-locations": "node scripts/backfillPropertyLocations.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDatabase } from "../config/db.js";
+import { getPublicRegistrationRole } from "../services/registrationPolicyService.js";
 
 const notificationTypeContent = {
     application_submitted: (payload) => ({
@@ -84,13 +85,13 @@ export const registerUser = async (req, res) => {
 
         const db = getDatabase();
 
-        const { email, name, profileImage = "", phone, role } = req.body;
+        const { email, name, profileImage = "", phone } = req.body;
 
         if (!email || !name) return res.status(400).json({ message: "Email and name are required" });
 
-        const validRoles = ["property_seeker", "property_owner", "user", "admin"];
-
-        const userRole = validRoles.includes(role) ? role : "user";
+        // Public callers must never control authorization roles. Role changes
+        // belong to a separate authenticated administrative workflow.
+        const userRole = getPublicRegistrationRole();
 
         const existing = await db.collection("users").findOne({ email });
 
