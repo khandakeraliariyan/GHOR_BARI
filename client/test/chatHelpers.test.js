@@ -1,5 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test, expect } from "@jest/globals";
 
 import {
   getInitials,
@@ -11,15 +10,15 @@ import {
 } from "../src/Utilities/ChatHelpers.js";
 
 test("truncateText preserves short text and truncates long text", () => {
-  assert.equal(truncateText("short", 10), "short");
-  assert.equal(truncateText("abcdefghijk", 5), "abcde...");
-  assert.equal(truncateText("", 5), "");
+  expect(truncateText("short", 10)).toBe("short");
+  expect(truncateText("abcdefghijk", 5)).toBe("abcde...");
+  expect(truncateText("", 5)).toBe("");
 });
 
 test("getInitials handles names and missing values", () => {
-  assert.equal(getInitials("Nayef Wasit Siddiqui"), "NW");
-  assert.equal(getInitials("Nayef"), "N");
-  assert.equal(getInitials(), "?");
+  expect(getInitials("Nayef Wasit Siddiqui")).toBe("NW");
+  expect(getInitials("Nayef")).toBe("N");
+  expect(getInitials()).toBe("?");
 });
 
 test("shouldShowTimestamp detects sender and time changes", () => {
@@ -28,17 +27,17 @@ test("shouldShowTimestamp detects sender and time changes", () => {
   const late = { createdAt: "2026-07-19T10:06:00Z", senderEmail: "a@example.com" };
   const other = { createdAt: "2026-07-19T10:01:00Z", senderEmail: "b@example.com" };
 
-  assert.equal(shouldShowTimestamp(first), true);
-  assert.equal(shouldShowTimestamp(near, first), false);
-  assert.equal(shouldShowTimestamp(late, first), true);
-  assert.equal(shouldShowTimestamp(other, first), true);
+  expect(shouldShowTimestamp(first)).toBe(true);
+  expect(shouldShowTimestamp(near, first)).toBe(false);
+  expect(shouldShowTimestamp(late, first)).toBe(true);
+  expect(shouldShowTimestamp(other, first)).toBe(true);
 });
 
 test("online and preview helpers return user-facing values", () => {
-  assert.equal(isUserOnline("a@example.com", ["a@example.com"]), true);
-  assert.equal(isUserOnline("b@example.com", ["a@example.com"]), false);
-  assert.equal(getStatusColor(true), "bg-green-500");
-  assert.equal(getStatusColor(false), "bg-gray-400");
-  assert.equal(getLastMessagePreview(null), "No messages yet");
-  assert.equal(getLastMessagePreview("Hello", "me@example.com", "me@example.com"), "You: Hello");
+  expect(isUserOnline("a@example.com", ["a@example.com"])).toBe(true);
+  expect(isUserOnline("b@example.com", ["a@example.com"])).toBe(false);
+  expect(getStatusColor(true)).toBe("bg-green-500");
+  expect(getStatusColor(false)).toBe("bg-gray-400");
+  expect(getLastMessagePreview(null)).toBe("No messages yet");
+  expect(getLastMessagePreview("Hello", "me@example.com", "me@example.com")).toBe("You: Hello");
 });

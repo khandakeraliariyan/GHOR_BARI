@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --coverage",
     "backfill:property-locations": "node scripts/backfillPropertyLocations.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -36,6 +36,7 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^16.5.0",
+    "jest": "^30.0.0",
     "nodemon": "^3.1.11",
     "prettier": "^3.5.1"
   }
