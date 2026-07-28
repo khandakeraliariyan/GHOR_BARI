@@ -6,8 +6,9 @@ The assessment covers the React/Vite client and Node.js/Express/MongoDB backend,
 
 ## 2. Methods
 
-- Automated unit tests with the Node.js test runner
-- Built-in code coverage reporting
+- Automated unit tests with Jest 30
+- React component/route tests with React Testing Library and jest-dom
+- Jest code coverage reporting
 - ESLint static analysis
 - Route/controller authorization review
 - Database-model behavior tests using controlled fake collections
@@ -18,9 +19,9 @@ The assessment covers the React/Vite client and Node.js/Express/MongoDB backend,
 
 | Target | Tests | Pass | Fail | Line coverage | Branch coverage | Function coverage |
 |---|---:|---:|---:|---:|---:|---:|
-| Backend tested modules | 17 | 17 | 0 | Re-run after fixes | Re-run after fixes | Re-run after fixes |
-| Frontend tested utility modules | 11 | 11 | 0 | 68.29% | 60.00% | 76.47% |
-| Total executions | 28 | 28 | 0 | Module-scoped | Module-scoped | Module-scoped |
+| Backend tested modules | 17 | 17 | 0 | 75.30% | 69.33% | 80.76% |
+| Frontend tested modules | 14 | 14 | 0 | 53.95% | 47.55% | 77.77% |
+| Total executions | 31 | 31 | 0 | Module-scoped | Module-scoped | Module-scoped |
 
 Coverage percentages apply to modules loaded by the suites, not the entire repository. This distinction must be stated during evaluation.
 

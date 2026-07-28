@@ -1,4 +1,6 @@
 node_modules
+coverage/
+**/coverage/
 .env
 temp-server
 backend/ghor-bari-firebase-admin-sdk.json

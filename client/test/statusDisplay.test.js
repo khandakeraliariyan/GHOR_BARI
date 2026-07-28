@@ -1,5 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test, expect } from "@jest/globals";
 
 import {
   getApplicationStatusColor,
@@ -10,25 +9,25 @@ import {
 } from "../src/Utilities/StatusDisplay.js";
 
 test("normalizes legacy accepted applications", () => {
-  assert.equal(getApplicationStatusDisplay("accepted"), "DEAL-IN-PROGRESS");
-  assert.equal(isActiveApplicationStatus("accepted"), true);
+  expect(getApplicationStatusDisplay("accepted")).toBe("DEAL-IN-PROGRESS");
+  expect(isActiveApplicationStatus("accepted")).toBe(true);
 });
 
 test("uses property state for completed sale and rental labels", () => {
-  assert.equal(getApplicationStatusDisplay("completed", { status: "sold", listingType: "sale" }), "BOUGHT");
-  assert.equal(getApplicationStatusDisplay("completed", { status: "rented", listingType: "rent" }), "CURRENTLY RENTING");
-  assert.equal(getApplicationStatusMessage("completed", { status: "sold", listingType: "sale" }), "You have bought this property.");
+  expect(getApplicationStatusDisplay("completed", { status: "sold", listingType: "sale" })).toBe("BOUGHT");
+  expect(getApplicationStatusDisplay("completed", { status: "rented", listingType: "rent" })).toBe("CURRENTLY RENTING");
+  expect(getApplicationStatusMessage("completed", { status: "sold", listingType: "sale" })).toBe("You have bought this property.");
 });
 
 test("handles inconsistent completed application state safely", () => {
   const property = { status: "deal-in-progress", listingType: "sale" };
-  assert.equal(getApplicationStatusDisplay("completed", property), "DEAL-IN-PROGRESS");
-  assert.match(getApplicationStatusMessage("completed", property), /in progress/i);
+  expect(getApplicationStatusDisplay("completed", property)).toBe("DEAL-IN-PROGRESS");
+  expect(getApplicationStatusMessage("completed", property)).toMatch(/in progress/i);
 });
 
 test("returns stable defaults and status colors", () => {
-  assert.equal(getPropertyStatusDisplay(), "PENDING");
-  assert.equal(getPropertyStatusDisplay("active"), "ACTIVE");
-  assert.match(getApplicationStatusColor("rejected"), /red/);
-  assert.equal(isActiveApplicationStatus("completed"), false);
+  expect(getPropertyStatusDisplay()).toBe("PENDING");
+  expect(getPropertyStatusDisplay("active")).toBe("ACTIVE");
+  expect(getApplicationStatusColor("rejected")).toMatch(/red/);
+  expect(isActiveApplicationStatus("completed")).toBe(false);
 });

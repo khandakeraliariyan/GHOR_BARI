@@ -20,15 +20,17 @@ Ghor Bari is a Bangladesh property rental and sales platform built with:
 The following quality activities were performed:
 
 1. Inspected the frontend and backend architecture, routes, controllers, services, models, middleware, and important user flows.
-2. Added deterministic automated unit-test commands to both applications.
-3. Added frontend tests for chat helpers, authentication error mapping, and application/property status rules.
-4. Added backend tests for property-description validation, authorization middleware, chat/database models, and public-registration security policy.
-5. Generated module-scoped line, branch, and function coverage reports.
-6. Ran ESLint static analysis on the frontend and backend.
-7. Reviewed registration, login, property CRUD, moderation, authorization, chat, notification, NID, profile, and privacy flows.
-8. Created separate Jira issues for verified defects with reproduction steps, expected and actual behavior, priority, severity, and code evidence.
-9. Fixed three selected issues and demonstrated the Jira workflow from To Do to In Progress to Done.
-10. Added a final SQA report, test-case matrix, and evaluation demonstration checklist under `sqa/`.
+2. Configured Jest 30 as the automated test runner for both applications.
+3. Configured React Testing Library, jest-dom, user-event, jsdom, and Babel/Jest JSX transformation for the frontend.
+4. Added frontend Jest tests for chat helpers, authentication error mapping, and application/property status rules.
+5. Added React Testing Library tests for protected-route loading, authenticated access, and unauthenticated redirection.
+6. Added backend Jest tests for property-description validation, authorization middleware, chat/database models, and public-registration security policy.
+7. Generated Jest module-scoped line, branch, statement, and function coverage reports.
+8. Ran ESLint static analysis on the frontend and backend.
+9. Reviewed registration, login, property CRUD, moderation, authorization, chat, notification, NID, profile, and privacy flows.
+10. Created separate Jira issues for verified defects with reproduction steps, expected and actual behavior, priority, severity, and code evidence.
+11. Fixed three selected issues and demonstrated the Jira workflow from To Do to In Progress to Done.
+12. Added a final SQA report, test-case matrix, and evaluation demonstration checklist under `sqa/`.
 
 ## 3. Automated test structure
 
@@ -52,6 +54,13 @@ Located in `client/test/`:
   - Completed sale and rental labels
   - Inconsistent deal-state handling
   - Status colors and defaults
+- `privateRoute.test.jsx` (React Testing Library)
+  - Loading UI while authentication resolves
+  - Protected content for authenticated users
+  - Redirect to login for unauthenticated users
+- `setupTests.js`
+  - Loads `@testing-library/jest-dom`
+  - Supplies jsdom-compatible `TextEncoder` and `TextDecoder`
 
 ### Backend tests
 
@@ -95,23 +104,35 @@ npm.cmd run test
 npm.cmd run test:coverage
 ```
 
-The test commands are deliberately restricted to `test/*.test.js`. This prevents the old `backend/test-hf.js` network-connectivity script from being incorrectly executed as a unit test.
+Jest configuration restricts discovery to the `test/` directories. This prevents the old `backend/test-hf.js` network-connectivity script from being incorrectly executed as a unit test.
+
+Frontend test infrastructure:
+
+- `client/jest.config.cjs` — jsdom, coverage targets, JSX transformation, and setup file
+- `client/babel.config.cjs` — current Node and automatic React JSX runtime
+- React Testing Library, jest-dom, and user-event development dependencies
+
+Backend test infrastructure:
+
+- `backend/jest.config.js` — Node environment, test discovery, and coverage targets
+- Jest runs ESM modules using Node's `--experimental-vm-modules` option
 
 ## 5. Latest verified results
 
 After the selected bug fixes:
 
-- Frontend: 11 tests passed, 0 failed
+- Frontend: 14 tests passed, 0 failed
 - Backend: 17 tests passed, 0 failed
-- Total: 28 tests passed, 0 failed
+- Total: 31 tests passed, 0 failed
 - Targeted ESLint checks passed for the modified frontend files and the new backend registration-policy files
 
-Earlier module-scoped coverage evidence before the final two backend regression assertions was:
+Latest Jest module-scoped coverage evidence:
 
-| Target | Line coverage | Branch coverage | Function coverage |
-|---|---:|---:|---:|
-| Backend tested modules | 77.18% | 79.25% | 80.00% |
-| Frontend tested utilities | 68.29% | 60.00% | 76.47% |
+| Target | Statement coverage | Branch coverage | Function coverage | Line coverage |
+|---|---:|---:|---:|---:|
+| Backend tested modules | 74.15% | 69.33% | 80.76% | 75.30% |
+| Frontend tested modules | 54.48% | 47.55% | 77.77% | 53.95% |
+| Frontend `PrivateRoute.jsx` | 100% | 100% | 100% | 100% |
 
 These figures apply only to modules loaded by the test suites. They are not whole-repository coverage and should not be presented as such.
 
@@ -193,7 +214,7 @@ Fix:
 
 Verification:
 
-- Frontend suite passed 11/11 tests.
+- Frontend Jest/RTL suite passed 14/14 tests.
 - Targeted ESLint reported zero errors for `RegisterPage.jsx`.
 - Verification evidence was attached to GHOR-3 before moving it to Done.
 
@@ -213,7 +234,7 @@ Fix:
 
 Verification:
 
-- Frontend suite passed 11/11 tests.
+- Frontend Jest/RTL suite passed 14/14 tests.
 - Targeted ESLint reported zero errors for `ProfilePage.jsx`.
 - The original `react-hooks/rules-of-hooks` finding disappeared.
 - Verification evidence was attached to GHOR-6 before moving it to Done.
@@ -244,8 +265,8 @@ The detailed matrix is available in `sqa/TEST_CASES.md`.
 - `sqa/TEST_CASES.md` — automated and manual/code-review test matrix
 - `sqa/FINAL_REPORT.md` — final assessment and coverage summary
 - `sqa/DEMONSTRATION_CHECKLIST.md` — evaluation presentation checklist
-- `client/test/` — frontend unit tests
-- `backend/test/` — backend unit tests
+- `client/test/` — frontend Jest unit and React Testing Library component tests
+- `backend/test/` — backend Jest unit tests
 
 ## 11. Presentation guidance
 

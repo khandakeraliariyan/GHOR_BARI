@@ -12,9 +12,9 @@
 ## Automated Tests
 
 - Run `npm.cmd run test:coverage` inside `client`.
-- Show 11 passing frontend tests.
+- Show 14 passing frontend Jest/RTL tests.
 - Run `npm.cmd run test:coverage` inside `backend`.
-- Show 15 passing backend tests.
+- Show 17 passing backend Jest tests.
 - Explain that reported coverage is module-scoped.
 - Open one test file and connect its assertions to a business rule.
 

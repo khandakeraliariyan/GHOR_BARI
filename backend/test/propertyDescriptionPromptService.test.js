@@ -1,5 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test, expect } from "@jest/globals";
 
 import {
   buildPropertyDescriptionPrompt,
@@ -22,39 +21,39 @@ const validFlat = {
 };
 
 test("accepts complete flat and building payloads", () => {
-  assert.equal(validatePropertyDescriptionPayload(validFlat), null);
-  assert.equal(validatePropertyDescriptionPayload({
+  expect(validatePropertyDescriptionPayload(validFlat)).toBeNull();
+  expect(validatePropertyDescriptionPayload({
     ...validFlat,
     propertyType: "building",
     floorCount: 6,
     totalUnits: 12,
-  }), null);
+  })).toBeNull();
 });
 
 test("rejects missing required text fields", () => {
   for (const field of ["title", "listingType", "propertyType", "divisionName", "districtName", "upazilaName", "address"]) {
-    assert.equal(typeof validatePropertyDescriptionPayload({ ...validFlat, [field]: "  " }), "string");
+    expect(typeof validatePropertyDescriptionPayload({ ...validFlat, [field]: "  " })).toBe("string");
   }
 });
 
 test("rejects invalid prices, areas, and flat dimensions", () => {
-  assert.equal(validatePropertyDescriptionPayload({ ...validFlat, price: 0 }), "Valid price is required");
-  assert.equal(validatePropertyDescriptionPayload({ ...validFlat, areaSqFt: "bad" }), "Valid area is required");
-  assert.equal(validatePropertyDescriptionPayload({ ...validFlat, roomCount: 0 }), "Valid room count is required");
-  assert.equal(validatePropertyDescriptionPayload({ ...validFlat, bathrooms: 0 }), "Valid bathroom count is required");
+  expect(validatePropertyDescriptionPayload({ ...validFlat, price: 0 })).toBe("Valid price is required");
+  expect(validatePropertyDescriptionPayload({ ...validFlat, areaSqFt: "bad" })).toBe("Valid area is required");
+  expect(validatePropertyDescriptionPayload({ ...validFlat, roomCount: 0 })).toBe("Valid room count is required");
+  expect(validatePropertyDescriptionPayload({ ...validFlat, bathrooms: 0 })).toBe("Valid bathroom count is required");
 });
 
 test("rejects invalid building dimensions", () => {
   const building = { ...validFlat, propertyType: "building", floorCount: 2, totalUnits: 4 };
-  assert.equal(validatePropertyDescriptionPayload({ ...building, floorCount: 0 }), "Valid floor count is required");
-  assert.equal(validatePropertyDescriptionPayload({ ...building, totalUnits: 0 }), "Valid total unit count is required");
+  expect(validatePropertyDescriptionPayload({ ...building, floorCount: 0 })).toBe("Valid floor count is required");
+  expect(validatePropertyDescriptionPayload({ ...building, totalUnits: 0 })).toBe("Valid total unit count is required");
 });
 
 test("builds a constrained prompt using only supplied facts", () => {
   const prompt = buildPropertyDescriptionPrompt(validFlat);
-  assert.match(prompt, /exactly one paragraph/);
-  assert.match(prompt, /Modern Flat/);
-  assert.match(prompt, /Rooms: 3/);
-  assert.match(prompt, /Amenities: Lift, Parking/);
-  assert.doesNotMatch(prompt, /Floor count:/);
+  expect(prompt).toMatch(/exactly one paragraph/);
+  expect(prompt).toMatch(/Modern Flat/);
+  expect(prompt).toMatch(/Rooms: 3/);
+  expect(prompt).toMatch(/Amenities: Lift, Parking/);
+  expect(prompt).not.toMatch(/Floor count:/);
 });
