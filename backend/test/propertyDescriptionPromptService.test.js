@@ -1,9 +1,6 @@
 import { test, expect } from "@jest/globals";
 
-import {
-  buildPropertyDescriptionPrompt,
-  validatePropertyDescriptionPayload,
-} from "../src/services/propertyDescriptionPromptService.js";
+import { buildPropertyDescriptionPrompt, validatePropertyDescriptionPayload } from "../src/services/propertyDescriptionPromptService.js";
 
 const validFlat = {
   title: "Modern Flat",
