@@ -99,6 +99,7 @@ Create an environment named `GhorBari Local` with these variables:
 |---|---|---|
 | `baseUrl` | `http://localhost:5000` | Backend URL, without trailing slash |
 | `firebaseApiKey` | Firebase Web API key | Used only with Firebase Auth REST |
+| `googleIdToken` | Google OAuth/OpenID ID token | Temporary input for Google-to-Firebase exchange |
 | `qaPassword` | `GhorBariQA123!` | Password for disposable QA accounts; mark secret |
 | `ownerEmail` | `owner.qa@example.com` | User A; initially acts as owner |
 | `seekerEmail` | `seeker.qa@example.com` | User B; initially acts as applicant |
@@ -185,6 +186,8 @@ If Firebase returns `EMAIL_EXISTS`, use the login request instead.
 
 #### Firebase: login and obtain a fresh ID token
 
+##### Email/password login
+
 `POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{firebaseApiKey}}`
 
 ```json
@@ -207,6 +210,78 @@ and:
 ```javascript
 pm.environment.set("adminToken", pm.response.json().idToken);
 ```
+
+Common Firebase failures:
+
+- `EMAIL_NOT_FOUND`: no Firebase Authentication account exists for that email;
+- `INVALID_PASSWORD` or `INVALID_LOGIN_CREDENTIALS`: credentials are wrong;
+- `USER_DISABLED`: the Firebase account is disabled.
+
+##### Google login
+
+There is no GhorBari Google-login route. Google sign-in is an interactive OAuth
+flow handled by Firebase.
+
+The simplest testing procedure is:
+
+1. Sign in through the frontend's **Continue with Google** button.
+2. Obtain the signed-in Firebase user's ID token with
+   `user.getIdToken()` in the application/debugging context.
+3. Use that Firebase ID token as the Postman bearer token.
+
+For a direct Postman flow, first obtain a **Google OpenID ID token** using
+Postman's OAuth 2.0 authorization-code flow and the Google web client configured
+for the Firebase project:
+
+```text
+Authorization URL: https://accounts.google.com/o/oauth2/v2/auth
+Access Token URL:  https://oauth2.googleapis.com/token
+Scope:             openid email profile
+```
+
+The Google client must allow Postman's callback URL. Copy the returned Google
+`id_token` into `{{googleIdToken}}`, then exchange it for a Firebase ID token:
+
+`POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={{firebaseApiKey}}`
+
+```json
+{
+  "postBody": "id_token={{googleIdToken}}&providerId=google.com",
+  "requestUri": "http://localhost",
+  "returnIdpCredential": true,
+  "returnSecureToken": true
+}
+```
+
+Expected `200` includes:
+
+```json
+{
+  "federatedId": "<Google account identifier>",
+  "email": "user@gmail.com",
+  "localId": "<Firebase UID>",
+  "idToken": "<Firebase ID token used as GhorBari bearer token>",
+  "refreshToken": "<Firebase refresh token>",
+  "expiresIn": "3600"
+}
+```
+
+Save the Firebase token—not the Google access token:
+
+```javascript
+const json = pm.response.json();
+pm.environment.set("ownerToken", json.idToken);
+pm.environment.set("ownerRefreshToken", json.refreshToken);
+```
+
+The Google provider must be enabled in Firebase Authentication. A Google OAuth
+access token or Google ID token must not be sent directly to a GhorBari private
+route; it must first be exchanged for the Firebase `idToken`.
+
+Official references:
+
+- <https://firebase.google.com/docs/auth/web/google-signin>
+- <https://firebase.google.com/docs/reference/rest/auth>
 
 #### Firebase: refresh without entering the password
 
