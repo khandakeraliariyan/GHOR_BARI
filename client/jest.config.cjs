@@ -13,6 +13,8 @@ module.exports = {
     "src/PrivateRoute/PrivateRoute.jsx",
     "src/PrivateRoute/AdminRoute.jsx",
     "src/Utilities/ToastMessage.jsx",
+    "src/context/ComparisonContext.jsx",
+    "src/context/WishlistContext.jsx",
   ],
   coverageDirectory: "coverage",
 };
