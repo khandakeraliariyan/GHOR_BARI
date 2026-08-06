@@ -11,6 +11,8 @@ module.exports = {
     "src/Utilities/firebaseAuthErrorMessage.js",
     "src/Utilities/StatusDisplay.js",
     "src/PrivateRoute/PrivateRoute.jsx",
+    "src/PrivateRoute/AdminRoute.jsx",
+    "src/Utilities/ToastMessage.jsx",
   ],
   coverageDirectory: "coverage",
 };
