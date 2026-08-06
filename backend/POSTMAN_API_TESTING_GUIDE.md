@@ -34,19 +34,62 @@ Before testing:
 2. Configure Firebase Admin credentials used by `src/config/firebase.js`.
 3. Start the backend from `backend/` with `npm run dev`.
 4. Create three Firebase Authentication users:
-   - property owner;
-   - property seeker;
-   - administrator.
-5. Register the same emails through `POST /register-user`.
-6. Set the administrator user's MongoDB `role` to `admin`.
-7. Obtain a current Firebase **ID token** for each account. A Firebase API key
-   is not an ID token, and a refresh token is not an ID token.
+   - QA User A (acts as property owner first);
+   - QA User B (acts as applicant/seeker first);
+   - QA administrator.
+5. Register the same emails through `POST /register-user` with role `user`.
+6. Change only the administrator's MongoDB `role` to `admin`.
+7. Obtain a current Firebase **ID token** for each account using section 3. A
+   Firebase API key is not an ID token, and a refresh token is not an ID token.
 8. For AI tests, configure the required Groq/AI environment variables.
 9. For email-job tests, configure `INTERNAL_CRON_SECRET`.
 10. For real payment tests, configure SSLCommerz and the frontend return URL.
 
 Firebase ID tokens expire. Refresh the corresponding Postman variable whenever
 a protected request starts returning `403 {"message":"Invalid token"}`.
+
+### Normal-user role model
+
+GhorBari does not enforce separate permanent owner and seeker roles for normal
+users. The frontend registers every non-admin account with:
+
+```json
+{"role":"user"}
+```
+
+“Owner” and “seeker” describe a user's relationship to a particular property or
+application:
+
+- a user is the owner of properties created with their Firebase token;
+- a different user is the seeker/applicant when they apply;
+- the same account can own one property and apply to somebody else's property;
+- only `role:"admin"` grants special role-based access.
+
+Legacy values `property_owner` and `property_seeker` are accepted by the backend
+registration controller, but the current UI does not use them and the protected
+owner/seeker actions do not depend on them.
+
+### Authentication and user-data architecture
+
+| System | Responsibility | Use by private APIs |
+|---|---|---|
+| Firebase Authentication | Signup, password/Google login, UID, token issuance and token verification | `Authorization: Bearer <Firebase ID token>` |
+| MongoDB `users` | Profile, phone, image, application role, NID state, ratings and analytics | Profile matched by the verified token's email |
+
+The backend does not store or validate passwords. On protected requests,
+`verifyToken` uses Firebase Admin to verify the ID token and attaches its UID,
+email, display name, picture, and email-verification flag to `req.user`.
+MongoDB then supplies application data and authorization context, such as
+`role:"admin"` and property/application ownership.
+
+Consequently:
+
+- a MongoDB profile alone cannot authenticate;
+- a Firebase account can authenticate, but profile-dependent APIs may have no
+  application data until `/register-user` creates the MongoDB profile;
+- the Firebase and MongoDB emails must match;
+- deleting an admin user endpoint removes only MongoDB data, not Firebase Auth;
+- passwords cannot be read or changed through this backend.
 
 ## 3. Postman environment
 
@@ -55,8 +98,11 @@ Create an environment named `GhorBari Local` with these variables:
 | Variable | Initial example | Purpose |
 |---|---|---|
 | `baseUrl` | `http://localhost:5000` | Backend URL, without trailing slash |
-| `ownerEmail` | `owner.qa@example.com` | Property owner account |
-| `seekerEmail` | `seeker.qa@example.com` | Applicant account |
+| `firebaseApiKey` | Firebase Web API key | Used only with Firebase Auth REST |
+| `googleIdToken` | Google OAuth/OpenID ID token | Temporary input for Google-to-Firebase exchange |
+| `qaPassword` | `GhorBariQA123!` | Password for disposable QA accounts; mark secret |
+| `ownerEmail` | `owner.qa@example.com` | User A; initially acts as owner |
+| `seekerEmail` | `seeker.qa@example.com` | User B; initially acts as applicant |
 | `adminEmail` | `admin.qa@example.com` | Administrator account |
 | `otherEmail` | `other.qa@example.com` | Optional fourth account |
 | `ownerToken` | Firebase ID token | Owner authorization |
@@ -74,6 +120,208 @@ Create an environment named `GhorBari Local` with these variables:
 | `shareLink` | set after sharing | Public comparison |
 | `notificationId` | set from notifications | Notification test |
 | `draftId` | set when a paid listing creates a draft | Payment tests |
+
+The existing variable names `ownerEmail` and `seekerEmail` are scenario labels,
+not permanent application roles.
+
+### Creating and logging in QA accounts
+
+`POST /register-user` is **not** an authentication signup endpoint. It creates
+only the MongoDB application profile and intentionally accepts no password.
+Firebase Authentication owns passwords and issues bearer tokens.
+
+The route itself is public and does not verify that the supplied email belongs
+to a real Firebase account. The normal frontend sequence creates/authenticates
+Firebase first and then creates the matching MongoDB profile.
+
+There are two valid setup options:
+
+1. Register each QA account through the frontend `/register` page, then use the
+   Firebase login request below to obtain its token; or
+2. Use Firebase Auth REST in Postman to create/login the Firebase account, then
+   call the backend `POST /register-user` once to create its profile.
+
+For DB-only QA profiles that were already created, use Firebase **Sign up** with
+the same email. After Firebase creates the credential, do not call backend
+registration again—the existing database profile is already linked by email.
+
+The Firebase Web API key is the value of frontend environment variable
+`VITE_apiKey`. It identifies the Firebase project; it is not a bearer token.
+
+#### Firebase: create an email/password credential
+
+This is an external Firebase request, not a GhorBari backend route:
+
+`POST https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{firebaseApiKey}}`
+
+```json
+{
+  "email": "{{ownerEmail}}",
+  "password": "{{qaPassword}}",
+  "returnSecureToken": true
+}
+```
+
+Expected `200`:
+
+```json
+{
+  "idToken": "<Firebase ID token>",
+  "email": "owner.qa@example.com",
+  "refreshToken": "<refresh token>",
+  "expiresIn": "3600",
+  "localId": "<Firebase UID>"
+}
+```
+
+Save the token:
+
+```javascript
+const json = pm.response.json();
+pm.environment.set("ownerToken", json.idToken);
+```
+
+Repeat for User B and admin, changing the email and destination token variable.
+If Firebase returns `EMAIL_EXISTS`, use the login request instead.
+
+#### Firebase: login and obtain a fresh ID token
+
+##### Email/password login
+
+`POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{firebaseApiKey}}`
+
+```json
+{
+  "email": "{{ownerEmail}}",
+  "password": "{{qaPassword}}",
+  "returnSecureToken": true
+}
+```
+
+Expected `200` contains `idToken`, `refreshToken`, `expiresIn`, and `localId`.
+Use the same token-saving script above. Create equivalent saved requests for:
+
+```javascript
+pm.environment.set("seekerToken", pm.response.json().idToken);
+```
+
+and:
+
+```javascript
+pm.environment.set("adminToken", pm.response.json().idToken);
+```
+
+Common Firebase failures:
+
+- `EMAIL_NOT_FOUND`: no Firebase Authentication account exists for that email;
+- `INVALID_PASSWORD` or `INVALID_LOGIN_CREDENTIALS`: credentials are wrong;
+- `USER_DISABLED`: the Firebase account is disabled.
+
+##### Google login
+
+There is no GhorBari Google-login route. Google sign-in is an interactive OAuth
+flow handled by Firebase.
+
+The simplest testing procedure is:
+
+1. Sign in through the frontend's **Continue with Google** button.
+2. Obtain the signed-in Firebase user's ID token with
+   `user.getIdToken()` in the application/debugging context.
+3. Use that Firebase ID token as the Postman bearer token.
+
+For a direct Postman flow, first obtain a **Google OpenID ID token** using
+Postman's OAuth 2.0 authorization-code flow and the Google web client configured
+for the Firebase project:
+
+```text
+Authorization URL: https://accounts.google.com/o/oauth2/v2/auth
+Access Token URL:  https://oauth2.googleapis.com/token
+Scope:             openid email profile
+```
+
+The Google client must allow Postman's callback URL. Copy the returned Google
+`id_token` into `{{googleIdToken}}`, then exchange it for a Firebase ID token:
+
+`POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={{firebaseApiKey}}`
+
+```json
+{
+  "postBody": "id_token={{googleIdToken}}&providerId=google.com",
+  "requestUri": "http://localhost",
+  "returnIdpCredential": true,
+  "returnSecureToken": true
+}
+```
+
+Expected `200` includes:
+
+```json
+{
+  "federatedId": "<Google account identifier>",
+  "email": "user@gmail.com",
+  "localId": "<Firebase UID>",
+  "idToken": "<Firebase ID token used as GhorBari bearer token>",
+  "refreshToken": "<Firebase refresh token>",
+  "expiresIn": "3600"
+}
+```
+
+Save the Firebase token—not the Google access token:
+
+```javascript
+const json = pm.response.json();
+pm.environment.set("ownerToken", json.idToken);
+pm.environment.set("ownerRefreshToken", json.refreshToken);
+```
+
+The Google provider must be enabled in Firebase Authentication. A Google OAuth
+access token or Google ID token must not be sent directly to a GhorBari private
+route; it must first be exchanged for the Firebase `idToken`.
+
+Official references:
+
+- <https://firebase.google.com/docs/auth/web/google-signin>
+- <https://firebase.google.com/docs/reference/rest/auth>
+
+#### Firebase: refresh without entering the password
+
+Optionally store the login response's refresh token in an environment variable
+such as `ownerRefreshToken`, then call:
+
+`POST https://securetoken.googleapis.com/v1/token?key={{firebaseApiKey}}`
+
+Body type: `x-www-form-urlencoded`
+
+```text
+grant_type=refresh_token
+refresh_token={{ownerRefreshToken}}
+```
+
+The refresh response uses snake case:
+
+```javascript
+const json = pm.response.json();
+pm.environment.set("ownerToken", json.id_token);
+pm.environment.set("ownerRefreshToken", json.refresh_token);
+```
+
+#### Apply authorization in Postman
+
+At the collection or protected-folder level:
+
+1. Open **Authorization**.
+2. Select **Bearer Token**.
+3. Enter `{{ownerToken}}`, `{{seekerToken}}`, or `{{adminToken}}`.
+4. Let individual requests inherit authorization.
+
+The header sent to GhorBari must be:
+
+```http
+Authorization: Bearer {{ownerToken}}
+```
+
+A `401 {"message":"Unauthorized"}` means the header is absent. A
+`403 {"message":"Invalid token"}` means Firebase rejected the supplied token.
 
 For protected requests use:
 
@@ -123,27 +371,27 @@ values.
 
 ## 4. Reusable dummy data
 
-### Owner
+### User A (initial property owner)
 
 ```json
 {
   "email": "owner.qa@example.com",
-  "name": "QA Property Owner",
+  "name": "QA User A",
   "phone": "01711111111",
   "profileImage": "https://example.com/owner.png",
-  "role": "owner"
+  "role": "user"
 }
 ```
 
-### Seeker
+### User B (initial applicant/seeker)
 
 ```json
 {
   "email": "seeker.qa@example.com",
-  "name": "QA Property Seeker",
+  "name": "QA User B",
   "phone": "01822222222",
   "profileImage": "https://example.com/seeker.png",
-  "role": "seeker"
+  "role": "user"
 }
 ```
 
@@ -154,9 +402,13 @@ values.
   "email": "admin.qa@example.com",
   "name": "QA Administrator",
   "phone": "01933333333",
-  "role": "admin"
+  "role": "user"
 }
 ```
+
+After creating this profile, promote it to `role:"admin"` directly through an
+authorized seed/admin process or the test database. Do not depend on public
+registration to grant admin privileges.
 
 ### Flat property
 
@@ -225,21 +477,23 @@ Use this to obtain `propertyId2`:
 Use a disposable database or clearly identifiable QA records.
 
 1. Server check and public statistics.
-2. Register owner, seeker, and administrator records.
-3. Profile, NID, and user lookup tests.
-4. Create two owner properties.
-5. If a property is created as `pending`, approve it as admin.
-6. Read/list/visibility tests.
-7. Create a seeker application.
-8. Test application messaging and owner counter-offer.
-9. Either revise the offer or accept the owner's counter.
-10. Create a chat from the accepted application and test messages.
-11. Complete the deal.
-12. Test ratings.
-13. Test wishlist and comparisons with another active property.
-14. Test AI.
-15. Test listing drafts/payments only in the SSLCommerz sandbox.
-16. Run destructive delete tests last.
+2. Create/login Firebase credentials and save all three bearer tokens.
+3. Register User A, User B, and administrator database profiles as `user`.
+4. Promote only the administrator profile to `admin` in the test database.
+5. Profile, NID, and user lookup tests.
+6. Create two properties as User A.
+7. If a property is created as `pending`, approve it as admin.
+8. Read/list/visibility tests.
+9. Create an application as User B.
+10. Test application messaging and User A's counter-offer.
+11. Either revise the offer or accept User A's counter.
+12. Create a chat from the accepted application and test messages.
+13. Complete the deal.
+14. Test ratings.
+15. Test wishlist and comparisons with another active property.
+16. Test AI.
+17. Test listing drafts/payments only in the SSLCommerz sandbox.
+18. Run destructive delete tests last.
 
 Do not run mutually exclusive branches on the same record. For example,
 withdrawing an application prevents accepting it later. Create a separate
@@ -317,6 +571,12 @@ Expected `201`:
 
 Negative cases: missing `email`/`name` → `400`; duplicate email → `400`.
 
+**Security finding:** the current public controller accepts `role:"admin"` from
+the request body. A client can therefore create an administrator database
+profile if the email is not already registered. Expected secure behavior is to
+ignore client-supplied privileged roles and always create `role:"user"`;
+include this in the security test report.
+
 ### 8.2 Check whether a user exists
 
 `GET {{baseUrl}}/check-user-exist?email={{ownerEmail}}` — public
@@ -327,7 +587,7 @@ Expected `200`: `{"exists":true}`. Missing email → `400`.
 
 `GET {{baseUrl}}/get-user-role?email={{ownerEmail}}` — public
 
-Expected `200`: `{"role":"owner"}`. Unknown/missing email returns
+Expected `200`: `{"role":"user"}`. Unknown/missing email returns
 `{"role":null}`.
 
 ### 8.4 Batch-fetch users
@@ -343,7 +603,7 @@ Expected `200`: array of matching public user records. Missing `emails` → `400
 
 ```json
 {
-  "name": "QA Owner Updated",
+  "name": "QA User A Updated",
   "phone": "01711111112",
   "profileImage": "https://example.com/owner-updated.png"
 }
@@ -375,8 +635,9 @@ Expected `200`:
 {"success":true,"message":"NID submitted for review"}
 ```
 
-NID must contain exactly 10 or 16 digits. A NID already used by another user is
-rejected. Use only designated dummy registry data in shared environments.
+NID must contain exactly 10 or 16 digits, and the MongoDB profile must already
+have a nonblank phone number. The submission controller does not check NID
+uniqueness. Use only designated dummy registry data in shared environments.
 
 ### 8.7 Get own profile
 
@@ -402,7 +663,7 @@ Capture an ID when present:
 ```javascript
 const json = pm.response.json();
 if (json.notifications?.length) {
-  pm.environment.set("notificationId", json.notifications[0]._id);
+  pm.environment.set("notificationId", json.notifications[0].id);
 }
 ```
 
@@ -443,7 +704,10 @@ non-messageable result.
 
 `GET {{baseUrl}}/public-profile/{{ownerEmail}}` — any user token
 
-Expected `200`: sanitized public profile data. Unknown email → `404`.
+Expected `200`: projected MongoDB profile data containing `name`, `email`,
+`profileImage`, `role`, `rating`, `createdAt`, `nidVerified`, and `phone`.
+Unknown email → `404`. The current response exposes the phone number to any
+authenticated user.
 
 ---
 
@@ -471,9 +735,13 @@ When payment is required, expected `200` instead:
 ```json
 {
   "success": true,
+  "mode": "payment_required",
   "requiresPayment": true,
+  "amount": 99,
+  "currency": "BDT",
   "draftId": "<MongoDB ObjectId>",
-  "paymentUrl": "<SSLCommerz gateway URL>"
+  "redirectUrl": "<SSLCommerz gateway URL>",
+  "entitlement": {}
 }
 ```
 
@@ -488,6 +756,11 @@ if (json.draftId) pm.environment.set("draftId", json.draftId);
 ```
 
 Owner name/email/UID come from the token and must not be trusted from the body.
+There is currently no request-validation middleware on this endpoint. The
+controller defaults an omitted `status` to `active`, but also accepts a
+client-supplied `status` unchanged. Include empty/malformed payloads and a
+forged status in the negative/security run; accepting an arbitrary lifecycle
+status is a backend defect.
 
 ### 9.2 Listing entitlement
 
@@ -522,16 +795,9 @@ Example:
 
 ```json
 {
-  "title": "QA Test Flat — Updated",
   "price": 32000,
   "areaSqFt": 1250,
   "overview": "Updated during Postman QA.",
-  "address": {
-    "division_name": "Dhaka",
-    "district_name": "Dhaka",
-    "upazila_name": "Dhanmondi",
-    "street": "Road 7A, House 12"
-  },
   "location": {"lat": 23.7465, "lng": 90.376},
   "images": [],
   "amenities": ["Lift", "Parking"],
@@ -546,7 +812,10 @@ Expected `200`:
 {"success":true,"message":"Property updated successfully"}
 ```
 
-The property cannot be edited during or after a completed deal.
+The property cannot be edited during or after a completed deal. The controller
+updates price, area, images, overview, amenities, location, and type-specific
+room/floor fields. It ignores submitted `title`, `address`, `listingType`, and
+`propertyType`.
 
 ### 9.7 Toggle visibility
 
@@ -635,6 +904,10 @@ and cannot exceed listing price; duplicate active applications are rejected.
 `GET {{baseUrl}}/my-applications?email={{seekerEmail}}` — seeker token
 
 Expected `200`: array of applications enriched with property information.
+
+Security note: the route verifies a Firebase token but does not verify that the
+`email` query belongs to that token. Any authenticated account can currently
+request another user's applications by changing this query value.
 
 ### 10.3 Get applications for owned property
 
@@ -761,7 +1034,8 @@ Expected `200`:
 {
   "success": true,
   "message": "Deal completed successfully",
-  "status": "completed"
+  "propertyId": "<property ObjectId>",
+  "applicationId": "<application ObjectId>"
 }
 ```
 
@@ -834,7 +1108,7 @@ Expected `200`:
 Expected `200`:
 
 ```json
-{"messages":[],"total":0,"hasMore":false}
+{"message":"Messages retrieved","messages":[],"total":0}
 ```
 
 ### 11.5 Send message
@@ -875,6 +1149,12 @@ Expected `200`: `{"unreadCount":0}` or the current dynamic count.
 `DELETE {{baseUrl}}/message/{{messageId}}` — message sender token
 
 Expected `200`: `{"message":"Message deleted"}`. Another participant → `403`.
+
+**Known implementation issue:** messages are stored with MongoDB ObjectId `_id`
+values, but this controller first searches using the raw string path value.
+Consequently a normal Postman ObjectId string currently returns
+`404 {"message":"Message not found"}` before deletion. Report this as a defect;
+the intended response is the `200` contract above.
 
 ### 11.8 Delete conversation
 
@@ -931,6 +1211,11 @@ attached by the token middleware. In the current code it is therefore expected
 to return `500 {"message":"Server error"}` even for a valid share link. Record
 that as a backend defect; the intended response is the `200` contract above.
 
+The comparison enrichment model also projects a top-level property
+`ownerEmail`, while current property documents store `owner.email`. Owner
+details may therefore appear as `Unknown` even after the database injection
+issue is corrected.
+
 ### 12.4 List own comparisons
 
 `GET {{baseUrl}}/user-comparisons` — creator token
@@ -949,7 +1234,7 @@ Expected `200`: `{"comparisons":[]}`.
 }
 ```
 
-Expected `200`: `{"message":"Comparison updated successfully","comparison":{}}`.
+Expected `200`: `{"message":"Comparison updated","comparison":{}}`.
 
 ### 12.6 Add property
 
@@ -959,7 +1244,7 @@ Expected `200`: `{"message":"Comparison updated successfully","comparison":{}}`.
 {"propertyId":"{{propertyId2}}"}
 ```
 
-Expected `200`: `{"message":"Property added successfully","comparison":{}}`.
+Expected `200`: `{"message":"Property added to comparison","comparison":{}}`.
 Duplicate or more than ten → `400`.
 
 ### 12.7 Remove property
@@ -967,7 +1252,7 @@ Duplicate or more than ten → `400`.
 `DELETE {{baseUrl}}/comparison/{{comparisonId}}/property/{{propertyId2}}`
 — creator token
 
-Expected `200`: `{"message":"Property removed successfully","comparison":{}}`.
+Expected `200`: `{"message":"Property removed from comparison","comparison":{}}`.
 
 ### 12.8 Share comparison
 
@@ -1000,7 +1285,7 @@ Expected `200`: `{"message":"Comparison is now private","comparison":{}}`.
 
 `DELETE {{baseUrl}}/comparison/{{comparisonId}}` — creator token
 
-Expected `200`: `{"message":"Comparison deleted successfully"}`. Run last.
+Expected `200`: `{"message":"Comparison deleted"}`. Run last.
 
 ---
 
@@ -1346,8 +1631,9 @@ No body. Expected `200`:
 ```json
 {
   "success": true,
-  "draftId": "<ID>",
-  "paymentUrl": "<SSLCommerz URL>"
+  "requiresPayment": true,
+  "redirectUrl": "<SSLCommerz URL>",
+  "draftId": "<ID>"
 }
 ```
 
@@ -1479,6 +1765,12 @@ Run these deliberately:
 13. Offer above listing price and invalid counter ranges → `400`.
 14. Rating while application is not `completed` or `cancelled` → `400`.
 15. Fabricated SSLCommerz success/IPN → must not publish a property.
+16. Public registration with `role:"admin"` → currently succeeds and must be
+    reported as a privilege-escalation vulnerability.
+17. Public registration for an email with no Firebase account → currently
+    creates an orphan MongoDB profile; report as a data-integrity weakness.
+18. Property creation with an empty body or forged lifecycle `status` → verify
+    whether malformed/arbitrary-state records are created and report them.
 
 Any authorization bypass, unexpected `500`, stack trace, secret, Firebase
 credential, or internal database detail in a response is a defect.
