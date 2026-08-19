@@ -1,0 +1,6 @@
+{
+    "spec": "e2e/**/*.test.js",
+    "timeout": 60000,
+    "slow": 10000,
+    "reporter": "spec"
+}

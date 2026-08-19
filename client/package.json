@@ -8,6 +8,7 @@
     "build": "vite build",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage",
+    "test:e2e": "mocha",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --check",
@@ -57,7 +58,9 @@
     "globals": "^16.5.0",
     "jest": "^30.0.0",
     "jest-environment-jsdom": "^30.0.0",
+    "mocha": "^11.8.0",
     "prettier": "^3.5.1",
+    "selenium-webdriver": "^4.47.0",
     "vite": "^7.2.4"
   }
 }
