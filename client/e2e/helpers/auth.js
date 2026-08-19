@@ -1,7 +1,10 @@
 import { By, until } from "selenium-webdriver";
 import { BASE_URL } from "./driver.js";
 
-const QUICK_LOGIN_TIMEOUT = 30000;
+// The first Chrome session in a run can be noticeably slower on its first
+// network round-trip (fresh profile: DNS + TLS handshake to Firebase), so
+// this is generous enough to cover a cold start, not just a warm one.
+const QUICK_LOGIN_TIMEOUT = 45000;
 
 /**
  * Logs in using one of the seeded "Quick Login" accounts exposed on the

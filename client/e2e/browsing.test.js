@@ -57,7 +57,10 @@ describe("Property browsing & details", function () {
             return;
         }
 
-        const firstCardLink = await driver.findElement(By.css("div.grid > div"));
+        // The card's own root div carries `cursor-pointer`, which the page
+        // Footer's grid never does, so this can't accidentally click a
+        // footer link column instead of a property card.
+        const firstCardLink = await driver.findElement(By.css("div[class*='cursor-pointer'][class*='rounded-lg']"));
         await firstCardLink.click();
 
         await driver.wait(until.urlContains("/property-details/"), 15000);
